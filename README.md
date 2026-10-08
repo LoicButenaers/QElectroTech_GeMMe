@@ -30,24 +30,51 @@ Qml permettent respectivement l'import PDF et les scripts JavaScript.
 Le fichier `.github/workflows/windows-build.yml` contient la liste des paquets
 MSYS2 UCRT64 et les étapes de compilation utilisées par le projet officiel.
 
-La chaîne C++/Qt n'était pas installée lors de cet import : aucune compilation
-ni aucun exécutable GeMMe n'ont encore été produits. Les outils de développement
-ne sont pas des fichiers sources à versionner dans Git.
+La chaîne MSYS2 UCRT64 est installée localement dans `build/msys64` à partir de
+la [distribution officielle MSYS2](https://www.msys2.org/docs/installer/).
+Elle contient GCC, CMake, Ninja, ccache, Qt 6, SQLite3, les bibliothèques KDE et
+hidapi. Les outils et les binaires générés sont exclus du suivi Git.
 
-Une fois la chaîne de compilation disponible dans l'environnement, utiliser un
-seul dossier `build/` et une compilation Release :
+Pour recompiler depuis PowerShell, fermer le logiciel puis lancer :
 
 ```powershell
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DPACKAGE_TESTS=OFF
-cmake --build build --target qelectrotech
-windeployqt --release --no-translations build/qelectrotech.exe
+.\build-aux\windows\Build-GeMMe.ps1
 ```
 
-Ces commandes constituent la base de compilation ; les options de dépendances
-de la configuration Windows officielle peuvent être nécessaires selon la chaîne
-choisie. La préparation des ressources et le lancement seront vérifiés lors de
-la première compilation. L'exécutable unique sera `build/qelectrotech.exe` et
-sera remplacé à chaque compilation. `build/` est exclu du suivi Git.
+Le script utilise une compilation Release 64 bits avec les modules PDF,
+JavaScript et SpaceMouse, ainsi que les en-têtes précompilés pour accélérer
+les compilations locales. Il limite le parallélisme à trois tâches (modifiable
+avec `-Jobs 2`, par exemple). Les exécutables de tests ne sont pas générés.
+Il déploie les DLL Qt/KDE et leurs dépendances dans `build/`, ainsi que les
+traductions. Les symboles, cartouches et exemples sont accessibles par des
+jonctions vers leurs dossiers sources, sans en créer de copie.
+
+L'exécutable unique est `build/qelectrotech.exe`, remplacé à chaque compilation.
+Le lancer directement depuis l'Explorateur Windows. Garder ses DLL et dossiers
+de ressources à côté de lui ; déplacer uniquement le fichier `.exe` ne suffit
+pas pour l'exécuter ailleurs. Les journaux de compilation et la liste des
+versions des paquets sont dans `build/compilation.log` et
+`build/toolchain-packages.txt`.
+
+Sur une nouvelle machine, réinstaller MSYS2 dans `build/msys64` et les paquets
+UCRT64 indiqués dans la configuration Windows officielle avant d'utiliser le
+script (NSIS et les outils de création d'installeur ne sont pas nécessaires
+pour cet exécutable local).
+
+Compilation initiale vérifiée le 8 octobre 2026 : Windows 64 bits, GCC 16.2.0,
+Qt 6.11.2 et KDE Frameworks 6.30.0. Vérifications effectuées sans la chaîne de
+développement dans le PATH : réponse de `--version`, démarrage et fermeture
+de la fenêtre principale, chargement des 8 839 symboles, lecture de
+`examples/tremie_vibrante.qet` (3 folios, 98 éléments, 77 conducteurs) et
+export PDF des trois pages. Les résultats et journaux sont conservés dans
+`build/verification-*.json` et `build/*.log`. La suite de tests unitaires
+officielle n'a pas été exécutée pour cette compilation locale.
+
+Le premier déploiement automatique a aussi généré des ressources Qt Quick
+inutilisées dans `build/qml` et `build/qmltooling`. Leur suppression a été
+bloquée par le contrôle automatique de l'environnement. Le script désactive
+leur ajout pour les futurs déploiements ; ces ressources restantes n'empêchent
+pas le fonctionnement de l'exécutable.
 
 Les règles de travail sont consignées dans [AGENTS.md](AGENTS.md).
 
