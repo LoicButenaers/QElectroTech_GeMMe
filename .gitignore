@@ -3,6 +3,7 @@
 __pycache__/
 *.pyc
 # Qt build output
+/build/
 *.user
 # doxygen Doxyfile output
 doc/*

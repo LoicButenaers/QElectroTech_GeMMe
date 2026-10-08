@@ -1,5 +1,56 @@
 ![](logo.png)
 
+## QElectroTech GeMMe
+
+Ce dépôt est la base de la version personnalisée GeMMe, destinée à améliorer
+l'ergonomie et les fonctionnalités de QElectroTech.
+
+- Dossier de travail : `C:\dev\QElectroTech_GeMMe`.
+- Branche de travail unique : `main`.
+- Sources importées du [dépôt officiel](https://github.com/qelectrotech/qelectrotech-source-mirror),
+  commit `a022d033388185230dfed62918d317f78bbb742c`.
+- L'historique, les licences, les ressources et les configurations de compilation
+  d'origine sont conservés. `upstream` désigne le dépôt officiel et `origin` le
+  dépôt GeMMe dans la copie locale initiale.
+- Les quatre sous-modules sont importés aux révisions prévues par les sources :
+  `SingleApplication`, `pugixml`, `elements` (collection de symboles) et
+  `doxygen-awesome-css` (documentation).
+
+Pour récupérer ce dépôt sur une autre machine avec ses dépendances intégrées :
+
+```powershell
+git clone --recurse-submodules --branch main https://github.com/LoicButenaers/QElectroTech_GeMMe.git
+```
+
+### Compilation Windows
+
+Les sources utilisent C++17, CMake, Qt 6 (avec les en-têtes privés de Qt GUI et
+LinguistTools), SQLite3, KDE CoreAddons et WidgetsAddons. Les modules Qt Pdf et
+Qml permettent respectivement l'import PDF et les scripts JavaScript.
+Le fichier `.github/workflows/windows-build.yml` contient la liste des paquets
+MSYS2 UCRT64 et les étapes de compilation utilisées par le projet officiel.
+
+La chaîne C++/Qt n'était pas installée lors de cet import : aucune compilation
+ni aucun exécutable GeMMe n'ont encore été produits. Les outils de développement
+ne sont pas des fichiers sources à versionner dans Git.
+
+Une fois la chaîne de compilation disponible dans l'environnement, utiliser un
+seul dossier `build/` et une compilation Release :
+
+```powershell
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DPACKAGE_TESTS=OFF
+cmake --build build --target qelectrotech
+windeployqt --release --no-translations build/qelectrotech.exe
+```
+
+Ces commandes constituent la base de compilation ; les options de dépendances
+de la configuration Windows officielle peuvent être nécessaires selon la chaîne
+choisie. La préparation des ressources et le lancement seront vérifiés lors de
+la première compilation. L'exécutable unique sera `build/qelectrotech.exe` et
+sera remplacé à chaque compilation. `build/` est exclu du suivi Git.
+
+Les règles de travail sont consignées dans [AGENTS.md](AGENTS.md).
+
 
 # QElectroTech
 
