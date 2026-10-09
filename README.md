@@ -12,11 +12,15 @@ l'ergonomie et les fonctionnalités de QElectroTech.
 - Étude approfondie du 9 octobre 2026 : [253 exigences et leurs sources](docs/EPLAN_P8_RESEARCH.md),
   [registre structuré](docs/EPLAN_P8_REQUIREMENTS.json) et
   [maquette interactive de l'atelier](docs/GEMME_INTERFACE.html) à ouvrir dans
-  un navigateur. Cette maquette ne modifie aucun projet et ne fait pas partie
-  de l'exécutable actuel.
-- Interface GeMMe : logo fourni par le propriétaire du projet, ruban industriel
-  à huit onglets et menus métier. Le suivi du cahier des charges distingue les
-  commandes disponibles des fonctions P8 restant à développer.
+  un navigateur. Cette maquette reste une référence visuelle indépendante.
+- Interface native GeMMe : logo fourni, trois espaces **Schéma**, **Appareils**
+  et **Vérification**, commandes contextuelles, menus métier et mode
+  **Concentration**. Appareils liste les représentations du projet, avec filtre,
+  propriétés et retour au symbole. Vérification relève les champs fabricant et
+  référence manquants sur les symboles repérés avec au moins deux bornes, hors renvois et
+  exclusions de nomenclature ; ce premier contrôle documentaire
+  ne valide pas les connexions électriques. Les fonctions P8 restantes sont
+  distinguées des commandes déjà disponibles dans le cahier des charges.
 - Sources importées du [dépôt officiel](https://github.com/qelectrotech/qelectrotech-source-mirror),
   commit `a022d033388185230dfed62918d317f78bbb742c`.
 - L'historique, les licences, les ressources et les configurations de compilation

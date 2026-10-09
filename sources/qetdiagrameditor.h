@@ -32,6 +32,7 @@
 
 class QToolButton;
 class QLabel;
+class QStackedWidget;
 
 class QMdiSubWindow;
 class QETProject;
@@ -101,7 +102,8 @@ class QETDiagramEditor : public QETMainWindow
 		void setUpToolBar       ();
 		void setUpMenu          ();
 		void setUpIndustrialRibbon();
-		QDockWidget *setUpDeviceNavigator();
+		QWidget *setUpDeviceNavigator(bool verification = false);
+		void setUpIndustrialWorkspaces();
 		
 		bool addProject(QETProject *, bool = true);
 		DiagramView *currentDiagramView() const;
@@ -303,6 +305,8 @@ class QETDiagramEditor : public QETMainWindow
 		void removeDiagramSilent(Diagram *diagram);
 
 		QMdiArea m_workspace;
+		QStackedWidget *m_industrial_workspaces = nullptr;
+		QPointer<ProjectView> m_industrial_project;
 		QSignalMapper windowMapper;
 		QDir open_dialog_dir; /// Directory to use for file dialogs such as File > save
 

@@ -424,3 +424,34 @@ choisis selon le changement : modèle/serialization/annulation/rapports pour les
 données, parcours Windows pour l'interface. Les essais existants concernés
 doivent être utilisés avant d'en ajouter. La branche `main` conserve le point
 de départ ; les travaux de ce programme se poursuivent sur `EPLAN_DESIGN`.
+
+## 9. Interface native livrée le 9 octobre 2026
+
+Les espaces Schéma, Appareils et Vérification remplacent le ruban à huit onglets.
+Ils utilisent directement le projet `.qet` et les commandes de l'éditeur ; le
+HTML reste une maquette de référence. La barre change selon l'espace, et le
+mode Concentration masque temporairement les panneaux latéraux.
+
+Appareils liste les représentations, avec filtre, sélection des propriétés et
+retour au symbole. Vérification relève les champs fabricant/référence vides
+sur les symboles repérés ayant au moins deux bornes, de type simple, maître,
+esclave ou borne, et non exclus de nomenclature. Les symboles à une borne,
+les renvois typés et les annotations ne sont pas contrôlés. Ce périmètre est
+un premier contrôle documentaire, pas une validation électrique du projet.
+
+Recette Windows réalisée sur un exemplaire de test de `tremie_vibrante` :
+
+- Compilation Release et démarrage avec les DLL déployées dans `build`, sans
+  ajouter MSYS2 au PATH du processus lancé.
+- 3 folios, 98 représentations et 77 conducteurs conservés.
+- Tableau de 98 lignes, filtre par référence ramenant une ligne, propriétés
+  correspondantes et retour au symbole sélectionné.
+- 17 représentations dans le contrôle documentaire ; filtre puis double-clic
+  vers un appareil du troisième folio.
+- Mode Concentration : masquage et restauration des panneaux.
+- Fermeture du projet depuis Appareils ; tableau ensuite vide et actions de
+  projet désactivées.
+- Export PDF de 3 pages et CSV contenant la référence fabricant du test.
+
+Exécutable unique : `build/qelectrotech.exe`. La cible P8 du registre reste
+inchangée : cette livraison intègre l'atelier, pas toutes les fonctions P8.

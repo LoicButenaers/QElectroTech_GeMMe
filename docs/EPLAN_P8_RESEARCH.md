@@ -152,9 +152,14 @@ appareils et diagnostics sont fictifs. Ses commandes permettent d'explorer
 les espaces de travail, sélectionner des objets, filtrer, consulter leurs
 propriétés, passer au diagnostic et changer de thème.
 
-Le ruban actuel à huit onglets reste utilisable pendant la transition. La
-cible est une barre compacte et trois espaces qui partagent sélection et
-projet. L'interface EPLAN documente déjà les espaces, panneaux détachables et
+L'application native intègre désormais une barre compacte et trois espaces
+qui utilisent le projet réel : Schéma, Appareils et Vérification. Le tableau
+Appareils porte actuellement sur les représentations des symboles ; le contrôle
+Vérification porte sur leurs champs fabricant et référence lorsqu'un repère
+et au moins deux bornes sont présents, hors renvois et exclusions de nomenclature.
+Les tables métier, les contrôles électriques et les fonctions
+avancées décrits ci-dessous restent la cible, et ne sont pas validés par cette
+première intégration. L'interface EPLAN documente déjà les espaces, panneaux détachables et
 commandes contextuelles ; la disposition ci-dessous est notre conception.
 [Interface de référence, S43](https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/userinterface_k_hintergrund.htm).
 
