@@ -4,7 +4,68 @@ Date : 9 octobre 2026. Branche : `EPLAN_DESIGN`.
 Décisions utilisateur : schémas industriels IEC, Belgique/Europe ; fabricants
 choisis par famille. Ce document est le résultat de la phase de recherche et
 de l'audit initial. Les exigences ci-dessous ne sont pas des fonctions nouvelles
-déjà livrées. L'exécutable actuel reste la base QElectroTech compilée le 8 octobre.
+déjà livrées. La base QElectroTech a été compilée le 8 octobre ; les évolutions
+effectivement développées sont consignées dans le suivi de livraison ci-dessous.
+
+## Suivi de livraison — identité GeMMe et interface industrielle
+
+Demande complémentaire du 9 octobre : intégrer le logo fourni et viser les
+fonctionnalités ainsi que l'organisation de l'interface d'EPLAN Electric P8.
+Cette cible ne signifie pas que la parité fonctionnelle est déjà atteinte.
+
+Changements de ce lot :
+
+- Logo original conservé dans `ico/gemme-logo.png`, utilisé par la fenêtre,
+  l'écran de démarrage, le ruban et la boîte À propos. Icône Windows dérivée
+  aux tailles 16, 24, 32, 48, 64, 128 et 256 pixels, sans redessiner le logo.
+- Ruban à huit onglets : Accueil, Insertion, Édition, Folios, Appareils,
+  Rapports, Affichage et Outils. Groupes de commandes et menus déroulants.
+- Menus Insertion, Folios, Appareils et Rapports, avec sous-menus Borniers
+  et Connexions. Les commandes appellent les fonctions existantes du logiciel.
+- Nouveau navigateur « Appareils et fonctions » couvrant tous les folios du
+  projet actif : filtre par repère, fabricant, référence ou désignation, colonnes
+  triables et navigation au symbole par double-clic/Entrée. Actualisation après
+  modification par l'historique, changement de projet, ouverture du panneau,
+  ou bouton Actualiser. Il liste les représentations, pas un décompte des
+  appareils physiques pour la nomenclature.
+- Recherche de commandes, ouverture/enregistrement, édition, placement de
+  symboles, gestion des folios, numérotation, borniers, nomenclature et exports
+  accessibles depuis le ruban. Les commandes conservent leur état contextuel
+  et leurs raccourcis grâce au partage des mêmes `QAction`.
+- Ruban réductible, dernier onglet mémorisé, défilement horizontal sur les
+  petits écrans. Visibilité réglable dans Configuration. Dispositions
+  existantes conservées ; les nouvelles configurations privilégient le ruban,
+  regroupent Projets/Collections à gauche et masquent la numérotation jusqu'à
+  son ouverture depuis Appareils.
+- Nom GeMMe dans la fenêtre principale et la boîte À propos ; crédits,
+  licences, format `.qet` et identifiant des réglages QElectroTech conservés.
+
+Référence d'interface : [aide officielle EPLAN 2027](https://eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/userinterface_k_hintergrund.htm).
+Elle décrit des onglets par activité, des groupes, des listes déroulantes,
+une recherche de commandes et des navigateurs ancrables. Le ruban GeMMe
+adopte cette organisation générale avec ses propres commandes et son logo.
+
+Restent notamment à développer/qualifier : gestion unifiée appareil/fonctions,
+catalogue fabricant contrôlé, diagnostics électriques complets, gestion
+avancée des E/S, câbles et borniers, variantes de macros, révisions,
+interfaces AutomationML et rapports paramétrables. Les boîtes de dialogue
+métier existantes restent celles de QElectroTech ; cette livraison ne prétend
+pas reproduire toutes les fenêtres ou fonctions P8. Les exigences V1–V4
+ci-dessous restent le suivi de ces écarts.
+
+Vérifications du lot sous Windows, le 9 octobre 2026 : compilation Release
+Qt 6/GCC réussie ; exécution avec seulement les dossiers Windows dans le PATH ;
+ouverture d'une copie de `tremie_vibrante.qet` (3 folios, 98 éléments,
+77 conducteurs) ; export PDF de 3 pages et nomenclature CSV conservant la
+référence fabricant de test. Dans la fenêtre : navigateur à 98 représentations,
+filtre ramenant la liste à une référence, activation du symbole correspondant,
+ajout d'un quatrième folio depuis le ruban puis annulation vers trois folios.
+Vérification visuelle du logo dans À propos, des titres des menus, des commandes
+désactivées sans projet, du ruban réduit/développé et du changement d'onglet en
+mode réduit. Dernier onglet conservé après redémarrage.
+La référence `TEST-NAV-001` est une donnée de recette dans `build/` uniquement,
+pas un article de catalogue distribué. La suite QtTest complète n'a pas été
+exécutée ; ces contrôles ne valent pas qualification complète de la V1.
 
 ## 1. Décision technique
 

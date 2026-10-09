@@ -34,6 +34,8 @@ AboutQETDialog::AboutQETDialog(QWidget *parent) :
 	ui(new Ui::AboutQETDialog)
 {
 	ui->setupUi(this);
+	setWindowTitle(tr("À propos de GeMMe"));
+	setWindowIcon(QIcon(":/ico/gemme-logo.png"));
 	QET::trackDialogGeometry(this);
 	setAbout();
 	setAuthors();
@@ -44,6 +46,7 @@ AboutQETDialog::AboutQETDialog(QWidget *parent) :
 	setLibraries();
 	setLicenses();
 	setLoginfo();
+	ui->tabWidget->setCurrentIndex(0);
 }
 
 /**
@@ -77,7 +80,8 @@ void AboutQETDialog::setAbout()
 
 
 
-	ui->m_about_label->setText(str);
+	ui->m_about_label->setText(QStringLiteral("<img src=\":/ico/gemme-logo.png\" width=\"72\" height=\"72\"><br><b>GeMMe</b><br>")
+		+ tr("Ingénierie électrique IEC — basé sur QElectroTech") + QStringLiteral("<br><br>") + str);
 }
 
 /**

@@ -159,6 +159,12 @@ if(WIN32)
         ${QET_DIR}/qelectrotech.qrc
         ${QET_DIR}/ico/icon-themes.qrc
     )
+    # Embed the application icon for Explorer as well as the Qt window icon.
+    configure_file(${QET_DIR}/build-aux/windows/qelectrotech-icon.rc.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/qelectrotech-icon.rc @ONLY)
+    target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/qelectrotech-icon.rc)
+    set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/qelectrotech-icon.rc
+        PROPERTIES OBJECT_DEPENDS "${QET_DIR}/ico/windows_icon/qelectrotech.ico")
     # Our own manifest (it declares longPathAware). MSVC merges a .manifest
     # listed as a source; MinGW needs it embedded through a resource file,
     # and ld then keeps it ahead of the toolchain's default manifest.

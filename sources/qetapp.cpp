@@ -2219,7 +2219,7 @@ void QETApp::configureQET()
 	// create dialogue
 	// cree le dialogue
 	ConfigDialog cd;
-	cd.setWindowTitle(tr("Configurer QElectroTech", "window title"));
+	cd.setWindowTitle(tr("Configurer GeMMe", "window title"));
 	// ApplicationModal so no other window can dispatch events while the dialog
 	// holds raw pointers derived from the current project list.  Same class of
 	// bug as ProjectPropertiesDialog — see issue #527.
@@ -2533,7 +2533,7 @@ void QETApp::parseArguments()
 void QETApp::initSplashScreen()
 {
 	if (non_interactive_execution_) return;
-	m_splash_screen = new QSplashScreen(QPixmap(":/ico/splash.png"));
+	m_splash_screen = new QSplashScreen(QPixmap(":/ico/gemme-logo.png").scaled(360, 360, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 	m_splash_screen -> show();
 	setSplashScreenStep(tr("Chargement...", "splash screen caption"));
 }
@@ -2776,7 +2776,7 @@ void QETApp::initSystemTray()
 				   "splash screen caption"));
 	// initialization of the icon menus in the systray
 	// initialisation des menus de l'icone dans le systray
-	menu_systray = new QMenu(tr("QElectroTech", "systray menu title"));
+	menu_systray = new QMenu(tr("GeMMe", "systray menu title"));
 
 	quitter_qet       = new QAction(QET::Icons::ApplicationExit,
 					tr("&Quitter"),this);
@@ -2826,7 +2826,7 @@ void QETApp::initSystemTray()
 	// initialization of the systray icon
 	// initialisation de l'icone du systray
 	m_qsti = new QSystemTrayIcon(QET::Icons::QETLogo, this);
-	m_qsti -> setToolTip(tr("QElectroTech", "systray icon tooltip"));
+	m_qsti -> setToolTip(tr("GeMMe", "systray icon tooltip"));
 	connect(m_qsti, &QSystemTrayIcon::activated, this, &QETApp::systray);
 	m_qsti -> setContextMenu(menu_systray);
 	m_qsti -> show();

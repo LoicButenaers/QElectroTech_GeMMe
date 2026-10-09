@@ -68,7 +68,7 @@ void QETMainWindow::initCommonActions()
 {
 	QETApp *qet_app = QETApp::instance();
 
-	configure_action_ = new QAction(QET::Icons::Configure, tr("&Configurer QElectroTech"), this);
+	configure_action_ = new QAction(QET::Icons::Configure, tr("&Configurer GeMMe"), this);
 	ShortcutManager::instance().registerAction(configure_action_, "mainwindow.configure", tr("Général"), QKeySequence());
 	configure_action_ -> setStatusTip(tr("Permet de régler différents paramètres de QElectroTech", "status bar tip"));
 	connect(configure_action_, &QAction::triggered, [qet_app]()
@@ -115,7 +115,7 @@ void QETMainWindow::initCommonActions()
 	whatsthis_action_ = QWhatsThis::createAction(this);
 	ShortcutManager::instance().registerAction(whatsthis_action_, "mainwindow.whats_this", tr("Général"), Qt::SHIFT | Qt::Key_F1);
 
-	about_qet_ = new QAction(QET::Icons::QETLogo, tr("À &propos de QElectroTech"), this);
+	about_qet_ = new QAction(QET::Icons::QETLogo, tr("À &propos de GeMMe"), this);
 	ShortcutManager::instance().registerAction(about_qet_, "mainwindow.about_qet", tr("Général"), QKeySequence());
 	about_qet_ -> setStatusTip(tr("Affiche des informations sur QElectroTech", "status bar tip"));
 	connect(about_qet_, &QAction::triggered, qet_app, &QETApp::aboutQET);

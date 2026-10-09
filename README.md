@@ -9,6 +9,9 @@ l'ergonomie et les fonctionnalités de QElectroTech.
 - Branche du chantier industriel : `EPLAN_DESIGN` ; `main` conserve la base initiale.
 - Recherche EPLAN, choix d'architecture, périmètre de la première version et
   fabricants retenus : [cahier des charges EPLAN_DESIGN](docs/EPLAN_DESIGN.md).
+- Interface GeMMe : logo fourni par le propriétaire du projet, ruban industriel
+  à huit onglets et menus métier. Le suivi du cahier des charges distingue les
+  commandes disponibles des fonctions P8 restant à développer.
 - Sources importées du [dépôt officiel](https://github.com/qelectrotech/qelectrotech-source-mirror),
   commit `a022d033388185230dfed62918d317f78bbb742c`.
 - L'historique, les licences, les ressources et les configurations de compilation

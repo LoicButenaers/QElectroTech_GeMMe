@@ -28,6 +28,14 @@
 #include <QCoreApplication>
 #include <QToolButton>
 #include <QWidgetAction>
+#include <QTabWidget>
+#include <QScrollArea>
+#include <QGroupBox>
+#include <QTreeWidget>
+#include <QHeaderView>
+#include <QLineEdit>
+#include <memory>
+#include "properties/deviceinformation.h"
 #include "ElementsCollection/elementscollectionwidget.h"
 #include "ElementsCollection/elementpickerpopup.h"
 #include "shortcutbarsettings.h"
@@ -166,9 +174,9 @@ QETDiagramEditor::QETDiagramEditor(const QStringList &files, QWidget *parent) :
 		//Set the signal mapper
 	connect(&windowMapper, &QSignalMapper::mappedObject, this, [this](QObject *object) { activateWidget(qobject_cast<QWidget *>(object)); });
 
-	setWindowTitle(tr("QElectroTech", "window title"));
+	setWindowTitle(tr("GeMMe — Schémas électriques", "window title"));
 	setWindowIcon(QET::Icons::QETLogo);
-	statusBar() -> showMessage(tr("QElectroTech", "status bar message"));
+	statusBar() -> showMessage(tr("GeMMe — Ingénierie électrique IEC", "status bar message"));
 
 	setUpElementsPanel();
 	setUpElementsCollectionWidget();
@@ -179,8 +187,16 @@ QETDiagramEditor::QETDiagramEditor(const QStringList &files, QWidget *parent) :
 	setUpActions();
 	setUpToolBar();
 	setUpMenu();
+	setUpIndustrialRibbon();
 
 	tabifyDockWidget(qdw_undo, qdw_pa);
+	if (!QSettings().contains("diagrameditor/state")) {
+		addDockWidget(Qt::LeftDockWidgetArea, m_qdw_elmt_collection);
+		tabifyDockWidget(qdw_pa, m_qdw_elmt_collection);
+		qdw_undo->hide();
+		m_autonumbering_dock->hide();
+		qdw_pa->raise();
+	}
 
 		//By default the windows is maximised
 	setMinimumSize(QSize(500, 350));
@@ -1431,8 +1447,267 @@ void QETDiagramEditor::rebuildToolBars()
 }
 
 /**
-	@brief QETDiagramEditor::setUpMenu
+	@brief Search representations across all folios of the active project.
 */
+QDockWidget *QETDiagramEditor::setUpDeviceNavigator()
+{
+	auto *dock = new QDockWidget(tr("Appareils et fonctions"), this);
+	dock->setObjectName("gemme_device_navigator");
+	auto *content = new QWidget(dock);
+	auto *layout = new QVBoxLayout(content);
+	auto *filter = new QLineEdit(content);
+	filter->setPlaceholderText(tr("Repère, fabricant, référence, désignation…"));
+	filter->setAccessibleName(tr("Filtrer les appareils du projet"));
+	filter->setClearButtonEnabled(true);
+	layout->addWidget(filter);
+	auto *tree = new QTreeWidget(content);
+	tree->setObjectName("gemme_device_tree");
+	tree->setHeaderLabels({tr("Repère"), tr("Folio"), tr("Fabricant"), tr("Référence"), tr("Désignation")});
+	tree->setRootIsDecorated(false);
+	tree->setAlternatingRowColors(true);
+	tree->setSortingEnabled(true);
+	tree->sortByColumn(0, Qt::AscendingOrder);
+	tree->header()->setSectionResizeMode(QHeaderView::Interactive);
+	tree->setToolTip(tr("Double-cliquer ou appuyer sur Entrée pour rejoindre le symbole."));
+	layout->addWidget(tree);
+	auto *count = new QLabel(content);
+	layout->addWidget(count);
+	auto *reload = new QPushButton(tr("Actualiser"), content);
+	layout->addWidget(reload);
+	dock->setWidget(content);
+	addDockWidget(Qt::LeftDockWidgetArea, dock);
+	dock->hide();
+
+	// A removed symbol can remain alive on the undo stack, so activation
+	// checks both its lifetime and membership in the current project.
+	auto elements = std::make_shared<QList<QPointer<Element>>>();
+	auto applyFilter = [tree, filter, count]() {
+		const QString needle = filter->text().trimmed();
+		int visible = 0;
+		for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+			auto *item = tree->topLevelItem(i);
+			QStringList fields;
+			for (int column = 0; column < tree->columnCount(); ++column) fields << item->text(column);
+			const bool matches = fields.join(QLatin1Char(' ')).contains(needle, Qt::CaseInsensitive);
+			item->setHidden(!matches);
+			if (matches) ++visible;
+		}
+		count->setText(tr("%1 / %2 représentations — double-clic pour ouvrir").arg(visible).arg(tree->topLevelItemCount()));
+	};
+	auto refresh = [this, dock, tree, elements, applyFilter]() {
+		if (!dock->isVisible()) return;
+		tree->setUpdatesEnabled(false);
+		tree->setSortingEnabled(false);
+		tree->clear();
+		elements->clear();
+		if (auto *project = currentProject()) {
+			int folio = 0;
+			for (auto *diagram : project->diagrams()) {
+				++folio;
+				for (auto *element : diagram->elements()) {
+					const auto info = DeviceInformation::fromContext(element->elementInformations());
+					auto *item = new QTreeWidgetItem(tree, {info.m_device_tag, QString::number(folio),
+						info.m_manufacturer, info.m_part_number, element->name()});
+					item->setData(0, Qt::UserRole, elements->size());
+					elements->append(QPointer<Element>(element));
+				}
+			}
+		}
+		tree->setSortingEnabled(true);
+		applyFilter();
+		tree->setUpdatesEnabled(true);
+	};
+	connect(filter, &QLineEdit::textChanged, dock, applyFilter);
+	connect(reload, &QPushButton::clicked, dock, refresh);
+	connect(dock, &QDockWidget::visibilityChanged, dock, [refresh](bool visible) { if (visible) refresh(); });
+	auto *timer = new QTimer(dock);
+	timer->setSingleShot(true);
+	timer->setInterval(150);
+	connect(timer, &QTimer::timeout, dock, refresh);
+	connect(&undo_group, &QUndoGroup::indexChanged, dock, [timer](int) { timer->start(); });
+	connect(&m_workspace, &QMdiArea::subWindowActivated, dock, [timer](QMdiSubWindow *) { timer->start(); });
+	connect(tree, &QTreeWidget::itemActivated, dock, [this, elements](QTreeWidgetItem *item, int) {
+		const int index = item->data(0, Qt::UserRole).toInt();
+		if (index < 0 || index >= elements->size()) return;
+		Element *element = elements->at(index);
+		auto *view = currentProjectView();
+		if (!element || !view || !element->diagram() || element->diagram()->project() != currentProject()) return;
+		view->showDiagram(element->diagram());
+		element->diagram()->clearSelection();
+		element->setSelected(true);
+		element->ensureVisible();
+	});
+	return dock;
+}
+
+void QETDiagramEditor::setUpIndustrialRibbon()
+{
+	auto *devices = setUpDeviceNavigator();
+	// Share the editor's actions: selection state, shortcuts, undo and all
+	// project commands must behave identically in menus and in the ribbon.
+	auto *ribbon = new QToolBar(tr("Ruban industriel"), this);
+	ribbon->setObjectName("gemme_industrial_ribbon");
+	ribbon->setMovable(false);
+	ribbon->setFloatable(false);
+	ribbon->setAllowedAreas(Qt::TopToolBarArea);
+	auto *tabs = new QTabWidget(ribbon);
+	tabs->setObjectName("gemme_ribbon_tabs");
+	tabs->setDocumentMode(true);
+	tabs->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	tabs->setMinimumWidth(0);
+	tabs->setFixedHeight(148);
+	auto *brand = new QLabel(tabs);
+	brand->setPixmap(QPixmap(":/ico/gemme-logo.png").scaled(28, 28, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+	brand->setToolTip(tr("GeMMe — Ingénierie électrique IEC"));
+	brand->setContentsMargins(8, 0, 12, 0);
+	tabs->setCornerWidget(brand, Qt::TopLeftCorner);
+	auto *collapse = new QToolButton(tabs);
+	collapse->setCheckable(true);
+	collapse->setText(tr("Réduire"));
+	collapse->setToolTip(tr("Réduire ou développer le ruban"));
+	collapse->setAccessibleName(collapse->toolTip());
+	tabs->setCornerWidget(collapse, Qt::TopRightCorner);
+	connect(collapse, &QToolButton::toggled, tabs, [tabs, collapse](bool compact) {
+		for (int i = 0; i < tabs->count(); ++i)
+			tabs->widget(i)->setVisible(!compact && i == tabs->currentIndex());
+		tabs->setFixedHeight(compact ? 36 : 148);
+		collapse->setText(compact ? tr("Développer") : tr("Réduire"));
+		QSettings().setValue("gemme/ribbon_compact", compact);
+	});
+	ribbon->addWidget(tabs);
+	insertToolBar(main_tool_bar, ribbon);
+	insertToolBarBreak(main_tool_bar);
+
+	auto page = [tabs](const QString &title) {
+		auto *scroll = new QScrollArea(tabs);
+		scroll->setWidgetResizable(true);
+		scroll->setFrameShape(QFrame::NoFrame);
+		scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+		auto *content = new QWidget(scroll);
+		auto *layout = new QHBoxLayout(content);
+		layout->setContentsMargins(6, 3, 6, 3);
+		layout->setSpacing(6);
+		layout->setSizeConstraint(QLayout::SetMinimumSize);
+		layout->addStretch();
+		scroll->setWidget(content);
+		tabs->addTab(scroll, title);
+		return layout;
+	};
+	auto group = [](QHBoxLayout *row, const QString &title, const QList<QAction *> &actions) {
+		auto *box = new QGroupBox(title);
+		auto *layout = new QHBoxLayout(box);
+		layout->setContentsMargins(6, 4, 6, 4);
+		for (QAction *action : actions) {
+			if (!action || action->isSeparator()) continue;
+			auto *button = new QToolButton(box);
+			button->setDefaultAction(action);
+			button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+			button->setIconSize(QSize(24, 24));
+			button->setMinimumHeight(58);
+			button->setMaximumWidth(158);
+			button->setAutoRaise(true);
+			if (action->menu()) button->setPopupMode(QToolButton::InstantPopup);
+			layout->addWidget(button);
+		}
+		row->insertWidget(row->count() - 1, box);
+	};
+	auto submenu = [this](const QString &title, const QIcon &icon, const QList<QAction *> &actions) {
+		auto *menu = new QMenu(title, this);
+		menu->setIcon(icon);
+		menu->addActions(actions);
+		return menu;
+	};
+
+	auto *files = submenu(tr("Ouvrir / enregistrer"), QET::Icons::DocumentOpen, m_file_actions_group.actions());
+	auto *home = page(tr("Accueil"));
+	group(home, tr("Projet"), {files->menuAction(), m_save_file, m_project_edit_properties});
+	group(home, tr("Historique"), {undo, redo});
+	group(home, tr("Rechercher"), {m_command_search, m_find, m_jump_to_element});
+
+	auto *insert = page(tr("Insertion"));
+	auto *insertionMenu = new QMenu(tr("Insertion"), this);
+	insertionMenu->addActions({m_show_element_picker, m_insert_last_element});
+	insertionMenu->addMenu(m_add_item_menu);
+	insertionMenu->addActions({m_auto_conductor, m_auto_break_conductor});
+	insertMenu(settings_menu_, insertionMenu);
+	group(insert, tr("Symboles"), {m_show_element_picker, m_insert_last_element});
+	group(insert, tr("Dessin et textes"), {m_add_item_menu->menuAction()});
+	group(insert, tr("Connexions"), {m_auto_conductor, m_auto_break_conductor});
+	group(insert, tr("Tableaux"), {m_add_summary, m_add_nomenclature});
+
+	auto *edit = page(tr("Édition"));
+	group(edit, tr("Presse-papiers"), {m_cut, m_copy, m_paste, m_duplicate});
+	group(edit, tr("Modifier"), {m_edit_selection, m_delete_selection, m_rotate_selection});
+	auto *transform = submenu(tr("Transformer"), QET::Icons::BringForward,
+		{m_rotate_group_selection, m_rotate_texts, m_mirror_horizontal, m_mirror_vertical,
+		 m_group_selection, m_ungroup_selection});
+	group(edit, tr("Organiser"), {m_align_menu->menuAction(), transform->menuAction()});
+
+	auto *folios = submenu(tr("Folios"), QET::Icons::Projects,
+		{m_project_add_diagram, m_remove_diagram_from_project, m_edit_diagram_properties,
+		 m_row_column_menu->menuAction()});
+	folios->setIcon(QIcon()); // Native menu bars may replace the title with the icon.
+	insertMenu(settings_menu_, folios);
+	auto *folioPage = page(tr("Folios"));
+	group(folioPage, tr("Structure du dossier"), folios->actions());
+	group(folioPage, tr("Projets ouverts"), {m_previous_window, m_next_window});
+
+	auto *terminals = submenu(tr("Borniers"), QET::Icons::Projects,
+		{m_terminal_strip_dialog, m_terminal_numbering, m_project_terminalBloc});
+	auto *connections = submenu(tr("Connexions"), QET::Icons::DocumentExport,
+		{m_conductor_reset, m_project_wiring_list_view, m_project_export_wiring_list, m_project_export_conductor_num});
+	auto *equipment = new QMenu(tr("Appareils"), this);
+	equipment->addAction(devices->toggleViewAction());
+	equipment->addActions({m_edit_selection, m_paste_element_info, m_find_element});
+	equipment->addMenu(terminals);
+	equipment->addMenu(connections);
+	equipment->addAction(m_reload_element_drawings);
+	insertMenu(settings_menu_, equipment);
+	auto *devicePage = page(tr("Appareils"));
+	group(devicePage, tr("Propriétés et symboles"), {devices->toggleViewAction(), m_edit_selection, m_paste_element_info, m_find_element});
+	group(devicePage, tr("Raccordement"), {terminals->menuAction(), connections->menuAction()});
+	group(devicePage, tr("Repérage"), {m_autonumbering_dock->toggleViewAction()});
+
+	auto *reports = submenu(tr("Rapports"), QET::Icons::DocumentExport,
+		{m_add_summary, m_add_nomenclature, m_csv_export, m_project_export_wiring_list,
+		 m_project_export_conductor_num, m_export_to_pdf, m_export_to_images, m_print});
+	reports->setIcon(QIcon());
+	insertMenu(settings_menu_, reports);
+	auto *reportPage = page(tr("Rapports"));
+	group(reportPage, tr("Dossier"), {m_add_summary, m_add_nomenclature, m_csv_export});
+	group(reportPage, tr("Câblage"), {connections->menuAction()});
+	group(reportPage, tr("Publication"), {m_export_to_pdf, m_export_to_images, m_print});
+
+	auto *view = page(tr("Affichage"));
+	auto *panels = submenu(tr("Navigateurs"), QET::Icons::Projects,
+		{devices->toggleViewAction(), qdw_pa->toggleViewAction(), m_qdw_elmt_collection->toggleViewAction(),
+		 m_selection_properties_editor->toggleViewAction(), m_autonumbering_dock->toggleViewAction(), qdw_undo->toggleViewAction()});
+	group(view, tr("Espace de travail"), {panels->menuAction(), m_tabbed_view_mode, m_windowed_view_mode});
+	group(view, tr("Folio"), {m_draw_grid, m_draw_guides, m_cell_rulers});
+	group(view, tr("Zoom"), m_zoom_action_toolBar);
+	auto *tools = page(tr("Outils"));
+	group(tools, tr("Préférences"), {settings_menu_->menuAction()});
+#ifdef QET_HAS_SCRIPTING
+	group(tools, tr("Automatisation"), {m_scripts_menu->menuAction()});
+#endif
+	group(tools, tr("Assistance"), {help_menu_->menuAction()});
+
+	settings_menu_->addAction(ribbon->toggleViewAction());
+	const QSettings settings;
+	tabs->setCurrentIndex(qBound(0, settings.value("gemme/ribbon_tab", 0).toInt(), tabs->count() - 1));
+	connect(tabs, &QTabWidget::currentChanged, this, [tabs, collapse](int index) {
+		if (auto *page = tabs->widget(index)) page->setVisible(!collapse->isChecked());
+		QSettings().setValue("gemme/ribbon_tab", index);
+	});
+	collapse->setChecked(settings.value("gemme/ribbon_compact", false).toBool());
+	// Existing saved layouts are respected. New installations start with the
+	// ribbon and keep the classic toolbars accessible in Configuration.
+	if (!settings.contains("diagrameditor/state")) {
+		for (auto *bar : {main_tool_bar, view_tool_bar, diagram_tool_bar, m_add_item_tool_bar, m_depth_tool_bar})
+			bar->hide();
+	}
+}
+
 void QETDiagramEditor::setUpMenu()
 {
 
@@ -3708,10 +3983,10 @@ void QETDiagramEditor::updateWindowModifiedState()
 	if (QETProject *project = currentProject()) {
 		setWindowTitle(QString("%1[*] - %2").arg(
 			project->pathNameTitle(),
-			tr("QElectroTech", "window title")));
+			tr("GeMMe — Schémas électriques", "window title")));
 		setWindowModified(project->projectWasModified());
 	} else {
-		setWindowTitle(tr("QElectroTech", "window title"));
+		setWindowTitle(tr("GeMMe — Schémas électriques", "window title"));
 		setWindowModified(false);
 	}
 }

@@ -100,6 +100,8 @@ class QETDiagramEditor : public QETMainWindow
 		void setUpActions       ();
 		void setUpToolBar       ();
 		void setUpMenu          ();
+		void setUpIndustrialRibbon();
+		QDockWidget *setUpDeviceNavigator();
 		
 		bool addProject(QETProject *, bool = true);
 		DiagramView *currentDiagramView() const;

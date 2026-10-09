@@ -571,9 +571,8 @@ void QET::Icons::initIcons()
 	ProjectFileGP = QIcon();
 	for (int size : {16, 22})
 		ProjectFileGP.addPixmap(Projects.pixmap(QSize(size, size), 1.0));
-	QETLogo             = QIcon::fromTheme("qet");
+	QETLogo             = QIcon(":/ico/gemme-logo.png");
 	QETManual           = QIcon::fromTheme("help-contents");
-	QETLogo.addFile(":/ico/256x256/qet.png");
 	QETVideo            = QIcon::fromTheme("kdenlive-show-video");
 	QtLogo              = QIcon::fromTheme("qt");
 	Raise               = QIcon::fromTheme("raise");
