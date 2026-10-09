@@ -67,6 +67,22 @@ La référence `TEST-NAV-001` est une donnée de recette dans `build/` uniquemen
 pas un article de catalogue distribué. La suite QtTest complète n'a pas été
 exécutée ; ces contrôles ne valent pas qualification complète de la V1.
 
+## Complément : étude approfondie et interface cible
+
+La demande du 9 octobre 2026 élargit le niveau de détail et autorise une
+refonte complète de l'interface. Voir [l'étude approfondie P8](EPLAN_P8_RESEARCH.md),
+ses 253 exigences dans 26 domaines, ses 65 références officielles et le
+[registre structuré](EPLAN_P8_REQUIREMENTS.json). Ce registre prend le relais
+des exigences générales V1–V4 pour le suivi détaillé. L'objectif complet P8
+reste conservé, y compris Fluid, topologie 2D, révisions et collaboration.
+Les produits complémentaires et les fonctions historiques sont identifiés.
+
+La [maquette interactive](GEMME_INTERFACE.html) propose trois espaces :
+Schéma, Appareils et Vérification. Elle reprend le logo GeMMe et illustre la
+navigation et les propriétés communes. Elle est indépendante du logiciel et
+ne génère pas de projets .qet. Le ruban compilé reste celui décrit plus haut.
+Cette livraison de recherche ne reconstruit pas l'exécutable.
+
 ## 1. Décision technique
 
 Conserver QElectroTech et le faire évoluer. La base dispose déjà d'un éditeur

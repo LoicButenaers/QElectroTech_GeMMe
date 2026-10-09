@@ -6,7 +6,10 @@
   Ne pas créer d'autre branche ni de worktree sans nouvelle demande.
 - Cible : schémas industriels IEC pour la Belgique et l'Europe. Les fabricants
   sont choisis par famille de composants. Suivre le cadrage dans
-  `docs/EPLAN_DESIGN.md` et distinguer les fonctions existantes des objectifs.
+  `docs/EPLAN_DESIGN.md` et l'étude approfondie `docs/EPLAN_P8_RESEARCH.md`.
+  Le registre `docs/EPLAN_P8_REQUIREMENTS.json` porte les exigences et recettes.
+  Distinguer les fonctions existantes, les maquettes et les objectifs. La cible
+  complète P8 est conservée ; les lots indiquent l'ordre de réception.
 - Ne créer que les dossiers nécessaires. Réutiliser les dossiers existants.
 - Conserver une seule version de l'exécutable QElectroTech. Utiliser
   `build/qelectrotech.exe` pour les compilations Windows Release et remplacer

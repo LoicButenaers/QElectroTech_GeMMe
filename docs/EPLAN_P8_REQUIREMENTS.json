@@ -1,0 +1,5913 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-10-09",
+  "reference_code_commit": "787e98a775b09e8296a9ecfa50f5aca32afe7810",
+  "target": "Parité fonctionnelle Electric P8 et plateforme associée ; extensions identifiées séparément",
+  "method": "Inventaire issu des sources publiques consultées. Critères de recette proposés pour GeMMe. Non exhaustif au niveau des propriétés/API/règles individuelles ; aucune parité certifiée.",
+  "statuses": {
+    "socle_a_qualifier": "Point d’appui local repéré, équivalence complète non démontrée.",
+    "non_demontre": "À développer ou approfondir dans le code ; absence non prouvée.",
+    "historique": "Fonction ou service ancien retiré/remplacé dans la référence 2027.",
+    "extension_a_etudier": "Produit complémentaire identifié, distinct du cœur P8."
+  },
+  "sources": [
+    {
+      "id": "S01",
+      "title": "Performances P8",
+      "version": "2026",
+      "url": "https://www.eplan.com/content/dam/eplan/corporate/performance-descriptions/2026/en/performance-description-eplan-electric-p8.pdf",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S02",
+      "title": "Structure du projet",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/projectstructure_h_prjstrukturdefinieren.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S03",
+      "title": "Types de folios",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/pagebrowsergui_k_seitentypen.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S04",
+      "title": "Éditeur graphique",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/gededitgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S05",
+      "title": "Appareils",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/devicelistgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S06",
+      "title": "Définitions des appareils",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/devicelistgui_h_geraetedefinitionenanlegen.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S07",
+      "title": "Connexions",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/connectionbrowsergui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S08",
+      "title": "Symboles de connexion",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/egedgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S09",
+      "title": "Potentiels et signaux",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/potentialbrowsergui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S10",
+      "title": "Borniers",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/terminalgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S11",
+      "title": "Bornes à étages",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/terminalgui_h_mehrstockklemmenarbeit.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S12",
+      "title": "Connecteurs",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/plugsgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S13",
+      "title": "Câbles",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/cablegui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S14",
+      "title": "Câbles préfabriqués",
+      "version": "2026",
+      "url": "https://eplan.help/techtipps/en-us/Kabel/TechTip-Usecase-prefabricated-cables.pdf",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S15",
+      "title": "Automates",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/plcgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S16",
+      "title": "Échanges automates",
+      "version": "2027",
+      "url": "https://eplan.help/techtipps/en-us/SPS/TechTip-PLC-data-exchange.pdf",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S17",
+      "title": "Descriptions fabricant des automates",
+      "version": "2027",
+      "url": "https://eplan.help/techtipps/en-us/SPS/TechTip-Configuring-PLC-devices-with-device-description-files.pdf",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S18",
+      "title": "Gestion des articles",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/articlesgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S19",
+      "title": "Macros",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/macrosgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S20",
+      "title": "Objets paramétrés",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/macrosgui_d_platzhalterobjekt.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S21",
+      "title": "Options de projet",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/projectoptionsgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S22",
+      "title": "Types de rapports",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/formgeneratorgui_k_auswertungstypen.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S23",
+      "title": "Génération de rapports",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/formgeneratorgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S24",
+      "title": "Formulaires et cartouches",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/formeditorgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S25",
+      "title": "Gestion des messages",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/msgmanagementgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S26",
+      "title": "Révisions",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/revisionmgtgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S27",
+      "title": "Clôture des folios",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/revisionmgtgui_h_seitenabschliessen.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S28",
+      "title": "Marqueurs de suppression",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/revisionmgtgui_h_loeschzeichenbearbeiten.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S29",
+      "title": "Dictionnaires",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/translatedbgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S30",
+      "title": "Traduction",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/translategui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S31",
+      "title": "Propriétés personnalisées",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/userdefproperties_k_prinzip.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S32",
+      "title": "Propriétés composées",
+      "version": "2024",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2024/Content/htm/blockproperties_k_prinzip.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S33",
+      "title": "Topologie et routage 2D",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/cablinggui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S34",
+      "title": "Implantation 2D",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/panellayoutgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S35",
+      "title": "Fluid",
+      "version": "2026",
+      "url": "https://www.eplan.help/en-US/Infoportal/Content/Plattform/2026/Content/htm/ftechnic_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S36",
+      "title": "Configurateur de flexibles",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/fluidhoseconfiggui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S37",
+      "title": "Sections de travail",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/workingsection_h_bereichedefinieren.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S38",
+      "title": "Sous-projets",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/subprojectservicesgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S39",
+      "title": "Gestion des projets",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/prjmanagementgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S40",
+      "title": "Données de base",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/xmasterdatasettingsgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S41",
+      "title": "Synchronisation des données de base",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/modaldialogsdb_d_stammdatenabgleich.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S42",
+      "title": "Variantes de symboles",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/symboleditorgui_h_mitsymbolvariantenarbeiten.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S43",
+      "title": "Interface utilisateur",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/userinterface_k_hintergrund.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S44",
+      "title": "Numérotation à l'insertion",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/numerationgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S45",
+      "title": "Renumérotation",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/offlinenumerationgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S46",
+      "title": "Renvois inter-folios",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/interruptionpointgui_k_darstellungabbruchstellen.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S47",
+      "title": "Références et images de contacts",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/xessettingsgui_d_einstellungenprojektqvwallgemein.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S48",
+      "title": "Archives",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/bakbackupdlggui_k_prinzip.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S49",
+      "title": "Interface DXF/DWG",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/xdxfgui_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S50",
+      "title": "Édition externe",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/pxfinterface_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S51",
+      "title": "Actions et automatisation",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/availableactions_k_start.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S52",
+      "title": "API des exports",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-US/infoportal/content/api/2027/export.html",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S53",
+      "title": "Évolutions 2027",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/news_p_plattform_notes_2027.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S54",
+      "title": "Propriétés des articles 2027",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/news_p_artikelverwaltung_eigenschaften_555495.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S55",
+      "title": "Applications cloud",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/SwReqs/Content/htm/SwReqs_k_cloud.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S56",
+      "title": "Notes de version",
+      "version": "2027 et antérieures",
+      "url": "https://www.eplan.help/en-US/Infoportal/Content/htm/portal_rel_notes_platform.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S57",
+      "title": "Portefeuille EPLAN",
+      "version": "consulté le 2026-10-09",
+      "url": "https://www.eplan.com/us-en/products/",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S58",
+      "title": "Échanges TIA Portal",
+      "version": "2027",
+      "url": "https://www.eplan.help/techtipps/en-US/SPS/TechTip-PLC-data-exchange-with-SIEMENS-STEP-7-TIA-Portal.pdf",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S59",
+      "title": "API actions",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-US/Infoportal/content/api/2027/Actions.html",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S60",
+      "title": "Folios Fluid",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/ftechnic_k_seitentyp_fluid.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S61",
+      "title": "Synchronisation cloud des données de base",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/modaldialogsdb_d_stammdatenabgleichcloud.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S62",
+      "title": "Fonctions et numérotation",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/numerationgui_k_verhaltenfunktionen.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S63",
+      "title": "API de renumérotation",
+      "version": "2026",
+      "url": "https://eplan.help/en-us/Infoportal/Content/api/2026/renumber.html",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S64",
+      "title": "Calculs de propriétés",
+      "version": "2027",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2027/Content/htm/blockproperties_k_berechnung.htm",
+      "consulted": "2026-10-09"
+    },
+    {
+      "id": "S65",
+      "title": "Paramètres PDF",
+      "version": "2025",
+      "url": "https://www.eplan.help/en-us/Infoportal/Content/Plattform/2025/Content/htm/pdfexportgui_r_allgemein.htm",
+      "consulted": "2026-10-09"
+    }
+  ],
+  "domains": [
+    {
+      "code": "PRJ",
+      "title": "Projets et structures",
+      "lot": "L1",
+      "dependencies": [],
+      "evidence": [
+        "sources/qetproject.cpp",
+        "sources/projectview.cpp"
+      ]
+    },
+    {
+      "code": "PAG",
+      "title": "Folios et documents",
+      "lot": "L1",
+      "dependencies": [
+        "PRJ"
+      ],
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/projectview.cpp"
+      ]
+    },
+    {
+      "code": "EDT",
+      "title": "Édition graphique et schématique",
+      "lot": "L1",
+      "dependencies": [
+        "PAG"
+      ],
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ]
+    },
+    {
+      "code": "DEV",
+      "title": "Appareils fonctions et représentations",
+      "lot": "L2",
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "evidence": [
+        "sources/properties/deviceinformation.cpp",
+        "sources/qetgraphicsitem/masterelement.cpp",
+        "sources/bomexport.cpp"
+      ]
+    },
+    {
+      "code": "CON",
+      "title": "Connexions et potentiels",
+      "lot": "L2",
+      "dependencies": [
+        "DEV"
+      ],
+      "evidence": [
+        "sources/qetgraphicsitem/conductor.cpp",
+        "sources/conductorrouter.cpp",
+        "sources/wiringrules.cpp",
+        "sources/conductorproperties.cpp"
+      ]
+    },
+    {
+      "code": "NUM",
+      "title": "Repérage et références croisées",
+      "lot": "L2",
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ]
+    },
+    {
+      "code": "TER",
+      "title": "Borniers industriels",
+      "lot": "L3",
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "evidence": [
+        "sources/TerminalStrip/terminalstrip.cpp",
+        "sources/TerminalStrip/terminalstripbridge.cpp",
+        "sources/TerminalStrip/ui/terminalstripeditor.cpp"
+      ]
+    },
+    {
+      "code": "PLG",
+      "title": "Connecteurs",
+      "lot": "L3",
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "CAB",
+      "title": "Câbles et faisceaux 2D",
+      "lot": "L3",
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "PLC",
+      "title": "Automates E/S et réseaux",
+      "lot": "L3",
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "evidence": [
+        "sources/editor/graphicspart/partplctable.cpp",
+        "sources/ui/plclinkwidget.cpp"
+      ]
+    },
+    {
+      "code": "ART",
+      "title": "Catalogue et données fabricant",
+      "lot": "L2",
+      "dependencies": [
+        "DEV"
+      ],
+      "evidence": [
+        "sources/materiallist/materiallist.cpp",
+        "sources/properties/deviceinformation.cpp",
+        "sources/import/edz/edzpart.cpp"
+      ]
+    },
+    {
+      "code": "MAC",
+      "title": "Macros et configuration",
+      "lot": "L4",
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "evidence": [
+        "sources/diagramevent/diagrameventaddmacro.cpp",
+        "sources/scripting/macrorecorder.cpp"
+      ]
+    },
+    {
+      "code": "RPT",
+      "title": "Rapports et dossier de fabrication",
+      "lot": "L4",
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "evidence": [
+        "sources/bomexport.cpp",
+        "sources/wiringlistexport.cpp",
+        "sources/conductornumexport.cpp"
+      ]
+    },
+    {
+      "code": "MDT",
+      "title": "Symboles formulaires et données de base",
+      "lot": "L4",
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "evidence": [
+        "sources/editor/ui/qetelementeditor.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/ElementsCollection/elementcollectionhandler.cpp"
+      ]
+    },
+    {
+      "code": "DAT",
+      "title": "Propriétés et édition en masse",
+      "lot": "L4",
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "evidence": [
+        "sources/SearchAndReplace/searchandreplaceworker.cpp",
+        "sources/qetgraphicsitem/dynamicelementtextitem.cpp"
+      ]
+    },
+    {
+      "code": "LNG",
+      "title": "Langues et conventions",
+      "lot": "L4",
+      "dependencies": [
+        "DAT",
+        "MDT"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "QA",
+      "title": "Contrôles et vérification",
+      "lot": "L2",
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "evidence": [
+        "sources/wiringrules.cpp",
+        "sources/ui/wiringruleswarning.cpp"
+      ]
+    },
+    {
+      "code": "REV",
+      "title": "Révisions et livraison",
+      "lot": "L5",
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "TEAM",
+      "title": "Travail en équipe et droits",
+      "lot": "L5",
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "LAY",
+      "title": "Implantation et topologie 2D",
+      "lot": "L5",
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "FLU",
+      "title": "Fluid et équipements hybrides",
+      "lot": "L5",
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "IO",
+      "title": "Échanges et publication",
+      "lot": "L4",
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "evidence": [
+        "sources/cli_export.cpp",
+        "sources/pdf_links.cpp",
+        "sources/dxfexport.cpp",
+        "sources/exportdialog.cpp"
+      ]
+    },
+    {
+      "code": "AUTO",
+      "title": "API scripts et traitement automatique",
+      "lot": "L4",
+      "dependencies": [
+        "DEV",
+        "QA",
+        "RPT"
+      ],
+      "evidence": [
+        "sources/scripting/qetscriptapi.cpp",
+        "sources/cli_export.cpp"
+      ]
+    },
+    {
+      "code": "UX",
+      "title": "Ergonomie et navigation",
+      "lot": "L1",
+      "dependencies": [
+        "EDT"
+      ],
+      "evidence": [
+        "sources/qetdiagrameditor.cpp"
+      ]
+    },
+    {
+      "code": "CLD",
+      "title": "Services connectés associés",
+      "lot": "L6",
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "EXT",
+      "title": "Produits complémentaires et intégrations",
+      "lot": "L6",
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "evidence": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PRJ-01",
+      "domain": "PRJ",
+      "capability": "Créer depuis un projet type",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S39"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetproject.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [],
+      "acceptance": "Créer deux dossiers clients sans partager leurs repères.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PRJ-02",
+      "domain": "PRJ",
+      "capability": "Structurer fonctions et localisations",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S02"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [],
+      "acceptance": "Deux appareils K1 dans des localisations différentes restent distincts.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PRJ-03",
+      "domain": "PRJ",
+      "capability": "Configurer la structure par objet",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S02"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [],
+      "acceptance": "Appliquer des conventions distinctes aux folios et aux câbles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PRJ-04",
+      "domain": "PRJ",
+      "capability": "Gérer les sous-identifiants",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S02"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [],
+      "acceptance": "Copier une armoire imbriquée et vérifier tous les identifiants complets.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PRJ-05",
+      "domain": "PRJ",
+      "capability": "Modifier une structure existante",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S02"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [],
+      "acceptance": "Prévisualiser les collisions puis annuler sans perte de données.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PRJ-06",
+      "domain": "PRJ",
+      "capability": "Administrer plusieurs projets",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S39"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [],
+      "acceptance": "Retrouver un dossier déplacé et afficher ses propriétés.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PRJ-07",
+      "domain": "PRJ",
+      "capability": "Modifier les propriétés en série",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S39"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [],
+      "acceptance": "Changer le client sur dix dossiers sans modifier leurs circuits.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PRJ-08",
+      "domain": "PRJ",
+      "capability": "Sauvegarder et restaurer les ressources",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S48"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetproject.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [],
+      "acceptance": "Rouvrir une archive sur un poste sans bibliothèque externe.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PRJ-09",
+      "domain": "PRJ",
+      "capability": "Archiver un état lisible",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S48"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetproject.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [],
+      "acceptance": "Rouvrir le dossier livré et comparer les repères avec son PDF.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PRJ-10",
+      "domain": "PRJ",
+      "capability": "Gérer les projets de base",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S40"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [],
+      "acceptance": "Créer un modèle avec conventions et vérifier leur transmission.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PAG-01",
+      "domain": "PAG",
+      "capability": "Distinguer folios logiques et graphiques",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S03"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Une décoration ne doit pas ajouter un appareil à la nomenclature.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PAG-02",
+      "domain": "PAG",
+      "capability": "Schémas multifilaires",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S01"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Dessiner un départ moteur triphasé puis rouvrir ses connexions.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PAG-03",
+      "domain": "PAG",
+      "capability": "Schémas unifilaires cohérents",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Représenter le même câble dans deux vues sans doubler les quantités.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PAG-04",
+      "domain": "PAG",
+      "capability": "Créer copier trier les folios",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S03"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Dupliquer trois folios et vérifier leurs liens internes.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PAG-05",
+      "domain": "PAG",
+      "capability": "Renuméroter les folios",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S63"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Insérer une page intermédiaire sans casser les renvois.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PAG-06",
+      "domain": "PAG",
+      "capability": "Gérer documents externes",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S48"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Réouvrir un dossier livré avec les fiches techniques disponibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PAG-07",
+      "domain": "PAG",
+      "capability": "Cartouches et coordonnées",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S24"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Changer de format sans fausser les coordonnées des renvois.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PAG-08",
+      "domain": "PAG",
+      "capability": "Échelles et unités",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/projectview.cpp"
+      ],
+      "dependencies": [
+        "PRJ"
+      ],
+      "acceptance": "Une cote de 100 mm reste exacte après changement d'échelle.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-01",
+      "domain": "EDT",
+      "capability": "Grille et accrochages",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Insérer dix symboles au clavier sur la même grille.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-02",
+      "domain": "EDT",
+      "capability": "Saisie de coordonnées",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Placer un raccordement à la coordonnée demandée.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-03",
+      "domain": "EDT",
+      "capability": "Déplacer et transformer les objets",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Déplacer puis tourner un groupe sans perdre ses raccordements.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-04",
+      "domain": "EDT",
+      "capability": "Copier coller entre projets",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "La copie ne réutilise pas les identités internes de l'original.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-05",
+      "domain": "EDT",
+      "capability": "Annuler rétablir une opération",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Annuler une insertion de circuit restitue exactement le projet initial.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-06",
+      "domain": "EDT",
+      "capability": "Zoom pendant une action",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Changer le zoom au milieu d'un tracé et poursuivre au bon point.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-07",
+      "domain": "EDT",
+      "capability": "Travailler avec plusieurs vues",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Sélectionner un appareil depuis deux folios sans incohérence.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-08",
+      "domain": "EDT",
+      "capability": "Texte images et liens",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Imprimer accents images et liens sans déplacement de mise en page.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-09",
+      "domain": "EDT",
+      "capability": "Propriétés visibles et textes groupés",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Déplacer la désignation sans modifier la valeur métier.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-10",
+      "domain": "EDT",
+      "capability": "Cotation et annotations",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Réouvrir une page cotée et vérifier ses mesures.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "EDT-11",
+      "domain": "EDT",
+      "capability": "Calques et présentation",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S51"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Masquer les annotations de travail tout en conservant les connexions.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EDT-12",
+      "domain": "EDT",
+      "capability": "Rognage et ajustement des traits",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagram.cpp",
+        "sources/qetdiagrameditor.cpp",
+        "sources/conductorrouter.cpp"
+      ],
+      "dependencies": [
+        "PAG"
+      ],
+      "acceptance": "Ajuster une ligne graphique sans couper un conducteur logique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "DEV-01",
+      "domain": "DEV",
+      "capability": "Séparer appareil et représentation",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/properties/deviceinformation.cpp",
+        "sources/qetgraphicsitem/masterelement.cpp",
+        "sources/bomexport.cpp"
+      ],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Une bobine et trois contacts donnent un seul contacteur physique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "DEV-02",
+      "domain": "DEV",
+      "capability": "Fonction principale et auxiliaires",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/properties/deviceinformation.cpp",
+        "sources/qetgraphicsitem/masterelement.cpp",
+        "sources/bomexport.cpp"
+      ],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Changer l'article principal et actualiser toutes les fonctions associées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "DEV-03",
+      "domain": "DEV",
+      "capability": "Décrire les fonctions disponibles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S06"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Un article à deux contacts refuse une troisième affectation incompatible.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-04",
+      "domain": "DEV",
+      "capability": "Concevoir depuis les symboles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/properties/deviceinformation.cpp",
+        "sources/qetgraphicsitem/masterelement.cpp",
+        "sources/bomexport.cpp"
+      ],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Dessiner un circuit puis lui affecter les articles compatibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "DEV-05",
+      "domain": "DEV",
+      "capability": "Concevoir depuis les appareils",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Préparer dix appareils et ne placer que cinq de leurs fonctions.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-06",
+      "domain": "DEV",
+      "capability": "Conserver les fonctions non placées",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "La sauvegarde conserve les fonctions encore absentes du dessin.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-07",
+      "domain": "DEV",
+      "capability": "Représenter un appareil plusieurs fois",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Les vues unifilaire et multifilaire partagent les données communes.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-08",
+      "domain": "DEV",
+      "capability": "Remplacer un appareil",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Afficher les raccordements incompatibles avant validation.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-09",
+      "domain": "DEV",
+      "capability": "Appareils imbriqués et modules",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Déplacer un ensemble conserve l'appartenance des composants.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-10",
+      "domain": "DEV",
+      "capability": "Protéger les appareils validés",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Une édition groupée signale les objets protégés sans les modifier.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-11",
+      "domain": "DEV",
+      "capability": "Synchroniser prévu et réalisé",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Afficher les fonctions prévues non utilisées et les fonctions ajoutées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DEV-12",
+      "domain": "DEV",
+      "capability": "Articles sans représentation",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S05"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "PRJ",
+        "EDT"
+      ],
+      "acceptance": "Ajouter un accessoire au dossier sans inventer de symbole électrique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-01",
+      "domain": "CON",
+      "capability": "Connexions automatiques et aperçu",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetgraphicsitem/conductor.cpp",
+        "sources/conductorrouter.cpp",
+        "sources/wiringrules.cpp",
+        "sources/conductorproperties.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Une borne alignée annonce la connexion avant placement.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "CON-02",
+      "domain": "CON",
+      "capability": "Jonctions avec ordre de câblage",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S08"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetgraphicsitem/conductor.cpp",
+        "sources/conductorrouter.cpp",
+        "sources/wiringrules.cpp",
+        "sources/conductorproperties.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Un T conserve la paire de bornes réellement câblée.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "CON-03",
+      "domain": "CON",
+      "capability": "Croisement sans raccordement",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S08"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetgraphicsitem/conductor.cpp",
+        "sources/conductorrouter.cpp",
+        "sources/wiringrules.cpp",
+        "sources/conductorproperties.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Deux traits croisés sans jonction appartiennent à deux réseaux.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "CON-04",
+      "domain": "CON",
+      "capability": "Points de définition de connexion",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Une surcharge locale de section ne modifie pas tout le potentiel.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-05",
+      "domain": "CON",
+      "capability": "Potentiels distincts des signaux",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S09"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Deux signaux distincts peuvent utiliser la même catégorie de potentiel.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-06",
+      "domain": "CON",
+      "capability": "Propagation des propriétés",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S09"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetgraphicsitem/conductor.cpp",
+        "sources/conductorrouter.cpp",
+        "sources/wiringrules.cpp",
+        "sources/conductorproperties.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Changer le potentiel 24 V actualise uniquement ses connexions.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "CON-07",
+      "domain": "CON",
+      "capability": "Surlignage des réseaux",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S09"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Suivre un signal sur trois folios sans changer les couleurs imprimées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-08",
+      "domain": "CON",
+      "capability": "Connexions non placées",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Définir une liaison en table puis la placer sans la dupliquer.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-09",
+      "domain": "CON",
+      "capability": "Ordre des cibles d'un réseau",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Passer d'une chaîne à une étoile modifie la liste de fils.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-10",
+      "domain": "CON",
+      "capability": "Unités sections couleurs",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetgraphicsitem/conductor.cpp",
+        "sources/conductorrouter.cpp",
+        "sources/wiringrules.cpp",
+        "sources/conductorproperties.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Un aller-retour mm² et AWG n'efface pas la valeur d'origine.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "CON-11",
+      "domain": "CON",
+      "capability": "Connexions électriques et fluidiques",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Un tuyau ne peut pas se connecter silencieusement à une borne électrique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-12",
+      "domain": "CON",
+      "capability": "Fraîcheur des connexions calculées",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Un rapport indique si son graphe de connexions est périmé.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CON-13",
+      "domain": "CON",
+      "capability": "Édition globale des connexions",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetgraphicsitem/conductor.cpp",
+        "sources/conductorrouter.cpp",
+        "sources/wiringrules.cpp",
+        "sources/conductorproperties.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Modifier vingt fils puis annuler l'ensemble en une opération.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-01",
+      "domain": "NUM",
+      "capability": "Numéroter lors de l'insertion",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S44"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Insérer cinq appareils avec des repères distincts et prévisibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-02",
+      "domain": "NUM",
+      "capability": "Configurer les règles de repérage",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S44"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Le modèle client produit le même repérage après réouverture.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-03",
+      "domain": "NUM",
+      "capability": "Repérer les copies de macros",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S44"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Copier un départ conserve les liens entre sa bobine et ses contacts.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-04",
+      "domain": "NUM",
+      "capability": "Renuméroter une sélection",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S45"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Les appareils hors sélection conservent leurs repères.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-05",
+      "domain": "NUM",
+      "capability": "Réserver les repères non placés",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S62"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Un appareil encore non dessiné empêche une collision de repère.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "NUM-06",
+      "domain": "NUM",
+      "capability": "Numéroter fils et câbles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S07",
+        "S13"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Conserver les repères manuels lors d'une numérotation automatique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-07",
+      "domain": "NUM",
+      "capability": "Renvois en chaîne et étoile",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S46"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Contrôler quatre points de renvoi et signaler un point orphelin.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-08",
+      "domain": "NUM",
+      "capability": "Trier les destinations de renvoi",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S46"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Changer l'ordre de parcours sans modifier l'identité du signal.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "NUM-09",
+      "domain": "NUM",
+      "capability": "Images de contacts configurables",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S47"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Les contacts NO et NC affichent leurs bonnes coordonnées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "NUM-10",
+      "domain": "NUM",
+      "capability": "Formats des références croisées",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S47"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/autoNum/ui/autonumberingmanagementw.cpp",
+        "sources/qetgraphicsitem/crossrefitem.cpp",
+        "sources/qetgraphicsitem/reportelement.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Deux modèles client produisent des formats différents mais les mêmes cibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "TER-01",
+      "domain": "TER",
+      "capability": "Définir bornes et borniers",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/TerminalStrip/terminalstrip.cpp",
+        "sources/TerminalStrip/terminalstripbridge.cpp",
+        "sources/TerminalStrip/ui/terminalstripeditor.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Créer X1 avec douze bornes et conserver leurs données.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "TER-02",
+      "domain": "TER",
+      "capability": "Bornes principales et auxiliaires",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Deux fonctions du même boîtier ne doublent pas la quantité physique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TER-03",
+      "domain": "TER",
+      "capability": "Bornes à plusieurs étages",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S11"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Une borne à trois niveaux conserve son boîtier et ses trois potentiels.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TER-04",
+      "domain": "TER",
+      "capability": "Assembler et séparer les étages",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S11"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Séparer un niveau ne supprime ni son conducteur ni son article.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TER-05",
+      "domain": "TER",
+      "capability": "Tri physique et tri logique",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/TerminalStrip/terminalstrip.cpp",
+        "sources/TerminalStrip/terminalstripbridge.cpp",
+        "sources/TerminalStrip/ui/terminalstripeditor.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Réordonner le bornier modifie son plan mais pas les destinations.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "TER-06",
+      "domain": "TER",
+      "capability": "Pontages manuels et automatiques",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/TerminalStrip/terminalstrip.cpp",
+        "sources/TerminalStrip/terminalstripbridge.cpp",
+        "sources/TerminalStrip/ui/terminalstripeditor.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Supprimer un pont isole le réseau attendu et met à jour les rapports.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "TER-07",
+      "domain": "TER",
+      "capability": "Accessoires et articles de bornier",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Une butée et un séparateur apparaissent une seule fois dans la liste.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TER-08",
+      "domain": "TER",
+      "capability": "Bornes distribuées",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Deux représentations de la même borne partagent les mêmes cibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TER-09",
+      "domain": "TER",
+      "capability": "Numérotation des bornes",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/TerminalStrip/terminalstrip.cpp",
+        "sources/TerminalStrip/terminalstripbridge.cpp",
+        "sources/TerminalStrip/ui/terminalstripeditor.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Renuméroter un sous-ensemble sans perdre les niveaux.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "TER-10",
+      "domain": "TER",
+      "capability": "Échanges de borniers",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Exporter puis réimporter un bornier témoin sans perdre ses ponts.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TER-11",
+      "domain": "TER",
+      "capability": "Destinations et potentiels",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S10"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/TerminalStrip/terminalstrip.cpp",
+        "sources/TerminalStrip/terminalstripbridge.cpp",
+        "sources/TerminalStrip/ui/terminalstripeditor.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Afficher simultanément les côtés interne et externe d'une borne.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PLG-01",
+      "domain": "PLG",
+      "capability": "Définir connecteurs et broches",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S12"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Créer X20 à huit contacts et réouvrir ses huit affectations.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLG-02",
+      "domain": "PLG",
+      "capability": "Accoupler mâle et femelle",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S12"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Signaler une broche sans vis-à-vis dans le connecteur partenaire.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLG-03",
+      "domain": "PLG",
+      "capability": "Connecteurs mixtes",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S12"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Conserver deux inserts de genres différents dans un même boîtier.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLG-04",
+      "domain": "PLG",
+      "capability": "Connecteurs hiérarchiques",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S12"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Une broche garde son appartenance au sous-connecteur.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLG-05",
+      "domain": "PLG",
+      "capability": "Ordre et repérage des broches",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S12"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Réordonner les broches ne modifie pas leur identité électrique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLG-06",
+      "domain": "PLG",
+      "capability": "Articles par broche",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S12"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Un contact à sertir figure dans la liste avec la bonne quantité.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLG-07",
+      "domain": "PLG",
+      "capability": "Connecteurs modulaires",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S05",
+        "S12"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Remplacer un insert sans supprimer les autres inserts.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-01",
+      "domain": "CAB",
+      "capability": "Définir câbles et conducteurs",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Un câble cinq conducteurs conserve ses cinq affectations.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-02",
+      "domain": "CAB",
+      "capability": "Affectation automatique des conducteurs",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Associer quatre fils puis présenter le conducteur libre restant.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-03",
+      "domain": "CAB",
+      "capability": "Affectation manuelle des conducteurs",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Permuter deux âmes actualise les deux extrémités.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-04",
+      "domain": "CAB",
+      "capability": "Réserves de câble",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Les conducteurs non utilisés restent comptés et identifiables.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-05",
+      "domain": "CAB",
+      "capability": "Blindages multiples",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Deux blindages distincts conservent leurs raccordements respectifs.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-06",
+      "domain": "CAB",
+      "capability": "Câbles hybrides",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Une fibre et une âme cuivre gardent des types distincts.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-07",
+      "domain": "CAB",
+      "capability": "Créer et compléter les câbles",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Rassembler les liaisons sélectionnées sans doubler les connexions.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-08",
+      "domain": "CAB",
+      "capability": "Source et destination déterministes",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Inverser le câble conserve la correspondance broche à broche.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-09",
+      "domain": "CAB",
+      "capability": "Cumuler les longueurs par article",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S13"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Trois tronçons de même référence produisent la somme attendue.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CAB-10",
+      "domain": "CAB",
+      "capability": "Câbles préassemblés avec connecteurs",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S14"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "PLG",
+        "TER"
+      ],
+      "acceptance": "Un câble équipé conserve les affectations de ses deux fiches.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-01",
+      "domain": "PLC",
+      "capability": "Stations racks modules et slots",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S16"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Deux automates conservent leurs racks et emplacements respectifs.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-02",
+      "domain": "PLC",
+      "capability": "Vue centralisée des E/S",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S15"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/editor/graphicspart/partplctable.cpp",
+        "sources/ui/plclinkwidget.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Retrouver toutes les entrées TOR d'une station.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PLC-03",
+      "domain": "PLC",
+      "capability": "Représentations carte et folio",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S15"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/editor/graphicspart/partplctable.cpp",
+        "sources/ui/plclinkwidget.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Une E/S sur le synoptique et le folio possède une seule adresse.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "PLC-04",
+      "domain": "PLC",
+      "capability": "Canaux et raccordements multiples",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S15"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Un canal analogique conserve alimentation signal et commun.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-05",
+      "domain": "PLC",
+      "capability": "Adressage automatique",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S15"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Adresser deux cartes avec les réserves et pas configurés.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-06",
+      "domain": "PLC",
+      "capability": "Adresses symboliques et listes",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S15"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Importer une liste avec accents sans dédoubler les signaux.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-07",
+      "domain": "PLC",
+      "capability": "Bus et réseaux physiques",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S16"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Une passerelle reste rattachée à ses deux réseaux.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-08",
+      "domain": "PLC",
+      "capability": "Descriptions fabricant",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S17"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Vérifier les slots configurés contre le fichier de description.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-09",
+      "domain": "PLC",
+      "capability": "Sous-appareils et modules configurables",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S17"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Conserver les sous-modules lors du retour d'un échange.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-10",
+      "domain": "PLC",
+      "capability": "Échange AutomationML",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S16"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Importer exporter puis comparer appareils ports et adresses.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-11",
+      "domain": "PLC",
+      "capability": "Échange TIA Portal versionné",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S58"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Tester un jeu TIA 20 et un jeu TIA 21 avec le profil déclaré.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "PLC-12",
+      "domain": "PLC",
+      "capability": "Génération de schémas E/S",
+      "scope": "P8_plateforme",
+      "lot": "L3",
+      "sources": [
+        "S15"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "NUM"
+      ],
+      "acceptance": "Placer huit canaux depuis une liste sans ressaisie des adresses.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-01",
+      "domain": "ART",
+      "capability": "Références fabricant et fournisseur",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S18"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/materiallist/materiallist.cpp",
+        "sources/properties/deviceinformation.cpp",
+        "sources/import/edz/edzpart.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Retrouver une référence précise après export et réimport.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "ART-02",
+      "domain": "ART",
+      "capability": "Recherche et classement technique",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S18"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/materiallist/materiallist.cpp",
+        "sources/properties/deviceinformation.cpp",
+        "sources/import/edz/edzpart.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Filtrer un contacteur par tension bobine et nombre de contacts.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "ART-03",
+      "domain": "ART",
+      "capability": "Accessoires obligatoires et facultatifs",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S18"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "L'article principal propose ses accessoires avec quantités séparées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-04",
+      "domain": "ART",
+      "capability": "Assemblages et modules commerciaux",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S18"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Décomposer un ensemble sans compter simultanément le parent et ses enfants.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-05",
+      "domain": "ART",
+      "capability": "Articles multilingues et devises",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S18"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Changer la langue ne modifie pas les identifiants de commande.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-06",
+      "domain": "ART",
+      "capability": "Modèles de fonctions des articles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S06"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Une référence définit les raccordements réellement disponibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-07",
+      "domain": "ART",
+      "capability": "Édition externe des articles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S18"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Un import de prix conserve les données techniques existantes.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-08",
+      "domain": "ART",
+      "capability": "Base partagée d'articles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S18"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Deux postes lisent la même version d'un article validé.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-09",
+      "domain": "ART",
+      "capability": "Articles obsolètes et remplaçants",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S53"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Détecter un remplacement circulaire et proposer une référence valide.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-10",
+      "domain": "ART",
+      "capability": "Identifiants Global Asset ID",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S54"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Une copie reçoit une identité distincte selon les règles configurées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-11",
+      "domain": "ART",
+      "capability": "Propriétés techniques extensibles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S31"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Filtrer 1 kV et 1000 V comme la même grandeur.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "ART-12",
+      "domain": "ART",
+      "capability": "Import des données portables EDZ",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S31"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/materiallist/materiallist.cpp",
+        "sources/properties/deviceinformation.cpp",
+        "sources/import/edz/edzpart.cpp"
+      ],
+      "dependencies": [
+        "DEV"
+      ],
+      "acceptance": "Afficher explicitement ce qui est importé et ce qui est perdu.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "MAC-01",
+      "domain": "MAC",
+      "capability": "Macros de circuits et folios",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S19"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/diagramevent/diagrameventaddmacro.cpp",
+        "sources/scripting/macrorecorder.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Réutiliser un départ moteur en conservant ses relations internes.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "MAC-02",
+      "domain": "MAC",
+      "capability": "Projets de macros et génération",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S19"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Régénérer une bibliothèque depuis son projet source.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-03",
+      "domain": "MAC",
+      "capability": "Variantes de représentation",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S19"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Choisir une variante sans changer l'identité fonctionnelle du circuit.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-04",
+      "domain": "MAC",
+      "capability": "Paramètres et jeux de valeurs",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S20"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Changer la puissance du moteur actualise les propriétés liées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-05",
+      "domain": "MAC",
+      "capability": "Variables sur plusieurs objets",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S20"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Un jeu de valeurs modifie appareil texte et propriétés du folio.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-06",
+      "domain": "MAC",
+      "capability": "Remplacement paramétré de symboles",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S20"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Un changement de variante conserve les raccordements compatibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-07",
+      "domain": "MAC",
+      "capability": "Groupes protégés",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S19"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Déplacer une macro protégée sans altérer sa structure interne.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-08",
+      "domain": "MAC",
+      "capability": "Mise à jour des macros",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S19"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Présenter les différences avant d'écraser une adaptation locale.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-09",
+      "domain": "MAC",
+      "capability": "Options de machine activables",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S21"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Désactiver une option la retire des rapports sans effacer son modèle.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MAC-10",
+      "domain": "MAC",
+      "capability": "Sections et paramètres d'option",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S21"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART",
+        "NUM"
+      ],
+      "acceptance": "Deux options indépendantes conservent leurs valeurs propres.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-01",
+      "domain": "RPT",
+      "capability": "Nomenclature détaillée et cumulée",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/bomexport.cpp",
+        "sources/wiringlistexport.cpp",
+        "sources/conductornumexport.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Un relais représenté trois fois apparaît comme un seul appareil physique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "RPT-02",
+      "domain": "RPT",
+      "capability": "Liste des repères d'appareils",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/bomexport.cpp",
+        "sources/wiringlistexport.cpp",
+        "sources/conductornumexport.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Chaque repère exporté ouvre l'appareil correspondant.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "RPT-03",
+      "domain": "RPT",
+      "capability": "Plans et implantation des borniers",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/bomexport.cpp",
+        "sources/wiringlistexport.cpp",
+        "sources/conductornumexport.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Vérifier les niveaux ponts et accessoires contre le bornier témoin.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "RPT-04",
+      "domain": "RPT",
+      "capability": "Plans de connecteurs et broches",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Comparer le plan avec les huit affectations du connecteur témoin.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-05",
+      "domain": "RPT",
+      "capability": "Plans et affectations de câbles",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Comparer chaque âme aux deux bornes réellement raccordées.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-06",
+      "domain": "RPT",
+      "capability": "Schémas de raccordement des appareils",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "La vue appareil restitue toutes ses destinations.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-07",
+      "domain": "RPT",
+      "capability": "Listes des connexions",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/bomexport.cpp",
+        "sources/wiringlistexport.cpp",
+        "sources/conductornumexport.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "La liste contient les deux extrémités de chaque fil.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "RPT-08",
+      "domain": "RPT",
+      "capability": "Vues des potentiels",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Un potentiel sur trois folios apparaît une seule fois avec ses cibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-09",
+      "domain": "RPT",
+      "capability": "Rapports cartes et adresses API",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Les réserves et canaux utilisés sont distingués.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-10",
+      "domain": "RPT",
+      "capability": "Sommaire couverture et structures",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/bomexport.cpp",
+        "sources/wiringlistexport.cpp",
+        "sources/conductornumexport.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "La pagination correspond au dossier PDF final.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "RPT-11",
+      "domain": "RPT",
+      "capability": "Listes fabricants et fournisseurs",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Chaque article renvoie au fournisseur choisi.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-12",
+      "domain": "RPT",
+      "capability": "Légendes d'armoire et montage",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "L'implantation et sa légende partagent les mêmes repères.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-13",
+      "domain": "RPT",
+      "capability": "Listes et plans de topologie",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "La longueur rapportée égale celle du parcours retenu.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-14",
+      "domain": "RPT",
+      "capability": "Options paramètres et révisions",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Le rapport distingue les options actives des options disponibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-15",
+      "domain": "RPT",
+      "capability": "Documentation des données de base",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Lister les symboles cartouches et formulaires réellement utilisés.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-16",
+      "domain": "RPT",
+      "capability": "Diagramme de séquence fonctionnelle",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Le document généré correspond aux étapes du scénario témoin.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-17",
+      "domain": "RPT",
+      "capability": "Rapports incorporés ou sur folios",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S23"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Actualiser une légende locale sans dupliquer ses lignes.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-18",
+      "domain": "RPT",
+      "capability": "Modèles filtres tris et blocs",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S23",
+        "S24"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Deux mises à jour successives donnent les mêmes lignes et pages.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-19",
+      "domain": "RPT",
+      "capability": "Étiquetage de fabrication",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Les repères exportés correspondent aux appareils et fils retenus.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "RPT-20",
+      "domain": "RPT",
+      "capability": "Listes des assemblages et modules",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Vérifier le choix détaillé ou regroupé sur un ensemble composé.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Couverture locale à auditer."
+    },
+    {
+      "id": "RPT-21",
+      "domain": "RPT",
+      "capability": "Vues générales câbles borniers connecteurs",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Comparer les trois listes aux objets présents dans le dossier témoin.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Couverture locale à auditer."
+    },
+    {
+      "id": "RPT-22",
+      "domain": "RPT",
+      "capability": "Légendes de découpes",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S22"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON",
+        "ART"
+      ],
+      "acceptance": "Associer chaque entrée à un objet de fabrication identifié.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Couverture locale à auditer."
+    },
+    {
+      "id": "MDT-01",
+      "domain": "MDT",
+      "capability": "Éditer les bibliothèques de symboles",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S40"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/editor/ui/qetelementeditor.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/ElementsCollection/elementcollectionhandler.cpp"
+      ],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "Créer un symbole à six raccordements et l'incorporer au projet.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "MDT-02",
+      "domain": "MDT",
+      "capability": "Variantes graphiques de symboles",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S42"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "La rotation de la variante conserve les numéros des raccordements.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MDT-03",
+      "domain": "MDT",
+      "capability": "Éditer les cartouches",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S24"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/editor/ui/qetelementeditor.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/ElementsCollection/elementcollectionhandler.cpp"
+      ],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "Changer le logo et vérifier tous les formats de folio.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "MDT-04",
+      "domain": "MDT",
+      "capability": "Éditer les formulaires de rapports",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S24"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "Un tableau de 80 lignes se poursuit sans perdre son en-tête.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MDT-05",
+      "domain": "MDT",
+      "capability": "Organiser les données par client",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S40"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "Deux clients peuvent utiliser deux versions d'un même modèle.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MDT-06",
+      "domain": "MDT",
+      "capability": "Comparer versions des données",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S41"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "Montrer les modèles plus récents avant synchronisation.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "MDT-07",
+      "domain": "MDT",
+      "capability": "Synchroniser les ressources du projet",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S41"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/editor/ui/qetelementeditor.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/ElementsCollection/elementcollectionhandler.cpp"
+      ],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "Mettre à jour un symbole sélectionné sans toucher aux autres.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "MDT-08",
+      "domain": "MDT",
+      "capability": "Ressources incorporées transportables",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S40"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/editor/ui/qetelementeditor.cpp",
+        "sources/titleblocktemplate.cpp",
+        "sources/ElementsCollection/elementcollectionhandler.cpp"
+      ],
+      "dependencies": [
+        "ART",
+        "MAC"
+      ],
+      "acceptance": "Ouvrir un projet dont la bibliothèque d'origine est absente.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "DAT-01",
+      "domain": "DAT",
+      "capability": "Propriétés personnalisées typées",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S31"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Refuser un texte dans une grandeur numérique configurée.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DAT-02",
+      "domain": "DAT",
+      "capability": "Propriétés transmises avec le projet",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S31"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Le destinataire retrouve valeurs et définitions sans import séparé.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DAT-03",
+      "domain": "DAT",
+      "capability": "Propriétés composées indirectes",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S32"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Afficher la localisation de la cible et l'actualiser après déplacement.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DAT-04",
+      "domain": "DAT",
+      "capability": "Calculs de propriétés",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S64"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Un calcul configuré donne un résultat reproductible avec unités.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DAT-05",
+      "domain": "DAT",
+      "capability": "Recherche et remplacement",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S04"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/SearchAndReplace/searchandreplaceworker.cpp",
+        "sources/qetgraphicsitem/dynamicelementtextitem.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Remplacer un texte sur deux folios sans altérer les repères voisins.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "DAT-06",
+      "domain": "DAT",
+      "capability": "Édition externe aller-retour",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S50"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Réimporter une table modifiée sans changer les lignes intactes.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DAT-07",
+      "domain": "DAT",
+      "capability": "Création d'objets depuis une table",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S50"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Importer dix fonctions avec identités stables et rapport d'erreurs.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "DAT-08",
+      "domain": "DAT",
+      "capability": "Édition tabulaire des propriétés",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S56"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "ART"
+      ],
+      "acceptance": "Modifier une colonne sur cent objets et annuler ensemble.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LNG-01",
+      "domain": "LNG",
+      "capability": "Dictionnaires métier multilingues",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S29"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DAT",
+        "MDT"
+      ],
+      "acceptance": "Deux projets utilisent des lexiques client différents.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LNG-02",
+      "domain": "LNG",
+      "capability": "Traduction à la saisie ou par lot",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S30"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DAT",
+        "MDT"
+      ],
+      "acceptance": "Traduire le dossier français vers néerlandais sans changer les repères.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LNG-03",
+      "domain": "LNG",
+      "capability": "Corrections manuelles de traduction",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S30"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DAT",
+        "MDT"
+      ],
+      "acceptance": "Conserver une traduction validée lors d'un nouveau traitement.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LNG-04",
+      "domain": "LNG",
+      "capability": "Liste des termes manquants",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S29"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DAT",
+        "MDT"
+      ],
+      "acceptance": "Exporter trois termes puis réimporter leurs traductions.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LNG-05",
+      "domain": "LNG",
+      "capability": "Termes exclus et Unicode",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S29"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DAT",
+        "MDT"
+      ],
+      "acceptance": "Un code produit reste inchangé dans les sorties multilingues.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LNG-06",
+      "domain": "LNG",
+      "capability": "Changement de convention de dessin",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DAT",
+        "MDT"
+      ],
+      "acceptance": "Convertir le projet témoin puis contrôler symboles cartouches et renvois.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "QA-01",
+      "domain": "QA",
+      "capability": "Contrôles interactifs et par lot",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S25"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/wiringrules.cpp",
+        "sources/ui/wiringruleswarning.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Introduire un défaut connu et le retrouver dans les deux modes.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "QA-02",
+      "domain": "QA",
+      "capability": "Profils de règles et sévérités",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S25"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Deux profils classent différemment le même défaut identifié.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "QA-03",
+      "domain": "QA",
+      "capability": "Contrôler une sélection ou le projet",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S25"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Les défauts hors sélection ne disparaissent pas de l'historique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "QA-04",
+      "domain": "QA",
+      "capability": "Diagnostics navigables",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S25"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Activer un diagnostic sélectionne exactement son objet.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "QA-05",
+      "domain": "QA",
+      "capability": "Contrôles des articles",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S25"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Repérer une fonction incompatible avec l'article affecté.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "QA-06",
+      "domain": "QA",
+      "capability": "Messages explicatifs et corrections",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S25"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Chaque défaut expose sa cause et une action vérifiable.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "QA-07",
+      "domain": "QA",
+      "capability": "Vérification du cahier client",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Un projet incomplet échoue avec une liste de critères non satisfaits.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "QA-08",
+      "domain": "QA",
+      "capability": "Limites de raccordement",
+      "scope": "P8_plateforme",
+      "lot": "L2",
+      "sources": [
+        "S25"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/wiringrules.cpp",
+        "sources/ui/wiringruleswarning.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "CON"
+      ],
+      "acceptance": "Une borne limitée à deux fils signale le troisième.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "REV-01",
+      "domain": "REV",
+      "capability": "Créer une référence figée",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S26"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "La référence reste identique après modification du projet courant.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "REV-02",
+      "domain": "REV",
+      "capability": "Suivre les changements",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S26"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Ajouter déplacer et supprimer un appareil produit trois événements.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "REV-03",
+      "domain": "REV",
+      "capability": "Comparer des propriétés choisies",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S26"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Ignorer une couleur et signaler un changement de référence fabricant.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "REV-04",
+      "domain": "REV",
+      "capability": "Marqueurs de modification",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S26"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Chaque marqueur ouvre l'objet et le changement associés.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "REV-05",
+      "domain": "REV",
+      "capability": "Marqueurs des suppressions",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S28"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Un composant supprimé conserve ses anciennes données consultables.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "REV-06",
+      "domain": "REV",
+      "capability": "Clôturer folios et projets",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S27"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Une page modifiée repasse en brouillon après clôture.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "REV-07",
+      "domain": "REV",
+      "capability": "Indices motifs auteurs et dates",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S27"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Retrouver la raison du changement dans le dossier livré.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "REV-08",
+      "domain": "REV",
+      "capability": "Rapports des révisions",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S26"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Le rapport distingue révision du projet et indice du folio.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-01",
+      "domain": "TEAM",
+      "capability": "Édition simultanée et conflits",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Deux postes modifiant le même objet obtiennent un conflit explicite.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-02",
+      "domain": "TEAM",
+      "capability": "Sections de travail attribuées",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S37"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Chaque utilisateur retrouve les folios de son périmètre.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-03",
+      "domain": "TEAM",
+      "capability": "Accès temporaire au projet complet",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S37"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Une mise à jour globale ne modifie pas les droits persistants.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-04",
+      "domain": "TEAM",
+      "capability": "Extraire et réintégrer un sous-projet",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S38"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Rendre un sous-projet modifié sans écraser les autres sections.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-05",
+      "domain": "TEAM",
+      "capability": "Sous-projets hors réseau",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S38"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Rouvrir un lot autonome avec ses symboles et références disponibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-06",
+      "domain": "TEAM",
+      "capability": "Rôles et droits par commande",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Un utilisateur lecteur ne peut pas modifier les données par une autre vue.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-07",
+      "domain": "TEAM",
+      "capability": "Utilisateurs et groupes d'entreprise",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Un changement de groupe modifie les droits à la reconnexion.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-08",
+      "domain": "TEAM",
+      "capability": "Commentaires avec état et historique",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Passer une remarque à traitée conserve son auteur et son origine.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "TEAM-09",
+      "domain": "TEAM",
+      "capability": "Ancien moniteur multi-utilisateur",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S53"
+      ],
+      "status": "historique",
+      "evidence": [],
+      "dependencies": [
+        "REV",
+        "PRJ"
+      ],
+      "acceptance": "Conserver la trace du retrait 2027 et ne pas le présenter comme fonction actuelle.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-01",
+      "domain": "LAY",
+      "capability": "Plaques et implantation 2D",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S34"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "Placer les appareils d'une armoire selon leurs dimensions.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-02",
+      "domain": "LAY",
+      "capability": "Suivi des appareils à placer",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "Une seconde représentation ne crée pas un deuxième appareil physique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-03",
+      "domain": "LAY",
+      "capability": "Légende d'implantation",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S34"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "La légende suit le remplacement d'un appareil.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-04",
+      "domain": "LAY",
+      "capability": "Réseau de parcours 2D",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S33"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "Créer trois chemins et rattacher leurs extrémités aux bons équipements.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-05",
+      "domain": "LAY",
+      "capability": "Routage selon filtres de parcours",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S33"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "Un câble interdit dans un chemin utilise une autre route.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-06",
+      "domain": "LAY",
+      "capability": "Longueurs et différences de hauteur",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S33"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "Ajouter une élévation connue augmente la longueur calculée.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-07",
+      "domain": "LAY",
+      "capability": "Topologie sans placement",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S33"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "Les objets préparés en table peuvent ensuite être placés.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "LAY-08",
+      "domain": "LAY",
+      "capability": "Rapports de câbles routés",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S33"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "CAB"
+      ],
+      "acceptance": "Comparer la liste des câbles traversant un chemin à son contenu.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-01",
+      "domain": "FLU",
+      "capability": "Hydraulique pneumatique et autres fluides",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S35"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "Distinguer deux circuits de métiers différents dans le même projet.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-02",
+      "domain": "FLU",
+      "capability": "Repérage des appareils Fluid",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S35"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "Le profil choisi produit des repères reproductibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-03",
+      "domain": "FLU",
+      "capability": "Tuyaux tubes et caractéristiques",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S35"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "Un diamètre de tube ne devient pas une section électrique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-04",
+      "domain": "FLU",
+      "capability": "Groupes et blocs de dispositifs",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S35"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "Conserver les composants internes d'un bloc de distributeurs.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-05",
+      "domain": "FLU",
+      "capability": "Références électrique vers Fluid",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S60"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "Une électrovanne relie sa bobine au bon distributeur.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-06",
+      "domain": "FLU",
+      "capability": "Vues fonctionnelles Fluid",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S60"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "L'aperçu et le schéma détaillé partagent les mêmes identités.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-07",
+      "domain": "FLU",
+      "capability": "Listes de conduites et contrôles",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S35"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "Une conduite orpheline est signalée avant génération du dossier.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "FLU-08",
+      "domain": "FLU",
+      "capability": "Configurateur de flexibles",
+      "scope": "P8_plateforme",
+      "lot": "L5",
+      "sources": [
+        "S36"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "CON",
+        "DEV",
+        "RPT"
+      ],
+      "acceptance": "Produire un code depuis les règles choisies avec ses paramètres conservés.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "IO-01",
+      "domain": "IO",
+      "capability": "PDF de projet et sélection",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S52"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/cli_export.cpp",
+        "sources/pdf_links.cpp",
+        "sources/dxfexport.cpp",
+        "sources/exportdialog.cpp"
+      ],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Exporter uniquement les folios sélectionnés dans le bon ordre.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "IO-02",
+      "domain": "IO",
+      "capability": "PDF navigable",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S65"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/cli_export.cpp",
+        "sources/pdf_links.cpp",
+        "sources/dxfexport.cpp",
+        "sources/exportdialog.cpp"
+      ],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Suivre un renvoi et revenir au bon appareil.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "IO-03",
+      "domain": "IO",
+      "capability": "Exports graphiques",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S52"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/cli_export.cpp",
+        "sources/pdf_links.cpp",
+        "sources/dxfexport.cpp",
+        "sources/exportdialog.cpp"
+      ],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Comparer le cadrage de la page à l'image produite.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "IO-04",
+      "domain": "IO",
+      "capability": "Exports DXF et DWG",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S49"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/cli_export.cpp",
+        "sources/pdf_links.cpp",
+        "sources/dxfexport.cpp",
+        "sources/exportdialog.cpp"
+      ],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Documenter les pertes logiques et vérifier la géométrie dans le lecteur cible.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "IO-05",
+      "domain": "IO",
+      "capability": "Imports DXF et DWG",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S49"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Importer un dessin sans attribuer une logique électrique aux traits.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "IO-06",
+      "domain": "IO",
+      "capability": "Archives avec données de base",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S48"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/cli_export.cpp",
+        "sources/pdf_links.cpp",
+        "sources/dxfexport.cpp",
+        "sources/exportdialog.cpp"
+      ],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Restaurer le dossier sur un poste vierge et contrôler les ressources.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "IO-07",
+      "domain": "IO",
+      "capability": "Impression et sorties par profils",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S52"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/cli_export.cpp",
+        "sources/pdf_links.cpp",
+        "sources/dxfexport.cpp",
+        "sources/exportdialog.cpp"
+      ],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Deux sorties successives avec le même profil ont la même pagination.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "IO-08",
+      "domain": "IO",
+      "capability": "Interopérabilité native EPLAN",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S52"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Définir une matrice de formats et pertes avant toute promesse d'aller-retour.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "IO-09",
+      "domain": "IO",
+      "capability": "PDF/A et documents liés",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S65"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Valider le PDF avec un outil indépendant et signaler les documents exclus.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Couverture locale à auditer."
+    },
+    {
+      "id": "IO-10",
+      "domain": "IO",
+      "capability": "Signets langues et propriétés PDF",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S65"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "RPT",
+        "QA"
+      ],
+      "acceptance": "Le lecteur retrouve chaque folio et affiche les textes dans la langue choisie.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Couverture locale à auditer."
+    },
+    {
+      "id": "AUTO-01",
+      "domain": "AUTO",
+      "capability": "Actions exécutables en ligne de commande",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S51"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/scripting/qetscriptapi.cpp",
+        "sources/cli_export.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Un export sans interface renvoie un code d'échec si le projet manque.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "AUTO-02",
+      "domain": "AUTO",
+      "capability": "Scripts et paramètres",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S51"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/scripting/qetscriptapi.cpp",
+        "sources/cli_export.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Un script reçoit un projet explicite et rapporte ses erreurs.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "AUTO-03",
+      "domain": "AUTO",
+      "capability": "Traitements enchaînés",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S51"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/scripting/qetscriptapi.cpp",
+        "sources/cli_export.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Exécuter contrôle puis rapports puis export avec un journal unique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "AUTO-04",
+      "domain": "AUTO",
+      "capability": "Commandes personnalisées",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S59"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "La commande ajoutée expose les mêmes préconditions que la commande native.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "AUTO-05",
+      "domain": "AUTO",
+      "capability": "API du modèle métier",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S59"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/scripting/qetscriptapi.cpp",
+        "sources/cli_export.cpp"
+      ],
+      "dependencies": [
+        "DEV",
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Créer un appareil avec deux fonctions dans une transaction annulable.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "AUTO-06",
+      "domain": "AUTO",
+      "capability": "Extensions externes",
+      "scope": "P8_plateforme",
+      "lot": "L4",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "DEV",
+        "QA",
+        "RPT"
+      ],
+      "acceptance": "Une extension incompatible refuse le chargement sans corrompre le projet.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "UX-01",
+      "domain": "UX",
+      "capability": "Espaces de travail mémorisés",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetdiagrameditor.cpp"
+      ],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Retrouver disposition zoom et folio après redémarrage.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "UX-02",
+      "domain": "UX",
+      "capability": "Panneaux détachables",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetdiagrameditor.cpp"
+      ],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Passer de deux écrans à un conserve tous les panneaux accessibles.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "UX-03",
+      "domain": "UX",
+      "capability": "Commandes contextuelles",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetdiagrameditor.cpp"
+      ],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Sans appareil sélectionné les actions nécessitant un appareil expliquent leur état.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "UX-04",
+      "domain": "UX",
+      "capability": "Recherche de commandes",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Trouver une commande par son nom et son synonyme français.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "UX-05",
+      "domain": "UX",
+      "capability": "Accès rapides et raccourcis",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetdiagrameditor.cpp"
+      ],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Utiliser les commandes fréquentes sans ouvrir de menus successifs.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "UX-06",
+      "domain": "UX",
+      "capability": "Thèmes clair sombre",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Les couleurs de travail n'altèrent pas le document imprimé.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "UX-07",
+      "domain": "UX",
+      "capability": "Filtres et schémas du projet",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S56"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Deux utilisateurs retrouvent le filtre fourni avec le projet.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "UX-08",
+      "domain": "UX",
+      "capability": "Insertion avec tags et aperçus",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S56"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Retrouver un symbole par fonction puis vérifier ses raccordements.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "UX-09",
+      "domain": "UX",
+      "capability": "Navigation graphique vers données",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "socle_a_qualifier",
+      "evidence": [
+        "sources/qetdiagrameditor.cpp"
+      ],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Sélectionner le même objet depuis un tableau et son symbole.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Fichiers de départ à examiner ; peuvent couvrir seulement une partie de cette exigence. Voir les limites de l’audit dans EPLAN_P8_RESEARCH.md."
+    },
+    {
+      "id": "UX-10",
+      "domain": "UX",
+      "capability": "État des calculs et diagnostics",
+      "scope": "P8_plateforme",
+      "lot": "L1",
+      "sources": [
+        "S43"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "EDT"
+      ],
+      "acceptance": "Afficher explicitement que les rapports doivent être recalculés.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-01",
+      "domain": "CLD",
+      "capability": "Catalogue fabricant en ligne",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Importer des données autorisées avec source date et version.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-02",
+      "domain": "CLD",
+      "capability": "Gestion cloud des données projet",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Deux versions publiées restent consultables séparément.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-03",
+      "domain": "CLD",
+      "capability": "Gestion cloud des articles",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S55"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Un article mis à jour conserve son historique et ses dépendances.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-04",
+      "domain": "CLD",
+      "capability": "Bibliothèques et génération configurée",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Générer deux variantes à partir des mêmes paramètres de modèle.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-05",
+      "domain": "CLD",
+      "capability": "Consultation et annotations partagées",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S01"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Une remarque distante cible un objet stable du projet publié.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-06",
+      "domain": "CLD",
+      "capability": "Synchronisation cloud des données de base",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S61"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Comparer puis appliquer une mise à jour de bibliothèque.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-07",
+      "domain": "CLD",
+      "capability": "Assistant intégré et commandes guidées",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S53"
+      ],
+      "status": "non_demontre",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Chaque modification suggérée reste explicable révisable et annulable.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "CLD-08",
+      "domain": "CLD",
+      "capability": "Ancien service eStock",
+      "scope": "P8_services_associes",
+      "lot": "L6",
+      "sources": [
+        "S55"
+      ],
+      "status": "historique",
+      "evidence": [],
+      "dependencies": [
+        "ART",
+        "REV",
+        "AUTO"
+      ],
+      "acceptance": "Tracer son remplacement 2027 sans supprimer le besoin de catalogue partagé.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EXT-01",
+      "domain": "EXT",
+      "capability": "Armoires 3D et préparation fabrication",
+      "scope": "ecosysteme_complementaire",
+      "lot": "L6",
+      "sources": [
+        "S57"
+      ],
+      "status": "extension_a_etudier",
+      "evidence": [],
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "acceptance": "Définir une recette indépendante pour implantation collisions et fabrication.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EXT-02",
+      "domain": "EXT",
+      "capability": "Préplanification fonctionnelle et procédés",
+      "scope": "ecosysteme_complementaire",
+      "lot": "L6",
+      "sources": [
+        "S57"
+      ],
+      "status": "extension_a_etudier",
+      "evidence": [],
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "acceptance": "Relier un objet de conception aux fonctions détaillées sans doublon.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EXT-03",
+      "domain": "EXT",
+      "capability": "Faisceaux et câblage machine 3D",
+      "scope": "ecosysteme_complementaire",
+      "lot": "L6",
+      "sources": [
+        "S57"
+      ],
+      "status": "extension_a_etudier",
+      "evidence": [],
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "acceptance": "Distinguer longueur physique et représentation schématique.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EXT-04",
+      "domain": "EXT",
+      "capability": "Configuration industrielle étendue",
+      "scope": "ecosysteme_complementaire",
+      "lot": "L6",
+      "sources": [
+        "S57"
+      ],
+      "status": "extension_a_etudier",
+      "evidence": [],
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "acceptance": "Une configuration produit un dossier traçable et reproductible.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EXT-05",
+      "domain": "EXT",
+      "capability": "ERP et synchronisation des articles",
+      "scope": "ecosysteme_complementaire",
+      "lot": "L6",
+      "sources": [
+        "S01"
+      ],
+      "status": "extension_a_etudier",
+      "evidence": [],
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "acceptance": "Un échange conserve identités quantités et sens de synchronisation.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EXT-06",
+      "domain": "EXT",
+      "capability": "PDM PLM et documents",
+      "scope": "ecosysteme_complementaire",
+      "lot": "L6",
+      "sources": [
+        "S01"
+      ],
+      "status": "extension_a_etudier",
+      "evidence": [],
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "acceptance": "Deux versions du dossier restent reliées à la bonne révision produit.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    },
+    {
+      "id": "EXT-07",
+      "domain": "EXT",
+      "capability": "Production et dossier numérique",
+      "scope": "ecosysteme_complementaire",
+      "lot": "L6",
+      "sources": [
+        "S57"
+      ],
+      "status": "extension_a_etudier",
+      "evidence": [],
+      "dependencies": [
+        "LAY",
+        "IO",
+        "AUTO"
+      ],
+      "acceptance": "Les retours d'atelier citent la version exacte du dossier exécuté.",
+      "verification": "Non exécutée : critère proposé pour GeMMe, pas une preuve de parité.",
+      "evidence_note": "Aucune couverture complète locale établie par cet audit."
+    }
+  ]
+}
