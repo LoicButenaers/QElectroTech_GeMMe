@@ -1,7 +1,12 @@
 # Règles du projet GeMMe
 
 - Travailler uniquement dans ce dépôt pour le logiciel : `C:\dev\QElectroTech_GeMMe`.
-- Toujours travailler sur la branche `main`. Ne pas créer de branche ni de worktree.
+- Pour le chantier demandé le 9 octobre 2026, travailler sur `EPLAN_DESIGN`.
+  Cette demande explicite remplace la consigne précédente de travail sur `main`.
+  Ne pas créer d'autre branche ni de worktree sans nouvelle demande.
+- Cible : schémas industriels IEC pour la Belgique et l'Europe. Les fabricants
+  sont choisis par famille de composants. Suivre le cadrage dans
+  `docs/EPLAN_DESIGN.md` et distinguer les fonctions existantes des objectifs.
 - Ne créer que les dossiers nécessaires. Réutiliser les dossiers existants.
 - Conserver une seule version de l'exécutable QElectroTech. Utiliser
   `build/qelectrotech.exe` pour les compilations Windows Release et remplacer

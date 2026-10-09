@@ -18,8 +18,8 @@ $previousChere = $env:CHERE_INVOKING
 $previousJobs = $env:GEMME_BUILD_JOBS
 try {
     $branch = & git branch --show-current
-    if ($LASTEXITCODE -ne 0 -or $branch -ne 'main') {
-        throw 'La compilation GeMMe doit être effectuée sur main.'
+    if ($LASTEXITCODE -ne 0 -or $branch -notin @('main', 'EPLAN_DESIGN')) {
+        throw 'La compilation GeMMe doit être effectuée sur main ou EPLAN_DESIGN.'
     }
     $running = Get-Process -Name qelectrotech -ErrorAction SilentlyContinue |
         Where-Object { $_.Path -eq (Join-Path $buildPath 'qelectrotech.exe') }

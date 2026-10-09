@@ -6,7 +6,9 @@ Ce dépôt est la base de la version personnalisée GeMMe, destinée à amélior
 l'ergonomie et les fonctionnalités de QElectroTech.
 
 - Dossier de travail : `C:\dev\QElectroTech_GeMMe`.
-- Branche de travail unique : `main`.
+- Branche du chantier industriel : `EPLAN_DESIGN` ; `main` conserve la base initiale.
+- Recherche EPLAN, choix d'architecture, périmètre de la première version et
+  fabricants retenus : [cahier des charges EPLAN_DESIGN](docs/EPLAN_DESIGN.md).
 - Sources importées du [dépôt officiel](https://github.com/qelectrotech/qelectrotech-source-mirror),
   commit `a022d033388185230dfed62918d317f78bbb742c`.
 - L'historique, les licences, les ressources et les configurations de compilation
@@ -19,7 +21,7 @@ l'ergonomie et les fonctionnalités de QElectroTech.
 Pour récupérer ce dépôt sur une autre machine avec ses dépendances intégrées :
 
 ```powershell
-git clone --recurse-submodules --branch main https://github.com/LoicButenaers/QElectroTech_GeMMe.git
+git clone --recurse-submodules --branch EPLAN_DESIGN https://github.com/LoicButenaers/QElectroTech_GeMMe.git
 ```
 
 ### Compilation Windows
