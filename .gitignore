@@ -1,13 +1,7 @@
-*.snap
-.flatpak-builder
-__pycache__/
-*.pyc
-# Qt build output
 /build/
+/obj/
+/bin/
 *.user
-# doxygen Doxyfile output
-doc/*
-!doc/QElectroTech.qch
-QElectroTech.tag
-!doc/doc-utils
-ui_*.h
+*.suo
+*.gemelec
+*.gemelec.tmp

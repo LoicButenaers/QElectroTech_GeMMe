@@ -1,0 +1,9 @@
+# Serveur local du projet. Ouvrir GeMMeElec avant d'appeler ses outils.
+# Adapter les deux chemins si le dépôt est déplacé.
+[mcp_servers.gemmeelec]
+command = 'C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe'
+args = ["--mcp"]
+cwd = 'C:\dev\QElectroTech_GeMMe'
+startup_timeout_sec = 20
+tool_timeout_sec = 30
+enabled = true

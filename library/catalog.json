@@ -1,0 +1,752 @@
+[
+  {
+    "id": "f01-1",
+    "family": "Disjoncteurs modulaires",
+    "brand": "Schneider Electric",
+    "range": "Acti9 iC60",
+    "symbol": "breaker1",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f01-2",
+    "family": "Disjoncteurs modulaires",
+    "brand": "ABB",
+    "range": "S200",
+    "symbol": "breaker1",
+    "source": "https://www.abb.com/global/en/areas/electrification/low-voltage/din-rail-devices/miniature-circuit-breakers/s200",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f01-3",
+    "family": "Disjoncteurs modulaires",
+    "brand": "Eaton",
+    "range": "FAZ",
+    "symbol": "breaker1",
+    "source": "https://www.eaton.com/content/dam/eaton/products/electrical-circuit-protection/eaton-xPole_DIN_modular_devices-product-catalog-en-en.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f02-1",
+    "family": "Disjoncteurs boîtier moulé",
+    "brand": "Schneider Electric",
+    "range": "ComPacT NSX",
+    "symbol": "breaker3",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f02-2",
+    "family": "Disjoncteurs boîtier moulé",
+    "brand": "ABB",
+    "range": "SACE Tmax XT",
+    "symbol": "breaker3",
+    "source": "https://new.abb.com/low-voltage/launches/xt",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f02-3",
+    "family": "Disjoncteurs boîtier moulé",
+    "brand": "Eaton",
+    "range": "NZM",
+    "symbol": "breaker3",
+    "source": "https://www.eaton.com/content/dam/eaton/products/electrical-circuit-protection/molded-case-circuit-breakers/emea---nzm-moulded-case-circuit-braker/documentation/en/eaton-digital-nzm-catalog-ca013003en-en-us.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f03-1",
+    "family": "Différentiels",
+    "brand": "Schneider Electric",
+    "range": "Acti9 iID",
+    "symbol": "rcd2",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f03-2",
+    "family": "Différentiels",
+    "brand": "ABB",
+    "range": "F200",
+    "symbol": "rcd2",
+    "source": "https://new.abb.com/low-voltage/products/system-pro-m/residual-current-devices/rccb/f200",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f03-3",
+    "family": "Différentiels",
+    "brand": "Eaton",
+    "range": "PFIM",
+    "symbol": "rcd2",
+    "source": "https://www.eaton.com/content/dam/eaton/products/electrical-circuit-protection/eaton-xPole_DIN_modular_devices-product-catalog-en-en.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f04-1",
+    "family": "Interrupteurs-sectionneurs",
+    "brand": "Schneider Electric",
+    "range": "ComPacT INS / INV",
+    "symbol": "isolator",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f04-2",
+    "family": "Interrupteurs-sectionneurs",
+    "brand": "ABB",
+    "range": "OT Plus",
+    "symbol": "isolator",
+    "source": "https://new.abb.com/low-voltage/products/switches/manual-operated-switch-disconnectors/ot-plus-switch-disconnectors-16-160a",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f04-3",
+    "family": "Interrupteurs-sectionneurs",
+    "brand": "Eaton",
+    "range": "P1",
+    "symbol": "isolator",
+    "source": "https://www.eaton.com/us/en-us/skuPage.226900.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f05-1",
+    "family": "Fusibles et porte-fusibles",
+    "brand": "Schneider Electric",
+    "range": "TeSys DF",
+    "symbol": "fuse",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f05-2",
+    "family": "Fusibles et porte-fusibles",
+    "brand": "Eaton",
+    "range": "Bussmann IEC cylindriques",
+    "symbol": "fuse",
+    "source": "https://www.eaton.com/gb/en-gb/catalog/electrical-circuit-protection/bussmann-low-voltage-iec-cylindrical-fuses.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f05-3",
+    "family": "Fusibles et porte-fusibles",
+    "brand": "Siemens",
+    "range": "SENTRON",
+    "symbol": "fuse",
+    "source": "https://www.siemens.com/en-gb/products/sentron/fuse-systems/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f06-1",
+    "family": "Disjoncteurs moteurs",
+    "brand": "Schneider Electric",
+    "range": "TeSys GV2",
+    "symbol": "motorbreaker",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f06-2",
+    "family": "Disjoncteurs moteurs",
+    "brand": "ABB",
+    "range": "MS116",
+    "symbol": "motorbreaker",
+    "source": "https://www.lowvoltage-tools.abb.com/soc/page/CoordinationTable.aspx?Id=3512",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f06-3",
+    "family": "Disjoncteurs moteurs",
+    "brand": "Eaton",
+    "range": "PKZM0",
+    "symbol": "motorbreaker",
+    "source": "https://de.ecat.eaton.com/flip-cat/?edition=MOTCONT1_DE",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f07-1",
+    "family": "Contacteurs",
+    "brand": "Schneider Electric",
+    "range": "TeSys Deca",
+    "symbol": "contactor",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f07-2",
+    "family": "Contacteurs",
+    "brand": "ABB",
+    "range": "AF",
+    "symbol": "contactor",
+    "source": "https://new.abb.com/low-voltage/products/contactors-and-contactor-relays",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f07-3",
+    "family": "Contacteurs",
+    "brand": "Eaton",
+    "range": "DILM",
+    "symbol": "contactor",
+    "source": "https://de.ecat.eaton.com/flip-cat/?edition=MOTCONT1_DE",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f08-1",
+    "family": "Relais thermiques",
+    "brand": "Schneider Electric",
+    "range": "TeSys LRD",
+    "symbol": "overload",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f08-2",
+    "family": "Relais thermiques",
+    "brand": "ABB",
+    "range": "TF42",
+    "symbol": "overload",
+    "source": "https://www.lowvoltage-tools.abb.com/soc/Page/CoordinationTable.aspx?Id=3951",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f08-3",
+    "family": "Relais thermiques",
+    "brand": "Eaton",
+    "range": "ZB",
+    "symbol": "overload",
+    "source": "https://de.ecat.eaton.com/flip-cat/?edition=MOTCONT1_DE",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f09-1",
+    "family": "Relais d’interface",
+    "brand": "Finder",
+    "range": "Série 40",
+    "symbol": "coil",
+    "source": "https://cdn.findernet.com/app/uploads/S40EN.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f09-2",
+    "family": "Relais d’interface",
+    "brand": "Omron",
+    "range": "G2R-S",
+    "symbol": "coil",
+    "source": "https://files.omron.eu/downloads/latest/datasheet/en/g2r-_-s_general-purpose_relay_datasheet_en.pdf?v=3",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f09-3",
+    "family": "Relais d’interface",
+    "brand": "Weidmüller",
+    "range": "TERMseries compact",
+    "symbol": "coil",
+    "source": "https://assets.dam.weidmueller.com/assets/api/ddb35622-3311-403d-85c6-7fc6871a8900/Original/MB_TERMSERIES-compact_EN_WEB.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f10-1",
+    "family": "Relais temporisés",
+    "brand": "Finder",
+    "range": "Série 80",
+    "symbol": "timer",
+    "source": "https://www.findernet.com/en/uk/series/80-series-modular-timers-1-6-8-16a/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f10-2",
+    "family": "Relais temporisés",
+    "brand": "Omron",
+    "range": "H3DT",
+    "symbol": "timer",
+    "source": "https://industrial.omron.eu/en/products/h3dt",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f10-3",
+    "family": "Relais temporisés",
+    "brand": "Schneider Electric",
+    "range": "Harmony RE17",
+    "symbol": "timer",
+    "source": "https://www.se.com/us/en/product/RE17RMJU/multifunction-relay-harmony-timer-relays-8a-1co-0-1s-100h-10-functions-12v-ac-dc/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f11-1",
+    "family": "Boutons-poussoirs NO",
+    "brand": "Schneider Electric",
+    "range": "Harmony XB5",
+    "symbol": "push_no",
+    "source": "https://download.se.com/files?p_Doc_Ref=DIA3ED2180701EN&p_File_Name=DIA3ED2180701EN.pdf&p_enDocType=Catalog",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f11-2",
+    "family": "Boutons-poussoirs NO",
+    "brand": "Eaton",
+    "range": "RMQ-Titan M22",
+    "symbol": "push_no",
+    "source": "https://automotive.eaton.com/us/en-us/catalog/machinery-controls/m22-modular-pushbuttons.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f11-3",
+    "family": "Boutons-poussoirs NO",
+    "brand": "Siemens",
+    "range": "SIRIUS ACT 3SU1",
+    "symbol": "push_no",
+    "source": "https://support.industry.siemens.com/cs/attachments/107542462/manual_SIRIUS_ACT_3SU1_en-US.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f12-1",
+    "family": "Boutons-poussoirs NC",
+    "brand": "Schneider Electric",
+    "range": "Harmony XB5",
+    "symbol": "push_nc",
+    "source": "https://download.se.com/files?p_Doc_Ref=DIA3ED2180701EN&p_File_Name=DIA3ED2180701EN.pdf&p_enDocType=Catalog",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f12-2",
+    "family": "Boutons-poussoirs NC",
+    "brand": "Eaton",
+    "range": "RMQ-Titan M22",
+    "symbol": "push_nc",
+    "source": "https://automotive.eaton.com/us/en-us/catalog/machinery-controls/m22-modular-pushbuttons.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f12-3",
+    "family": "Boutons-poussoirs NC",
+    "brand": "Siemens",
+    "range": "SIRIUS ACT 3SU1",
+    "symbol": "push_nc",
+    "source": "https://support.industry.siemens.com/cs/attachments/107542462/manual_SIRIUS_ACT_3SU1_en-US.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f13-1",
+    "family": "Arrêts d’urgence",
+    "brand": "Schneider Electric",
+    "range": "Harmony XB5",
+    "symbol": "estop",
+    "source": "https://download.se.com/files?p_Doc_Ref=DIA3ED2180701EN&p_File_Name=DIA3ED2180701EN.pdf&p_enDocType=Catalog",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f13-2",
+    "family": "Arrêts d’urgence",
+    "brand": "Eaton",
+    "range": "RMQ-Titan M22",
+    "symbol": "estop",
+    "source": "https://automotive.eaton.com/us/en-us/catalog/machinery-controls/m22-modular-pushbuttons.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f13-3",
+    "family": "Arrêts d’urgence",
+    "brand": "Siemens",
+    "range": "SIRIUS ACT 3SU1",
+    "symbol": "estop",
+    "source": "https://support.industry.siemens.com/cs/attachments/107542462/manual_SIRIUS_ACT_3SU1_en-US.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f14-1",
+    "family": "Sélecteurs",
+    "brand": "Schneider Electric",
+    "range": "Harmony XB5",
+    "symbol": "selector",
+    "source": "https://download.se.com/files?p_Doc_Ref=DIA3ED2180701EN&p_File_Name=DIA3ED2180701EN.pdf&p_enDocType=Catalog",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f14-2",
+    "family": "Sélecteurs",
+    "brand": "Eaton",
+    "range": "RMQ-Titan M22",
+    "symbol": "selector",
+    "source": "https://automotive.eaton.com/us/en-us/catalog/machinery-controls/m22-modular-pushbuttons.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f14-3",
+    "family": "Sélecteurs",
+    "brand": "Siemens",
+    "range": "SIRIUS ACT 3SU1",
+    "symbol": "selector",
+    "source": "https://support.industry.siemens.com/cs/attachments/107542462/manual_SIRIUS_ACT_3SU1_en-US.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f15-1",
+    "family": "Voyants",
+    "brand": "Schneider Electric",
+    "range": "Harmony XB5",
+    "symbol": "lamp",
+    "source": "https://download.se.com/files?p_Doc_Ref=DIA3ED2180701EN&p_File_Name=DIA3ED2180701EN.pdf&p_enDocType=Catalog",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f15-2",
+    "family": "Voyants",
+    "brand": "Eaton",
+    "range": "RMQ-Titan M22",
+    "symbol": "lamp",
+    "source": "https://automotive.eaton.com/us/en-us/catalog/machinery-controls/m22-modular-pushbuttons.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f15-3",
+    "family": "Voyants",
+    "brand": "Siemens",
+    "range": "SIRIUS ACT 3SU1",
+    "symbol": "lamp",
+    "source": "https://support.industry.siemens.com/cs/attachments/107542462/manual_SIRIUS_ACT_3SU1_en-US.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f16-1",
+    "family": "Alimentations DC",
+    "brand": "Phoenix Contact",
+    "range": "QUINT POWER",
+    "symbol": "psu",
+    "source": "https://assets.phoenixcontact.com/file/5db825bd-ca0c-4f92-ad13-df65c807d0d6/media/original",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f16-2",
+    "family": "Alimentations DC",
+    "brand": "WAGO",
+    "range": "Pro 2",
+    "symbol": "psu",
+    "source": "https://www.wago.com/us/products/electronic-interface/power-supplies-ups-ecbs/power-supply-pro2",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f16-3",
+    "family": "Alimentations DC",
+    "brand": "Weidmüller",
+    "range": "PROtop",
+    "symbol": "psu",
+    "source": "https://www.weidmuller.com/en/products/electronics/power_supplies/protop.jsp",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f17-1",
+    "family": "Bornes de passage",
+    "brand": "Phoenix Contact",
+    "range": "CLIPLINE PT",
+    "symbol": "terminal",
+    "source": "https://www.phoenixcontact.com/en-us/products/terminal-blocks/feed-through-terminal-blocks-multi-conductor-terminal-blocks-and-multi-level-terminal-blocks?p=5",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f17-2",
+    "family": "Bornes de passage",
+    "brand": "WAGO",
+    "range": "TOPJOB S",
+    "symbol": "terminal",
+    "source": "https://www.wago.com/us/products/electrical-interconnect/rail-chassis-terminal-blocks-product-family/topjobs-terminal-blocks",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f17-3",
+    "family": "Bornes de passage",
+    "brand": "Weidmüller",
+    "range": "Klippon Connect",
+    "symbol": "terminal",
+    "source": "https://www.weidmueller.com/int/products/connectivity/terminal_blocks/klippon_connect.jsp",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f18-1",
+    "family": "Bornes PE",
+    "brand": "Phoenix Contact",
+    "range": "CLIPLINE PT",
+    "symbol": "terminal_pe",
+    "source": "https://www.phoenixcontact.com/en-us/products/terminal-blocks/feed-through-terminal-blocks-multi-conductor-terminal-blocks-and-multi-level-terminal-blocks?p=5",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f18-2",
+    "family": "Bornes PE",
+    "brand": "WAGO",
+    "range": "TOPJOB S",
+    "symbol": "terminal_pe",
+    "source": "https://www.wago.com/us/products/electrical-interconnect/rail-chassis-terminal-blocks-product-family/topjobs-terminal-blocks",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f18-3",
+    "family": "Bornes PE",
+    "brand": "Weidmüller",
+    "range": "Klippon Connect",
+    "symbol": "terminal_pe",
+    "source": "https://www.weidmueller.com/int/products/connectivity/terminal_blocks/klippon_connect.jsp",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f19-1",
+    "family": "Automates",
+    "brand": "Siemens",
+    "range": "SIMATIC S7-1200 G2",
+    "symbol": "plc",
+    "source": "https://www.siemens.com/global/en/products/automation/systems/industrial/plc/s7-1200.html",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f19-2",
+    "family": "Automates",
+    "brand": "Schneider Electric",
+    "range": "Modicon M221",
+    "symbol": "plc",
+    "source": "https://www.se.com/uk/en/product-range-az/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f19-3",
+    "family": "Automates",
+    "brand": "WAGO",
+    "range": "PFC200",
+    "symbol": "plc",
+    "source": "https://www.wago.com/us/products/automation-technology/plcs/pfc-200-controllers",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f20-1",
+    "family": "Modules E/S",
+    "brand": "Siemens",
+    "range": "SIMATIC ET 200SP",
+    "symbol": "io",
+    "source": "https://mall.industry.siemens.com/mall/de/b1/Catalog/Products/10144488",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f20-2",
+    "family": "Modules E/S",
+    "brand": "Schneider Electric",
+    "range": "Modicon TM3",
+    "symbol": "io",
+    "source": "https://www.se.com/uk/en/product-range/62131-modicon-tm3/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f20-3",
+    "family": "Modules E/S",
+    "brand": "WAGO",
+    "range": "750 / 753",
+    "symbol": "io",
+    "source": "https://www.wago.com/us/products/automation-technology/plcs/pfc-200-controllers",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f21-1",
+    "family": "Variateurs de fréquence",
+    "brand": "Schneider Electric",
+    "range": "Altivar ATV320",
+    "symbol": "drive",
+    "source": "https://shop.se.com/pro/us/en/category/variable-speed-drives-13346/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f21-2",
+    "family": "Variateurs de fréquence",
+    "brand": "ABB",
+    "range": "ACS580",
+    "symbol": "drive",
+    "source": "https://www.abb.com/global/en/areas/motion/drives/low-voltage-ac-drives/general-purpose-drives/acs580",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f21-3",
+    "family": "Variateurs de fréquence",
+    "brand": "Siemens",
+    "range": "SINAMICS G120C",
+    "symbol": "drive",
+    "source": "https://www.siemens.com/en-us/products/sinamics/g120c/",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f22-1",
+    "family": "Moteurs triphasés",
+    "brand": "ABB",
+    "range": "M3BP",
+    "symbol": "motor",
+    "source": "https://new.abb.com/motors-generators/pt/motores-de-baixa-tensao-iec/motores-de-desempenho-de-processo/linha-m3bp-motores-de-area-segura-ir3",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f22-2",
+    "family": "Moteurs triphasés",
+    "brand": "WEG",
+    "range": "W22",
+    "symbol": "motor",
+    "source": "https://www.weg.net/catalog/weg/BR/pt/Motores-El%C3%A9tricos/Trif%C3%A1sico---Baixa-Tens%C3%A3o/Uso-Geral/W22/W22-/W22/p/MKT_WMO_TEXT_IMAGE_BR_MT_3PHASE_LV_TEFC_W22",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f22-3",
+    "family": "Moteurs triphasés",
+    "brand": "Innomotics",
+    "range": "GP",
+    "symbol": "motor",
+    "source": "https://www.innomotics.com/portfolio/products/low-voltage-motors/general-purpose-motors",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f23-1",
+    "family": "Détecteurs inductifs",
+    "brand": "SICK",
+    "range": "IME",
+    "symbol": "sensor_ind",
+    "source": "https://www.sick.com/kr/en/catalog/products/detection-sensors/inductive-proximity-sensors/ime/c/g345451",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f23-2",
+    "family": "Détecteurs inductifs",
+    "brand": "ifm",
+    "range": "IFS",
+    "symbol": "sensor_ind",
+    "source": "https://www.ifm.com/binaries/content/assets/us/pdfs/sensor_catalog_2018.pdf",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f23-3",
+    "family": "Détecteurs inductifs",
+    "brand": "Omron",
+    "range": "E2E NEXT",
+    "symbol": "sensor_ind",
+    "source": "https://industrial.omron.eu/en/products/e2e-next",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f24-1",
+    "family": "Détecteurs photoélectriques",
+    "brand": "SICK",
+    "range": "W4",
+    "symbol": "sensor_photo",
+    "source": "https://www.sick.com/sg/en/catalog/products/detection-sensors/photoelectric-sensors/w4/c/g577401?tab=selection",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f24-2",
+    "family": "Détecteurs photoélectriques",
+    "brand": "ifm",
+    "range": "O6",
+    "symbol": "sensor_photo",
+    "source": "https://www.ifm.com/us/en/us/learn-more/position/photoelectric-sensor/o6/o6-small-rectangular-photoelectric-sensor",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f24-3",
+    "family": "Détecteurs photoélectriques",
+    "brand": "Omron",
+    "range": "E3Z",
+    "symbol": "sensor_photo",
+    "source": "https://industrial.omron.eu/en/products/photoelectric-sensors",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f25-1",
+    "family": "Relais de sécurité",
+    "brand": "Pilz",
+    "range": "PNOZ",
+    "symbol": "safety",
+    "source": "https://www.pilz.com/en-US/products/relay-modules/safety-relays-protection-relays",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f25-2",
+    "family": "Relais de sécurité",
+    "brand": "Siemens",
+    "range": "SIRIUS 3SK1",
+    "symbol": "safety",
+    "source": "https://perfdata.public.siemens.com/SelectSafetyBID.aspx?lang=en",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  },
+  {
+    "id": "f25-3",
+    "family": "Relais de sécurité",
+    "brand": "Schneider Electric",
+    "range": "Preventa XPS",
+    "symbol": "safety",
+    "source": "https://download.se.com/files?p_Doc_Ref=DIABED2151007EN&p_File_Name=Catalog+Safety+modules+Preventa+XPSAXE+XPSAC+For+Emergency+stop+and+switch+monitoring+-+Category+0+-+English+2019.pdf&p_enDocType=Catalog",
+    "reference": "",
+    "note": "Gamme fabricant. Symbole fonctionnel générique : choisir la référence exacte, vérifier ses bornes et ses caractéristiques avant fabrication."
+  }
+]

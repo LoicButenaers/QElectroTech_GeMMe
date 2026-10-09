@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>GeMMeElec</AssemblyName>
+    <RootNamespace>GeMMeElec</RootNamespace>
+    <Version>0.1.0</Version>
+    <Product>GeMMeElec</Product>
+    <Description>Atelier de conception de schémas électriques</Description>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <ApplicationIcon>assets/app.ico</ApplicationIcon>
+    <UseAppHost>true</UseAppHost>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="src/*.cs" />
+    <EmbeddedResource Include="library/catalog.json" LogicalName="catalog.json" />
+    <Resource Include="assets/logo.png" />
+  </ItemGroup>
+</Project>

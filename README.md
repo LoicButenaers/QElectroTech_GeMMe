@@ -1,307 +1,85 @@
-![](logo.png)
+# GeMMeElec
 
-## QElectroTech GeMMe
+Atelier Windows de conception de schémas électriques industriels, réécrit en **C# / WPF / .NET 10**. Branche `GeMMeElec`, créée depuis `main`. Les anciens fichiers suivis ont été retirés de cette branche ; l’historique Git et la branche `EPLAN_DESIGN` sont conservés. Aucun code QElectroTech n’est utilisé par cette nouvelle application.
 
-Ce dépôt est la base de la version personnalisée GeMMe, destinée à améliorer
-l'ergonomie et les fonctionnalités de QElectroTech.
+## Démarrer
 
-- Dossier de travail : `C:\dev\QElectroTech_GeMMe`.
-- Branche de travail unique : `main`.
-- Sources importées du [dépôt officiel](https://github.com/qelectrotech/qelectrotech-source-mirror),
-  commit `a022d033388185230dfed62918d317f78bbb742c`.
-- L'historique, les licences, les ressources et les configurations de compilation
-  d'origine sont conservés. `upstream` désigne le dépôt officiel et `origin` le
-  dépôt GeMMe dans la copie locale initiale.
-- Les quatre sous-modules sont importés aux révisions prévues par les sources :
-  `SingleApplication`, `pugixml`, `elements` (collection de symboles) et
-  `doxygen-awesome-css` (documentation).
+Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Windows x64 embarque le runtime et la bibliothèque ; aucune installation de Qt ou de .NET n’est nécessaire pour l’utiliser. Le logo fourni est intégré.
 
-Pour récupérer ce dépôt sur une autre machine avec ses dépendances intégrées :
+Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
+
+## Fonctionnalités de cette première version
+
+- Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
+- Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
+- 34 symboles vectoriels originaux ; bibliothèque de 75 associations famille/fabricant/gamme dans 25 familles, trois fabricants par famille.
+- Recherche, filtres et aperçu des symboles ; placement répété sur grille.
+- Déplacement, sélection multiple, duplication des composants, rotation, suppression.
+- Connexions entre bornes, tracé orthogonal, coudes manuels, repères de conducteurs, suivi des déplacements.
+- Repères et propriétés des appareils, référence commerciale libre, caractéristiques, libellés de bornes, documentation fabricant.
+- Annotations, zoom à la molette, déplacement de la vue, ajustement du folio.
+- Historique commun à l’interface et au MCP : 100 annulations/rétablissements.
+- Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
+- Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
+- Serveur MCP local avec 22 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+
+## Dessiner
+
+Cliquer un équipement dans la bibliothèque puis cliquer le folio. Échap termine la pose. Le mode Conducteur permet de cliquer une première borne, des points de passage facultatifs, puis la borne d’arrivée. Les croisements n’établissent pas de liaison électrique : utiliser un symbole **Jonction électrique** pour créer une dérivation.
+
+| Action | Raccourci |
+| --- | --- |
+| Sélection / conducteur / texte | V / W / T |
+| Rotation / ajuster le folio | R / F |
+| Déplacer un symbole | Glisser à la souris |
+| Ajouter à la sélection | Ctrl+clic |
+| Zoom / déplacement de la vue | Molette / bouton central |
+| Enregistrer / enregistrer sous | Ctrl+S / Ctrl+Maj+S |
+| Ouvrir / nouveau projet | Ctrl+O / Ctrl+N |
+| Annuler / rétablir | Ctrl+Z / Ctrl+Y |
+| Dupliquer / supprimer | Ctrl+D / Suppr |
+
+Les valeurs de l’inspecteur sont enregistrées dans le projet après **Appliquer les propriétés**. Le menu Fichier propose un exemple de départ moteur, explicitement incomplet côté commande.
+
+## Bibliothèque et périmètre
+
+Les fabricants sont une sélection industrielle pertinente en Europe, **pas un classement de parts de marché**. Le catalogue contient des **gammes**, pas toutes leurs références commandables. Les symboles fonctionnels sont indépendants du fabricant ; les blocs PLC, E/S, variateur et sécurité ne reproduisent pas tout le bornage d’un appareil réel. Choisir la référence, vérifier sa documentation et compléter les propriétés avant fabrication. Voir [le catalogue documenté](docs/CATALOGUE.md).
+
+Cette base ne comprend pas encore le dimensionnement électrique, la simulation, les renvois interfolios, les borniers automatiques, l’import QET/EPLAN, la gestion de câbles multicœurs, les implantations d’armoires, ni les catalogues complets des fabricants. Elle ne revendique pas une certification IEC/RGIE ou une équivalence à EPLAN.
+
+## Compiler et vérifier
+
+Depuis le dépôt, sous PowerShell 7 :
 
 ```powershell
-git clone --recurse-submodules --branch main https://github.com/LoicButenaers/QElectroTech_GeMMe.git
+./Build.ps1 -Test
 ```
 
-### Compilation Windows
+Le script installe si nécessaire le SDK officiel .NET 10.0.401 dans `build/dotnet`, restaure les dépendances sous `build/packages`, puis publie **le même chemin `build/GeMMeElec.exe`** à chaque compilation. Fermer GeMMeElec avant de le recompiler. Les outils, caches et résultats de compilation ne sont pas versionnés.
 
-Les sources utilisent C++17, CMake, Qt 6 (avec les en-têtes privés de Qt GUI et
-LinguistTools), SQLite3, KDE CoreAddons et WidgetsAddons. Les modules Qt Pdf et
-Qml permettent respectivement l'import PDF et les scripts JavaScript.
-Le fichier `.github/workflows/windows-build.yml` contient la liste des paquets
-MSYS2 UCRT64 et les étapes de compilation utilisées par le projet officiel.
+Le choix .NET 10/WPF permet un éditeur Windows natif, un rendu vectoriel et un exécutable autonome ; [SDK officiel .NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
 
-La chaîne MSYS2 UCRT64 est installée localement dans `build/msys64` à partir de
-la [distribution officielle MSYS2](https://www.msys2.org/docs/installer/).
-Elle contient GCC, CMake, Ninja, ccache, Qt 6, SQLite3, les bibliothèques KDE et
-hidapi. Les outils et les binaires générés sont exclus du suivi Git.
-
-Pour recompiler depuis PowerShell, fermer le logiciel puis lancer :
+Les tests intégrés écrivent `build/self-test.json`. Pour le test d’intégration MCP, ouvrir GeMMeElec sur un projet vierge puis exécuter :
 
 ```powershell
-.\build-aux\windows\Build-GeMMe.ps1
+./Test-Mcp.ps1
 ```
 
-Le script utilise une compilation Release 64 bits avec les modules PDF,
-JavaScript et SpaceMouse, ainsi que les en-têtes précompilés pour accélérer
-les compilations locales. Il limite le parallélisme à trois tâches (modifiable
-avec `-Jobs 2`, par exemple). Les exécutables de tests ne sont pas générés.
-Il déploie les DLL Qt/KDE et leurs dépendances dans `build/`, ainsi que les
-traductions. Les symboles, cartouches et exemples sont accessibles par des
-jonctions vers leurs dossiers sources, sans en créer de copie.
-
-L'exécutable unique est `build/qelectrotech.exe`, remplacé à chaque compilation.
-Le lancer directement depuis l'Explorateur Windows. Garder ses DLL et dossiers
-de ressources à côté de lui ; déplacer uniquement le fichier `.exe` ne suffit
-pas pour l'exécuter ailleurs. Les journaux de compilation et la liste des
-versions des paquets sont dans `build/compilation.log` et
-`build/toolchain-packages.txt`.
-
-Sur une nouvelle machine, réinstaller MSYS2 dans `build/msys64` et les paquets
-UCRT64 indiqués dans la configuration Windows officielle avant d'utiliser le
-script (NSIS et les outils de création d'installeur ne sont pas nécessaires
-pour cet exécutable local).
-
-Compilation initiale vérifiée le 8 octobre 2026 : Windows 64 bits, GCC 16.2.0,
-Qt 6.11.2 et KDE Frameworks 6.30.0. Vérifications effectuées sans la chaîne de
-développement dans le PATH : réponse de `--version`, démarrage et fermeture
-de la fenêtre principale, chargement des 8 839 symboles, lecture de
-`examples/tremie_vibrante.qet` (3 folios, 98 éléments, 77 conducteurs) et
-export PDF des trois pages. Les résultats et journaux sont conservés dans
-`build/verification-*.json` et `build/*.log`. La suite de tests unitaires
-officielle n'a pas été exécutée pour cette compilation locale.
-
-Le premier déploiement automatique a aussi généré des ressources Qt Quick
-inutilisées dans `build/qml` et `build/qmltooling`. Leur suppression a été
-bloquée par le contrôle automatique de l'environnement. Le script désactive
-leur ajout pour les futurs déploiements ; ces ressources restantes n'empêchent
-pas le fonctionnement de l'exécutable.
-
-Les règles de travail sont consignées dans [AGENTS.md](AGENTS.md).
-
-
-# QElectroTech
-
-### What it is
-
-QElectroTech, or QET in short, is a libre and open source desktop application to create diagrams and schematics.
-The software is primarily intended to create electrical documentation but it can also be used to draw any kinds of diagrams, such as those made in pneumatics, hydraulics, process industries, electronics...
-Generally speaking, QET is a **CAD/CAE editor focusing on schematics drawing features**.
-
-This means that there are no embedded simulating or calculating functionalities and it is not planned to implement them.
-
-The main goal of the developers is to provide a libre, easy to use and effective software for **schematics drawing purposes**.
-
-### Version
-
-The current stable version is 0.100 and was released on 2026.01.25.
-Once it has been officially released, the stable version is always frozen and is no longer developed.
-
-New functionalities, bug and issue fixings are further made in the development version (currently 0.100.1 or 0.200.0 if based on new Qt6 port), which can also be [downloaded](https://qelectrotech.org/download.php).
-
-Users who want to test and take benefits from the last software implementations should use the development version. But... use it at your own risk, since things are sometimes broken or only partially implemented until they are done!
-
-### License
-
-The software is licensed under [GNU/GPL](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html).
-You are free to use, copy, modify and redistribute it under the terms of the license.
-
-Like many other open source software, QElectroTech is provided as is, without any warranty.
-
-### Development / technical choices
-
-The development follows the classical way of free and open source software: the source code, written by a community of users, is freely accessible.
-*    Get sources and sub-modules
-```txt
-git clone --recursive https://github.com/qelectrotech/qelectrotech-source-mirror.git
-```
-
-Here are the technical choices made for the software development:
-
-*   Integrated development environment: [Qt Framework](https://www.qt.io/ide/)
-*   Libraries: Qt 6.x
-*   [KF6 Framework](https://github.com/KDE)
-    [Cmake](https://cmake.org/install/)
-    [kcoreaddons](https://invent.kde.org/frameworks/kcoreaddons)
-    [kwidgetsaddons](https://invent.kde.org/frameworks/kwidgetsaddons).
-*   Coding language: [C++](https://en.wikipedia.org/wiki/C%2B%2B)
-*   GUI translations: [Qt Linguist](http://doc.qt.io/qt-6/qtlinguist-index.html)
-*   Version control: [GIT](https://github.com/qelectrotech/qelectrotech-source-mirror.git)
-*   Doxygen documentation :[Doxygen](https://download.qelectrotech.org/qet/doxygen/html/)
-*   QtCreator qch doxygen :[QElectroTech.qch](https://download.qelectrotech.org/qet/doxygen/QElectroTech.qch)
-*   File format for projects, elements and titleblocks: [XML](http://www.w3schools.com/xml/xml_whatis.asp)
-*   Main development platform: [GNU/Linux](http://getgnulinux.org/en/linux/)
-*   Targeted platforms: Windows, GNU/Linux, Mac OS X, BSDs
-*   [Forum](https://qelectrotech.org/forum/index.php)
-*   [Wiki](https://qelectrotech.org/wiki_new/)
-*   [Mantis_bugtracker](https://qelectrotech.org/bugtracker/my_view_page.php)
-
-If you wish to be informed of the latest developments, browse the [archive](https://listengine.tuxfamily.org/lists.tuxfamily.org/qet/) of the project mailing list where all commits (changes) are registered. This archive is publicly available, you don't need any account to access it.
-
-
-# Features
-
-QElectroTech is a free and open source software.
-No need to worry about restrictive licensing, privacy violation or dependency on a company.
-Zero cost and no licensing fees!
-But you are welcome to make a donation to support the development
-
-QElectroTech runs on the 3 most widespread operating systems for desktop computers in the world.
-Files that were created on an OS can be edited on another OS without any conversion or restriction.
-MS Windows users can even run the "ready-to-use" version of QElectroTech from an external medium with no need to install it on an access restricted computer.
-
-
-Take advantage of the modern GUI
-
-Toolbars and panels can be enabled/disabled, moved and displayed the way you want to work.
-Panels can be stacked on each other (as tabs) or docked on the sides (as docks) or completely separated from the main window (as windows).
-The GUI can fit to small or big screens, and even to multi-display configurations.
-![](https://download.qelectrotech.org/qet/images-features/0030.png "GUI overview")
-
-
-The GUI of QElectroTech is translated in 25 languages.
-You only need to restart the application for the new selected language to take effect.
-![](https://download.qelectrotech.org/qet/images-features/0040.png "Lang menu")
-
-Create technical documentation in professional quality
-
-Size, look and informations of the folios (sheets) are fully configurable.
-You can set vertical and horizontal headers (printed rulers) individually on and off, set number of columns and rows, and set width/height of each column/row.
-
-Titlebocks can be created and edited with the embedded titleblock editor to perfectly suit your needs.
-Custom variables can be defined to display the informations you wish in the titleblock.
-![](https://download.qelectrotech.org/qet/images-features/0055.png "Titleblock editor")
-
-With only 2 mouse clicks you can add a full automatic generated table of content.
-Changes in the documentation are updated on the fly.
-![](https://download.qelectrotech.org/qet/images-features/0060.png "Table of content")
-
-Choose from more than 8.200 symbols...
-The embedded QET collection contains a rich library of electric, logic, pneumatic, hydraulic and fluid symbols.
-The library grows at every new release thanks to an active user community.
-![](https://download.qelectrotech.org/qet/images-features/0070.png "Collections")
-
-...or create your own collection
-
-The embedded element editor is a nice tool to create your own elements (symbols or anything else).
-Your own elements are stored in the user collection.
-![](https://download.qelectrotech.org/qet/images-features/0080.png "Element editor")
-
-Quickly find what you need
-
-All collections can quickly be searched with the integrated search engine.
-Furthermore, the search request can be restricted to the folder of your choice.
-![](https://download.qelectrotech.org/qet/images-features/0090.png "Search engine")
-
-Easily draw complex schematics
-
-To add an element on the drawing area, it only needs a drag & drop from the collection panel.
-![](https://download.qelectrotech.org/qet/images-features/0102.png "Drag and drop")
-
-Elements are automatically connected if they are aligned, or connected from point to point by pulling a conductor with the mouse.
-![](https://download.qelectrotech.org/qet/images-features/0105.png "Conductor connections")
-
-The path of every conductor can be modified by moving its handles with the mouse.
-![](https://download.qelectrotech.org/qet/images-features/0107.png "Conductor handles")
-And of course, you can accurately zoom with the mouse wheel over the drawing area to catch the smallest details.
-
-Link elements together to create cross references
-
-Several types of element can be linked together to display a cross reference text.
-All types of cross references are automatically updated on the fly, you don't need to think about them if you make changes.
-![](https://download.qelectrotech.org/qet/images-features/0112.png "Cross ref elements")
-To speed up your work, linkable elements are easily searched and shown.
-![](https://download.qelectrotech.org/qet/images-features/0115.png  "Cross ref search")
-
-
-Export informations to a parts list
-Informations of all elements in the project can be exported to a .csv file that can be read and edited by any spreadsheet application.
-![](https://download.qelectrotech.org/qet/images-features/0122.png "Element informations")
-
-This way, you can make your own parts list or bill of material using the full power of a spreadsheet program.
-![](https://download.qelectrotech.org/qet/images-features/0125.png "Spreadsheet")
-Print to pdf and/or export your work to images
-
-Your whole documentation or only selected parts of it can be printed to a real printer or to a pdf file.
-Alternatively, you can export to vector (svg) or pixel (png, jpg, bmp) format images.
-
-### And much more:
-
-*   open and edit several projects at the same time
-*   import images (.bmp, .jpg, .png, .svg) in your diagrams
-*   add basic shapes (lines, rectangles, ellipses, polygons) to your drawings
-*   edit the thickness, the line style and the color of conductors
-*   define some autonum patterns for conductors, symbols and folios
-*   take advantage of the open xml standard of elements and projects to create custom tools
-*   search and replace Widget (Ctrl + F) in entire project
-*   conductors num can be exported to csv file.
-*   ***
-
-Nomenclature
-
-A new nomenclature tool appears in the menu: project -> Add a nomenclature.
-The nomenclature is presented in the form of a configurable table separated into two parts: the display (the form) and the content (the background).
-- Display: the size and position of the table, the margins between text and the table cell, the alignment of the text in the cells and the font. The configuration of the table headers and the table itself are separate.
-- Content: the information to display in the table and the order in which it should be displayed.
-
-![](https://download.qelectrotech.org/qet/images_depeche_linuxfr/08/dialogue_nomenclature.png "nomenclature dialogue")
-
-In order to speed up the establishment of a nomenclature, it is possible to export / import the display and content configurations separately. This is the "Configuration" part that can be seen in the photos above.
-
-Behind the scenes, an SQLite database does the work, so setting up the content is nothing more or less than an SQL query created using a dialog (screenshot by right).
-The SQL query is configured as follows (from top to bottom in the screenshot):
-- “Available information”: the information to display;
-- "Filter": filter the information (is not empty, is empty, contains, does not contain, is equal to, is not equal to) only one filter can be applied per information, it is not possible combine several;
-- "Type of elements": allows you to filter on what type of element you want to obtain information.
-
-At the bottom, a checkmark "SQL query" allows you to edit a personalized query, if the basic options are not sufficient.
-
-When a nomenclature is too large to be contained in a single folio, it is possible to separate it on several folios, the tables of each folio are then linked together. When creating a nomenclature, this option is activated by default, which has the effect of adding the necessary number of folios, adding a table in each of them and linking them together.
-
-Finally two buttons are available in the property panel:
-- "Fit the table to the folio": positions and adjusts the size and determines the number of rows in the table in relation to the folio;
-- "Apply geometry to all tables linked to this one": applies the three properties mentioned above to all linked tables in order to save time and maintain aesthetic consistency.
-
-And to finish a table
-![](https://download.qelectrotech.org/qet/images_depeche_linuxfr/08/tableau.png "table")
-
-
-Summary
-
-The old summary has been completely removed from the code in order to make room for the new one which is exactly the same as the nomenclature (a large amount of the code is common), with the exception of the SQL query (and its dialog to configure it) which offers specific information for editing a summary.
-
-Export of the internal database
-
-The database used by the nomenclature and the summary can be exported in a “.sqlite” file.
-Currently this is irrelevant, as the function was created during development for debugging purposes, we left it.
-Note that the database will become increasingly important in the future of Qet.
-
-
-Export of the wiring list
-
-In order to be able to use the wiring number printers more easily, the names of conductors can be exported in CSV format, the export respects the quantity of conductors in order to print the right quantity of numbers, for example a potential numbered 240 composed of 3 wires will give 6 × 240 (2 numbers per wire × 3 wires) in the CSV. 
-
-
-
-### Story
-
-The QElectroTech project was founded in 2007 by two french students, Xavier and Benoit.
-Xavier developed the base application itself and made all technical choices about the development.
-The first version of QET (0.1) was released on 09.03.2008.
-However, both Xavier and Benoit do not participate anymore in the project since 2013.
-
-Following this period, new developers and contributors took over the project and kept it alive.
-The development and the many translations are actively maintained.
-New functionalities and evolutions are planned to make QET ever better.
-
-Nowadays, QET is not only used by many individuals, teachers and students but also by professional electricians and companies all over the world.
-
-  
-### Donate Money
-
-If you love QElectroTech, you can help developers to buy new hardware to test
-and implement new features. Thanks in advance for your generous donations.
-
-For more information, look at [Paypal](https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=ZZHC9D7C3MDPC&ssrt=1694606609672)
-
-
-
+Le test crée un circuit de commande dans la fenêtre, vérifie les refus d’entrées invalides et la protection des fichiers, puis écrit `build/mcp-test.json`, un projet et ses exports. Il refuse de remplacer un autre projet non vide ou non enregistré. Il peut reprendre son propre fichier de test enregistré.
+
+## Structure
+
+| Fichier | Rôle |
+| --- | --- |
+| `src/Model.cs` | Projet, validation structurelle, transactions, historique |
+| `src/Symbols.cs` | Géométrie et bornes des symboles |
+| `src/Drawing.cs` | Scène vectorielle partagée |
+| `src/SheetCanvas.cs` | Interaction du dessinateur |
+| `src/MainWindow.cs` | Interface, inspecteur, commandes et exemple |
+| `src/Export.cs` | SVG, PDF, nomenclature |
+| `src/Mcp.cs` | MCP stdio et canal local vers l’interface |
+| `library/catalog.json` | Gammes et sources officielles |
+
+Voir [la configuration MCP](docs/MCP.md) et [les vérifications de livraison](docs/VALIDATION.md).
+
+L’ancien dossier de compilation QElectroTech est encore présent localement : sa suppression a été rejetée par le contrôle automatique (« blocked by policy »). Il reste ignoré par Git et n’est pas utilisé par GeMMeElec.
