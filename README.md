@@ -8,13 +8,18 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.5)
+## Fonctionnalités (version 0.6)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
 - 92 symboles vectoriels originaux répartis en 10 catégories industrielles ; accès séparé aux 75 associations famille/fabricant/gamme dans 25 familles, trois fabricants par famille.
 - Cadre de repérage avec colonnes numérotées et lignes lettrées, configurable par folio ; localisation des composants dans la BOM, par exemple `K1 : 3 / C7`.
 - Renvois interfolios départ/arrivée liés par nom, modes chaîne et étoile, références réciproques, navigation et continuité des connexions.
+- Reports avec flèche pleine rouge, nom bleu et destination verte sur une ligne ; double-clic sur le symbole ou son texte pour rejoindre le report lié.
+- Jonctions calculées à partir des fils partageant une borne : point au départ commun ou à la divergence, suppression automatique quand il ne reste qu’un fil. Les nœuds de dérivation suivent le déplacement des segments.
+- Éditeur de copies de symboles avec aperçu, primitives et bornes éditables, bibliothèque personnelle embarquée dans le projet et échange `.gemsymbol`.
+- Import de symboles fabricants DXF 2000+ : blocs, traits, cercles, arcs, polylignes et textes ; échelle réglable et ajout manuel des bornes.
+- Conversion QElectroTech `.qet` avec symboles embarqués et connexions ; import graphique multipage des exports DXF EPLAN/CAO, avec rapport de limites avant ouverture.
 - Recherche, filtres et aperçu des symboles ; placement répété sur grille.
 - Déplacement, sélection multiple, duplication des composants, rotation, suppression.
 - Connexions entre bornes, tracé orthogonal, coudes manuels, repères de conducteurs, suivi des déplacements.
@@ -32,7 +37,7 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec un budget mémoire de 64 Mo pour les projets contenant des images.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
-- Serveur MCP local avec 35 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Serveur MCP local avec 41 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Dessiner
 
@@ -64,7 +69,17 @@ Les valeurs de l’inspecteur sont enregistrées dans le projet après **Appliqu
 
 Les fabricants sont une sélection industrielle pertinente en Europe, **pas un classement de parts de marché**. Le catalogue contient des **gammes**, pas toutes leurs références commandables. Les symboles fonctionnels sont indépendants du fabricant ; les blocs PLC, E/S, variateur et sécurité ne reproduisent pas tout le bornage d’un appareil réel. Choisir la référence, vérifier sa documentation et compléter les propriétés avant fabrication. Voir [le catalogue documenté](docs/CATALOGUE.md).
 
-Cette base ne comprend pas encore le dimensionnement électrique, la simulation, les références croisées entre bobines et contacts d’un appareil, les borniers automatiques, l’import QET/EPLAN, la gestion de câbles multicœurs, les implantations d’armoires, ni les catalogues complets des fabricants. Elle ne revendique pas une certification IEC/RGIE ou une équivalence à EPLAN.
+Cette base ne comprend pas encore le dimensionnement électrique, la simulation, les références croisées entre bobines et contacts d’un appareil, les borniers automatiques, l’import des formats EPLAN natifs `.elk`, `.zw1` et `.epj`, la gestion de câbles multicœurs, les implantations d’armoires, ni les catalogues complets des fabricants. Elle ne revendique pas une certification IEC/RGIE ou une équivalence à EPLAN. Le DXF EPLAN récupère le dessin, sans reconstruire les appareils ni les réseaux électriques.
+
+## Symboles personnels et conversion
+
+Sélectionner un composant puis **Propriétés → Modifier le symbole en copie…**, ou choisir un symbole dans la bibliothèque et utiliser **Insérer → Modifier un symbole en copie…**. Les tableaux modifient lignes, rectangles, cercles, textes et bornes ; le clic dans l’aperçu positionne l’objet sélectionné. **Enregistrer la copie** l’ajoute à **Mes symboles** dans le projet. La case dédiée remplace le composant sélectionné, en préservant les IDs des bornes raccordées. **Exporter .gemsymbol** crée un fichier réutilisable dans un autre projet.
+
+**Insérer → Importer un symbole DXF / GeMMeElec…** ouvre le même éditeur. Pour un DXF fabricant, régler l’échelle, ajouter les bornes électriques puis enregistrer la copie. La géométrie seule ne fournit ni référence commerciale vérifiée ni connectivité. Le lecteur DXF [netDxf 3.0.1](https://github.com/haplokuon/netDxf) est distribué sous [licence MIT](docs/netDxf-LICENSE.txt), également consultable dans **Aide**.
+
+Le menu **Importer** convertit un projet `.qet`, ou plusieurs folios `.dxf` exportés depuis EPLAN/une CAO. La conversion s’effectue en arrière-plan ; un rapport présente les simplifications avant l’ouverture du résultat. Enregistrer ensuite en `.gemelec`. Les fichiers sources restent intacts. Voir [le guide et les limites des imports](docs/IMPORTS.md).
+
+Les jonctions de borne commune sont calculées sans ajouter un composant. Une dérivation dessinée sur le trajet d’un fil utilise un nœud interne automatique : il n’est plus sélectionnable comme un appareil ni présent dans la BOM. Lorsque deux tronçons seuls restent, le point disparaît ; ils sont fusionnés si leurs numéros et couleurs concordent, sinon leurs propriétés distinctes sont conservées. Un croisement de fils indépendants n’établit pas de connexion.
 
 ## Repérage et renvois interfolios
 
@@ -86,7 +101,7 @@ Insérer des champs comme `{project.title}`, `{sheet.title}`, `{sheet.number}`, 
 
 **Propriétés du composant → Ajouter une image BOM** intègre une photo PNG/JPEG/BMP ; sinon la BOM affiche le symbole fonctionnel. Les images sont ramenées à 512 pixels et conservées dans le projet, une seule fois par contenu. Le HTML contient les images, fonctionne hors ligne et peut être imprimé depuis le navigateur. Le CSV contient les données et une indication textuelle de l’image ; il n’embarque pas de photo. L’export XLSX natif n’est pas encore proposé.
 
-Pour garder l’éditeur réactif : scène vectorielle et grille réutilisées pendant le survol, index des composants et cache des tracés pour les fils, caches bornés pour les textes et images, tableaux virtualisés et aperçu du cartouche temporisé. Les renvois sont indexés une fois par reconstruction de scène ; la BOM est paginée à la demande. Les projets 0.2, 0.3 et 0.4 restent lisibles.
+Pour garder l’éditeur réactif : scène vectorielle et grille réutilisées pendant le survol, index des composants et cache des tracés pour les fils, caches bornés pour les textes et images, tableaux virtualisés et aperçu du cartouche temporisé. Les renvois sont indexés une fois par reconstruction de scène ; les jonctions utilisent un arbre des trajets communs. La BOM est paginée à la demande. Les imports UI s’exécutent en arrière-plan et la bibliothèque personnelle n’est reconstruite qu’après changement de ses définitions. Les projets 0.2 à 0.5 restent lisibles.
 
 ## Compiler et vérifier
 
@@ -117,6 +132,10 @@ Le mode `-Headless` crée une instance invisible et une session MCP séparée : 
 | `src/IndustrialSymbols.cs` | Catégories et symboles industriels supplémentaires |
 | `src/CrossReferences.cs` | Zones, résolution des renvois et continuité des connexions |
 | `src/ReferenceDialogs.cs` | Réglage des zones, propriétés et navigateur des renvois |
+| `src/ReferenceDisplay.cs` | Reports en ligne et zone cliquable du texte |
+| `src/Junctions.cs` | Jonctions dynamiques, nettoyage et déplacement des nœuds |
+| `src/CustomSymbols.cs`, `src/SymbolDialogs.cs` | Définitions personnelles, copies, éditeur et échanges |
+| `src/DxfImport.cs`, `src/ProjectImport.cs` | Lecture DXF, conversion QET et rapports |
 | `src/Drawing.cs` | Scène vectorielle partagée |
 | `src/SheetCanvas.cs` | Interaction du dessinateur |
 | `src/MainWindow.cs` | Interface, inspecteur, commandes et exemple |

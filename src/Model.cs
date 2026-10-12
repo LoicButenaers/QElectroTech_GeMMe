@@ -27,6 +27,7 @@ public static class Catalog
 }
 public sealed class Project
 {
+    public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
     public string Format { get; set; } = "GeMMeElec";
     public int Version { get; set; } = 1;
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -68,6 +69,9 @@ public sealed class Sheet
 }
 public sealed class Component
 {
+    public bool AutoJunction { get; set; }
+    public bool ShowPortLabels { get; set; } = true;
+    [JsonIgnore] public SymbolDefinition? ResolvedDefinition { get; set; }
     public string LinkName { get; set; } = "";
     public string LinkMode { get; set; } = "pair";
     public int LinkOrder { get; set; }
@@ -90,7 +94,7 @@ public sealed class Component
     public LabelPlacement TagPlacement { get; set; } = new() { OffsetY = -12 };
     public LabelPlacement DetailPlacement { get; set; } = new() { OffsetY = 12 };
     public LabelPlacement DescriptionPlacement { get; set; } = new() { Side = "bottom", Horizontal = "center", Vertical = "top", Visible = false };
-    [JsonIgnore] public SymbolDefinition Definition => Symbols.All[Symbol];
+    [JsonIgnore] public SymbolDefinition Definition => ResolvedDefinition ?? Symbols.All[Symbol];
     public Point Transform(double x, double y)
     {
         var angle = Rotation * Math.PI / 180;
@@ -228,6 +232,7 @@ public static class ProjectStore
         if (p.Format != "GeMMeElec" || p.Version != 1) throw new InvalidDataException("Format ou version de projet non pris en charge.");
         void Text(string? value) { if (value is null || value.Length > 2000) throw new InvalidDataException("Champ texte absent ou trop long."); }
         Text(p.Title); Text(p.Author); Text(p.Revision);
+        CustomSymbols.Validate(p);
         DocumentModel.Validate(p);
         if (p.Sheets is null || p.Sheets.Count is < 1 or > 100) throw new InvalidDataException("Le projet doit contenir entre 1 et 100 folios.");
         var ids = new HashSet<string>();
@@ -248,7 +253,9 @@ public static class ProjectStore
                 Text(c.LinkName);
                 if (c.LinkMode is not ("pair" or "star") || c.LinkOrder is < 0 or > 99999 || c.LinkName.Length > 80) throw new InvalidDataException("Paramètres de renvoi invalides.");
                 Id(c.Id);
-                if (c.Symbol is null || !Symbols.All.ContainsKey(c.Symbol)) throw new InvalidDataException("Symbole non pris en charge.");
+                if (c.Symbol is null) throw new InvalidDataException("Symbole non pris en charge.");
+                c.ResolvedDefinition = CustomSymbols.Resolve(p, c.Symbol);
+                if (c.AutoJunction && c.Symbol != "junction") throw new InvalidDataException("Nœud de câblage invalide.");
                 if (!double.IsFinite(c.X) || !double.IsFinite(c.Y) || c.X < 0 || c.X > s.Width || c.Y < 0 || c.Y > s.Height || c.Rotation % 90 != 0) throw new InvalidDataException("Position ou rotation de symbole invalide.");
                 c.PortLabels ??= [];
                 if (c.TagPlacement is null || c.DetailPlacement is null || c.DescriptionPlacement is null) throw new InvalidDataException("Position de texte absente.");
@@ -331,11 +338,13 @@ public sealed partial class Editor
     {
         if (InteractionInProgress) throw new InvalidOperationException("Terminer le déplacement en cours.");
         var before = ProjectStore.Serialize(Project);
-        try { action(); ProjectStore.ValidateStructure(Project); Commit(before); }
+        try { action(); Commit(before); }
         catch { Project = ProjectStore.Deserialize(before); Notify(); throw; }
     }
     public void Commit(string before)
     {
+        ProjectStore.ValidateStructure(Project);
+        Junctions.Cleanup(Project);
         ProjectStore.ValidateStructure(Project);
         if (before != ProjectStore.Serialize(Project)) { undo.Add(before); redo.Clear(); TrimHistory(); }
         Notify();
@@ -375,12 +384,12 @@ public sealed partial class Editor
     }
     public Component AddComponent(string symbol, double x, double y, string? catalogId = null)
     {
-        if (!Symbols.All.TryGetValue(symbol, out var d)) throw new ArgumentException("Symbole inconnu.");
+        var d = CustomSymbols.Resolve(Project, symbol);
         CatalogEntry? entry = catalogId is null ? null : Catalog.Entries.SingleOrDefault(c => c.Id == catalogId) ?? throw new ArgumentException("Article de bibliothèque introuvable.");
         if (entry is not null && entry.Symbol != symbol) throw new ArgumentException("Le symbole ne correspond pas à la gamme.");
-        var c = new Component { Symbol = symbol, X = Snap(x), Y = Snap(y), Tag = NextTag(d.Prefix), Description = d.Name,
+        var c = new Component { Symbol = symbol, ResolvedDefinition = d, X = Snap(x), Y = Snap(y), Tag = NextTag(d.Prefix), Description = d.Name,
             CatalogId = entry?.Id ?? "", Brand = entry?.Brand ?? "", Range = entry?.Range ?? "", Reference = entry?.Reference ?? "", Source = entry?.Source ?? "" };
-        if (CrossReferences.IsPoint(c)) { c.TagPlacement = new() { Side = "top", Horizontal = "center", Vertical = "bottom", Gap = 8 }; c.DetailPlacement = new() { Side = "bottom", Horizontal = "center", Vertical = "top", Gap = 8 }; }
+        if (CrossReferences.IsPoint(c)) { c.TagPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; c.DetailPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; }
         Change(() => Sheet.Components.Add(c)); return c;
     }
     public Wire Connect(Endpoint from, Endpoint to, IEnumerable<Position>? points = null, string number = "", string? color = null)

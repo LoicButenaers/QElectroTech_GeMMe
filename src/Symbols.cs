@@ -1,7 +1,7 @@
 namespace GeMMeElec;
 
 public sealed record Port(string Id, double X, double Y);
-public sealed record Shape(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "");
+public sealed record Shape(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "") { public double Rotation { get; init; } }
 public sealed record SymbolDefinition(string Id, string Name, string Prefix, double Width, double Height, List<Port> Ports, List<Shape> Shapes)
 {
     public string Category { get; init; } = "Divers";

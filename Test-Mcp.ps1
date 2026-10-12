@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 35) '35 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 41) '41 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -189,6 +189,44 @@ try {
     $bomText = $state.project.sheets[-1].bomPage.rows | ConvertTo-Json -Depth 20
     Assert ($bomText.Contains('CMD-2') -and $bomText.Contains('C7')) 'Nomenclature avec position des composants'
     $null = Call 'export_pdf' @{ path=(Join-Path $root "build/$stem.pdf"); overwrite=$true }
+    $null = Call 'page_select' @{ id=$firstPage }
+    $definition = Call 'symbol_get' @{ id='coil' }
+    $definition.name = 'Bobine MCP personnelle'
+    $custom = Call 'symbol_copy' @{ definition=$definition; componentId=$coil.id }
+    Assert ($custom.id -like 'custom-*' -and (Call 'symbol_get' @{id='coil'}).name -ne $custom.name) 'Copie de symbole sans modifier la source'
+    $state = Call 'project_get'
+    Assert (@($state.project.sheets[0].components | Where-Object symbol -eq $custom.id).Count -eq 1 -and $state.project.sheets[0].wires.Count -gt 0) 'Remplacement du symbole avec connexions conservées'
+    $symbolPath = Join-Path $root 'build/MCP-custom-symbol.gemsymbol'
+    $null = Call 'symbol_export' @{ id=$custom.id; path=$symbolPath; overwrite=$true }
+    $null = Call 'symbol_export' @{ id=$custom.id; path=$symbolPath } -ExpectError
+    $importedSymbol = Call 'symbol_import' @{ path=$symbolPath }
+    Assert ($importedSymbol.symbol.id -ne $custom.id -and $importedSymbol.symbol.ports.Count -eq 2) 'Échange de symbole autonome et protection du fichier existant'
+    $null = Call 'project_save' @{ path=$path; overwrite=$true }
+    $null = Call 'project_open' @{ path=$path }
+    Assert ((Call 'symbol_get' @{id=$custom.id}).name -eq 'Bobine MCP personnelle') 'Bibliothèque personnelle persistante'
+    $fixtureDir = if ($AssemblyPath) { Split-Path $AssemblyPath } else { Join-Path $root 'build' }
+    $qetPath = Join-Path $fixtureDir 'qet-import-fixture.qet'
+    $report = Call 'project_import' @{ path=$qetPath }
+    Assert ($report.sheets -eq 1 -and !$report.applied -and (Call 'project_get').project.title -eq 'Essai MCP · circuit de commande') 'Analyse de conversion sans remplacer le projet courant'
+    $null = Call 'project_import' @{ path=$qetPath; apply=$true }
+    $state = Call 'project_get'
+    Assert ($state.dirty -and !$state.filePath -and $state.project.sheets[0].wires.Count -eq 1) 'Import QET ouvert comme nouveau projet non enregistré'
+    $dxfPath = Join-Path $fixtureDir 'manufacturer-symbol-fixture.dxf'
+    $null = Call 'project_import' @{ path=$dxfPath; apply=$true } -ExpectError
+    $dxf = Call 'symbol_import' @{ path=$dxfPath; scale=2 }
+    Assert ($dxf.symbol.shapes.Count -gt 40 -and $dxf.symbol.ports.Count -eq 0 -and $dxf.warnings.Count -gt 0) 'Import DXF sans bornes électriques inventées'
+    $dxfReport = Call 'project_import' @{ path=$dxfPath }
+    Assert ($dxfReport.report.Contains('graphique') -and !$dxfReport.applied) 'Limites de conversion EPLAN DXF explicites'
+    $null = Call 'project_import' @{ path=(Join-Path $root 'build/project.zw1') } -ExpectError
+    $null = Call 'project_new' @{ title='Test déplacement de jonction'; discardUnsaved=$true }
+    $a = Call 'component_add' @{symbol='coil';x=200;y=150}; $b = Call 'component_add' @{symbol='coil';x=200;y=600}; $c = Call 'component_add' @{symbol='coil';x=600;y=300}
+    $wire = Call 'wire_add' @{fromComponent=$a.id;fromPort='A2';toComponent=$b.id;toPort='A1'}
+    $branch = Call 'wire_branch' @{fromComponent=$c.id;fromPort='A1';targetWire=$wire.id;x=200;y=350}
+    $null = Call 'wire_segment_move' @{id=$wire.id;segment=1;x=250;y=350}
+    $state = Call 'project_get'
+    Assert (($state.project.sheets[0].components | Where-Object autoJunction).x -eq 250) 'Jonction déplaçable avec le segment via MCP'
+    $null = Call 'wire_delete' @{id=$branch.id}
+    Assert (@((Call 'project_get').project.sheets[0].components | Where-Object autoJunction).Count -eq 0) 'Nettoyage automatique après suppression de branche'
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

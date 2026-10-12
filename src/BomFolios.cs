@@ -86,7 +86,7 @@ public static class BomFolios
         double total = 100 + HeaderHeight(b.Columns, Widths(b.Columns));
         foreach (var row in b.Rows)
         {
-            if (row is null || row.Cells is null || row.Cells.Count != b.Columns.Count || row.Cells.Any(c => c is null || c.Count > 60 || c.Any(t => t is null || t.Length > 2000)) || !double.IsFinite(row.Height) || row.Height < 32 || row.Height < row.Cells.Max(c => c.Count) * Line + 12 || row.Symbol is null || !Symbols.All.ContainsKey(row.Symbol) || row.ImageId is null || (row.ImageId.Length > 0 && !p.Images.ContainsKey(row.ImageId))) throw new InvalidDataException("Ligne de nomenclature invalide.");
+            if (row is null || row.Cells is null || row.Cells.Count != b.Columns.Count || row.Cells.Any(c => c is null || c.Count > 60 || c.Any(t => t is null || t.Length > 2000)) || !double.IsFinite(row.Height) || row.Height < 32 || row.Height < row.Cells.Max(c => c.Count) * Line + 12 || row.Symbol is null || !(Symbols.All.ContainsKey(row.Symbol) || p.CustomSymbols.ContainsKey(row.Symbol)) || row.ImageId is null || (row.ImageId.Length > 0 && !p.Images.ContainsKey(row.ImageId))) throw new InvalidDataException("Ligne de nomenclature invalide.");
             total += row.Height;
         }
         if (total > Bottom + .01) throw new InvalidDataException("La nomenclature dépasse la page.");
@@ -127,8 +127,8 @@ public static class BomFolios
             double w = image.PixelWidth * scale, h = image.PixelHeight * scale;
             ink.Add(new("image", x - w / 2, y - h / 2, w, h, Text: p.Images[row.ImageId])); return;
         }
-        var d = Symbols.All[row.Symbol]; double k = size / Math.Max(d.Width + 12, d.Height + 12);
+        var d = CustomSymbols.Resolve(p, row.Symbol); double k = size / Math.Max(d.Width + 12, d.Height + 12);
         foreach (var shape in d.Shapes)
-            ink.Add(new(shape.Kind, x + shape.X * k, y + shape.Y * k, shape.Kind == "line" ? x + shape.A * k : shape.A * k, shape.Kind == "line" ? y + shape.B * k : shape.B * k, shape.Text, Size: shape.A * k));
+            ink.Add(new(shape.Kind, x + shape.X * k, y + shape.Y * k, shape.Kind == "line" ? x + shape.A * k : shape.A * k, shape.Kind == "line" ? y + shape.B * k : shape.B * k, shape.Text, Size: shape.A * k, Rotation: shape.Rotation));
     }
 }

@@ -16,6 +16,8 @@ public sealed partial class MainWindow : Window
     private readonly ListBox library = new(), pages = new();
     private readonly TextBox search = new();
     private readonly ComboBox family = new(), brand = new(), libraryMode = new();
+    private Dictionary<string, SymbolDefinition>? displayedCustomSymbols;
+    private int displayedCustomCount;
     private readonly StackPanel properties = new();
     private readonly TextBlock status = new(), counts = new(), mcpStatus = new(), libraryCount = new();
     private readonly Dictionary<string, TextBox> fields = [];
@@ -42,11 +44,12 @@ public sealed partial class MainWindow : Window
         AddMenu(menu, "_Fichier", ("Nouveau projet…", NewProject), ("Ouvrir…", Open), ("Enregistrer", () => Save(false)), ("Enregistrer sous…", () => Save(true)), ("Informations du projet…", ProjectInfo), ("Exemple de départ moteur", Demo), ("Quitter", Close));
         AddMenu(menu, "_Édition", ("Annuler    Ctrl+Z", Editor.Undo), ("Rétablir    Ctrl+Y", Editor.Redo), ("Dupliquer    Ctrl+D", Duplicate), ("Rotation 90°    R", Rotate), ("Supprimer    Suppr", Delete));
         AddMenu(menu, "_Folio", ("Ajouter…", AddPage), ("Propriétés du folio…", SheetInfo), ("Cartouches…", TitleBlockEditor), ("Repérage lignes / colonnes…", ZonesDialog), ("Monter dans le projet", () => MovePage(-1)), ("Descendre dans le projet", () => MovePage(1)), ("Renommer…", RenamePage), ("Supprimer le folio", DeletePage));
-        AddMenu(menu, "_Insérer", ("Conducteur    W", () => Canvas.SetMode("wire")), ("Texte    T", () => Canvas.SetMode("text")), ("Sélection    V", () => Canvas.SetMode("select")));
+        AddMenu(menu, "_Insérer", ("Conducteur    W", () => Canvas.SetMode("wire")), ("Texte    T", () => Canvas.SetMode("text")), ("Sélection    V", () => Canvas.SetMode("select")), ("Modifier un symbole en copie…", SymbolEditor), ("Importer un symbole DXF / GeMMeElec…", ImportSymbol));
+        AddMenu(menu, "_Importer", ("Projet QElectroTech (.qet)…", () => ImportDrawingProject(false)), ("Folios EPLAN / CAO exportés en DXF…", () => ImportDrawingProject(true)));
         AddMenu(menu, "_Projet", ("Vérifier les connexions et les repères", Validate), ("Cartouches…", TitleBlockEditor), ("Nomenclature configurable…", Bom), ("Navigateur des renvois…", ReferenceNavigator));
         AddMenu(menu, "E_xporter", ("Tous les folios en PDF…", () => ExportFile("pdf")), ("Folio courant en SVG…", () => ExportFile("svg")), ("Nomenclature CSV…", () => ExportFile("csv")));
         AddMenu(menu, "_Affichage", ("Ajuster le folio    F", Canvas.Fit), ("Grille du plan…", GridDialog), ("Palette des conducteurs…", () => PaletteDialog()), ("Bibliothèque", () => workspace?.Show("library")), ("Propriétés", () => workspace?.Show("properties")), ("Folios", () => workspace?.Show("pages")), ("Rétablir les panneaux", () => workspace?.Reset()));
-        AddMenu(menu, "_Aide", ("Raccourcis et utilisation", Help), ("Connexion MCP", McpHelp));
+        AddMenu(menu, "_Aide", ("Raccourcis et utilisation", Help), ("Connexion MCP", McpHelp), ("Licence du lecteur DXF", () => { using var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("netDxf-LICENSE.txt")!; using var reader = new System.IO.StreamReader(stream); MessageBox.Show(this, reader.ReadToEnd(), "netDxf 3.0.1 · licence MIT"); }));
         DockPanel.SetDock(menu, Dock.Top); root.Children.Add(menu);
         var toolbar = new WrapPanel { Background = Brushes.White, Margin = new(0, 1, 0, 1) };
         foreach (var (label, action) in new (string, Action)[] { ("Nouveau", NewProject), ("Ouvrir", Open), ("Enregistrer", () => Save(false)), ("↶", Editor.Undo), ("↷", Editor.Redo), ("Sélection  V", () => Canvas.SetMode("select")), ("Conducteur  W", () => Canvas.SetMode("wire")), ("Texte  T", () => Canvas.SetMode("text")), ("Rotation  R", Rotate), ("Ajuster  F", Canvas.Fit), ("Vérifier", Validate), ("PDF", () => ExportFile("pdf")) }) toolbar.Children.Add(Button(label, action));
@@ -55,7 +58,7 @@ public sealed partial class MainWindow : Window
         var left = new DockPanel { Background = Brushes.White };
         var leftTop = new StackPanel { Margin = new(14, 4, 14, 8) };
         search.ToolTip = "Rechercher un équipement, une marque ou une gamme"; search.Margin = new(0, 10, 0, 8); search.TextChanged += (_, _) => Filter(); leftTop.Children.Add(search);
-        libraryMode.ItemsSource = new[] { "Symboles industriels", "Gammes fabricants" }; libraryMode.SelectedIndex = 0; libraryMode.Margin = new(0, 0, 0, 8); leftTop.Children.Add(libraryMode);
+        libraryMode.ItemsSource = new[] { "Symboles industriels", "Gammes fabricants", "Mes symboles" }; libraryMode.SelectedIndex = 0; libraryMode.Margin = new(0, 0, 0, 8); leftTop.Children.Add(libraryMode);
         family.Margin = new(0, 0, 0, 8); family.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(family);
         brand.Items.Add("Tous les fabricants"); foreach (var b in Catalog.Entries.Select(e => e.Brand).Distinct().Order()) brand.Items.Add(b); brand.SelectedIndex = 0; brand.Margin = new(0, 0, 0, 8); brand.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(brand);
         libraryMode.SelectionChanged += (_, _) => LibraryCategories(); LibraryCategories();
@@ -79,6 +82,7 @@ public sealed partial class MainWindow : Window
     private void AddMenu(Menu menu, string label, params (string, Action)[] actions) { var m = new MenuItem { Header = label }; foreach (var (text, action) in actions) { var item = new MenuItem { Header = text }; item.Click += (_, _) => Run(action); m.Items.Add(item); } menu.Items.Add(m); }
     private void LibraryCategories()
     {
+        family.Visibility = libraryMode.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible;
         family.Items.Clear(); family.Items.Add("Toutes les familles");
         foreach (var category in libraryMode.SelectedIndex == 1 ? Catalog.Entries.Select(e => e.Family).Distinct().Order() : Symbols.All.Values.Select(s => s.Category).Distinct().Order()) family.Items.Add(category);
         brand.Visibility = libraryMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed; family.SelectedIndex = 0; Filter();
@@ -88,12 +92,14 @@ public sealed partial class MainWindow : Window
         if (family.SelectedItem is null || brand.SelectedItem is null) return;
         library.Items.Clear(); var f = family.SelectedIndex > 0 ? (string)family.SelectedItem : "";
         if (libraryMode.SelectedIndex == 1) foreach (var e in Catalog.Search(search.Text, f, brand.SelectedIndex > 0 ? (string)brand.SelectedItem : "")) LibraryItem(e.Id, e.Range, e.Brand + " · " + e.Family, e.Note);
+        else if (libraryMode.SelectedIndex == 2) foreach (var s in Editor.Project.CustomSymbols.Values.Where(s => Symbols.SearchKey(s.Name).Contains(Symbols.SearchKey(search.Text)))) LibraryItem(s.Id, s.Name, s.Category, "Copie enregistrée dans ce projet · modifier ou exporter depuis Insérer");
         else foreach (var s in Symbols.Search(search.Text, f)) LibraryItem(s.Id, s.Name, s.Category, "Symbole fonctionnel · cliquer puis placer · R pour tourner");
         libraryCount.Text = $"{library.Items.Count} résultats · cliquer puis placer";
+        if (libraryMode.SelectedIndex == 2) { displayedCustomSymbols = Editor.Project.CustomSymbols; displayedCustomCount = displayedCustomSymbols.Count; }
     }
     private void LibraryItem(string id, string name, string detail, string tip)
     {
-        var row = new DockPanel { Margin = new(3, 6, 3, 6) }; var symbol = Catalog.Entries.FirstOrDefault(e => e.Id == id)?.Symbol ?? id; row.Children.Add(new SymbolPreview(symbol));
+        var row = new DockPanel { Margin = new(3, 6, 3, 6) }; var symbol = Catalog.Entries.FirstOrDefault(e => e.Id == id)?.Symbol ?? id; row.Children.Add(new SymbolPreview(symbol) { Definition = CustomSymbols.Resolve(Editor.Project, symbol) });
         var stack = new StackPanel { Margin = new(7, 0, 0, 0) }; stack.Children.Add(new TextBlock { Text = name, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap }); stack.Children.Add(new TextBlock { Text = detail, Foreground = Drawing.Brush("#687D90"), FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 0) }); row.Children.Add(stack);
         var item = new ListBoxItem { Tag = id, Content = row, ToolTip = tip, HorizontalContentAlignment = HorizontalAlignment.Stretch };
         // A second click resumes placement after wiring or Escape, even if selection did not change.
@@ -102,6 +108,8 @@ public sealed partial class MainWindow : Window
     }
     private void Refresh()
     {
+        if (!Symbols.All.ContainsKey(Canvas.Symbol) && !Editor.Project.CustomSymbols.ContainsKey(Canvas.Symbol)) { Canvas.Symbol = "breaker1"; Canvas.CatalogId = null; }
+        if (libraryMode.SelectedIndex == 2 && (!ReferenceEquals(displayedCustomSymbols, Editor.Project.CustomSymbols) || displayedCustomCount != Editor.Project.CustomSymbols.Count)) Filter();
         refreshing = true; pages.ItemsSource = null; pages.ItemsSource = Editor.Project.Sheets; pages.SelectedItem = Editor.Sheet; refreshing = false;
         Title = $"{(Editor.Dirty ? "● " : "")}{Editor.Project.Title} — GeMMeElec";
         counts.Text = $"{Editor.Sheet.Components.Count} symboles   {Editor.Sheet.Wires.Count} conducteurs   |   Folio {Editor.Project.Sheets.IndexOf(Editor.Sheet) + 1}";
@@ -121,6 +129,7 @@ public sealed partial class MainWindow : Window
         {
             properties.Children.Add(new TextBlock { Text = c.Definition.Name, FontSize = 18, TextWrapping = TextWrapping.Wrap, Margin = new(0, 14, 0, 4) });
             if (CrossReferences.IsPoint(c)) { ReferenceInspector(c); return; }
+            if (c.Symbol != "junction") properties.Children.Add(Button("Modifier le symbole en copie…", SymbolEditor));
             properties.Children.Add(Hint("Emplacement : " + SheetZones.Address(Editor.Project, Editor.Sheet, c)));
             Field("tag", "Repère", c.Tag); Field("description", "Description", c.Description); Field("brand", "Fabricant", c.Brand); Field("range", "Gamme", c.Range); Field("reference", "Référence exacte", c.Reference); Field("rating", "Calibre / tension / puissance", c.Rating);
             properties.Children.Add(Button("Appliquer les propriétés", () => { var values = fields.ToDictionary(x => x.Key, x => x.Value.Text); Editor.Change(() => { c.Tag = values["tag"]; c.Description = values["description"]; c.Brand = values["brand"]; c.Range = values["range"]; c.Reference = values["reference"]; c.Rating = values["rating"]; foreach (var p in c.Definition.Ports) c.PortLabels[p.Id] = values["port:" + p.Id]; }); }));
@@ -235,7 +244,7 @@ public sealed partial class MainWindow : Window
     private void Duplicate()
     {
         var originals = Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id)).ToList(); List<string> ids = [];
-        Editor.Change(() => { foreach (var c in originals) { var copy = System.Text.Json.JsonSerializer.Deserialize<Component>(System.Text.Json.JsonSerializer.Serialize(c, ProjectStore.Json), ProjectStore.Json)!; copy.Id = Guid.NewGuid().ToString("N"); copy.X = Math.Min(Editor.Sheet.Width, c.X + 40); copy.Y = Math.Min(Editor.Sheet.Height, c.Y + 40); copy.Tag = Editor.NextTag(copy.Definition.Prefix); if (CrossReferences.IsPoint(copy)) { copy.LinkName = ""; copy.LinkSource = false; } Editor.Sheet.Components.Add(copy); ids.Add(copy.Id); } }); Canvas.Selected.Clear(); foreach (var id in ids) Canvas.Selected.Add(id); Inspect(); Canvas.InvalidateVisual();
+        Editor.Change(() => { foreach (var c in originals) { var copy = System.Text.Json.JsonSerializer.Deserialize<Component>(System.Text.Json.JsonSerializer.Serialize(c, ProjectStore.Json), ProjectStore.Json)!; copy.Id = Guid.NewGuid().ToString("N"); copy.X = Math.Min(Editor.Sheet.Width, c.X + 40); copy.Y = Math.Min(Editor.Sheet.Height, c.Y + 40); copy.ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, copy.Symbol); copy.Tag = Editor.NextTag(copy.Definition.Prefix); if (CrossReferences.IsPoint(copy)) { copy.LinkName = ""; copy.LinkSource = false; } Editor.Sheet.Components.Add(copy); ids.Add(copy.Id); } }); Canvas.Selected.Clear(); foreach (var id in ids) Canvas.Selected.Add(id); Inspect(); Canvas.InvalidateVisual();
     }
     private void Keys(object sender, KeyEventArgs e)
     {

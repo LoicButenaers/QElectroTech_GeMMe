@@ -119,7 +119,7 @@ public sealed class SheetCanvas : FrameworkElement
         if (hoveredWire is { } branch && connection is not null && hoveredPort is null) dc.DrawEllipse(accent, new Pen(Brushes.White, 1 / Zoom), branch.Point, 6 / Zoom, 6 / Zoom);
         if (sheet.BomPage is null && Mode == "place" && IsMouseOver && hoveredPort is null)
         {
-            var ghost = new Component { Symbol = Symbol, X = Editor.Snap(pointer.X), Y = Editor.Snap(pointer.Y), Tag = "" };
+            var ghost = new Component { Symbol = Symbol, ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, Symbol), X = Editor.Snap(pointer.X), Y = Editor.Snap(pointer.Y), Tag = "" };
             var r = ghost.Bounds(); dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(30, 0, 127, 134)), pen, r);
         }
         dc.Pop(); dc.Pop();
@@ -140,7 +140,7 @@ public sealed class SheetCanvas : FrameworkElement
     {
         var from = connection!; var id = editingWire; var end = reconnectFrom; var points = waypoints.ToList(); ClearConnection();
         var wire = Editor.Branch(from, target.Id, target.Point, points, id, end); Select(wire.Id);
-        Status?.Invoke("Dérivation raccordée : point de jonction créé sur le conducteur.");
+        Status?.Invoke("Dérivation raccordée : jonction automatique suivant le câblage.");
     }
     private static Point Mid(Point a, Point b) => new((a.X + b.X) / 2, (a.Y + b.Y) / 2);
     private void StartConnection(Endpoint from, MouseButtonEventArgs e, string? wireId = null, bool changeFrom = false)
@@ -165,7 +165,8 @@ public sealed class SheetCanvas : FrameworkElement
     }
     private string? Hit(Point p)
     {
-        foreach (var c in Editor.Sheet.Components.AsEnumerable().Reverse()) { var r = c.Bounds(); r.Inflate(8, 8); if (r.Contains(p)) return c.Id; }
+        CrossReferences? references = null;
+        foreach (var c in Editor.Sheet.Components.AsEnumerable().Reverse().Where(c => !Junctions.Automatic(c))) { var r = CrossReferences.IsPoint(c) ? ReferenceDisplay.HitBounds(Editor.Project, c, references ??= new CrossReferences(Editor.Project)) : c.Bounds(); r.Inflate(8, 8); if (r.Contains(p)) return c.Id; }
         foreach (var n in Editor.Sheet.Notes.AsEnumerable().Reverse()) if (new Rect(n.X, n.Y, Math.Max(60, n.Text.Length * 9), 24).Contains(p)) return n.Id;
         foreach (var w in Editor.Sheet.Wires.AsEnumerable().Reverse()) { var r = w.Route(Editor.Sheet); for (int i = 1; i < r.Count; i++) if (Distance(p, r[i - 1], r[i]) < 7 / Zoom) return w.Id; }
         return null;
@@ -181,9 +182,10 @@ public sealed class SheetCanvas : FrameworkElement
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
-            if (e.ClickCount == 2 && connection is null && Mode == "select")
+            if (e.ClickCount == 2 && Mode == "select")
             {
-                var reference = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && c.Bounds().Contains(pointer));
+                var refs = new CrossReferences(Editor.Project);
+                var reference = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && ReferenceDisplay.HitBounds(Editor.Project, c, refs).Contains(pointer));
                 if (reference is not null) { ReferenceRequested?.Invoke(reference.Id); return; }
             }
             var port = HitPort(pointer);
@@ -221,7 +223,7 @@ public sealed class SheetCanvas : FrameworkElement
         if (before is not null && editingWire is not null && originalRoute is not null)
         {
             sceneCache=null; routeCache=null;
-            if ((pointer - dragStart).Length * Zoom > 3) Editor.Sheet.Wires.Single(w => w.Id == editingWire).Waypoints = WireRouting.ShiftSegment(originalRoute, segmentIndex, new(Math.Clamp(pointer.X, 0, Editor.Sheet.Width), Math.Clamp(pointer.Y, 0, Editor.Sheet.Height)));
+            if ((pointer - dragStart).Length * Zoom > 3) Junctions.ShiftSegment(Editor.Sheet, editingWire, originalRoute, segmentIndex, new(Math.Clamp(pointer.X, 0, Editor.Sheet.Width), Math.Clamp(pointer.Y, 0, Editor.Sheet.Height)));
         }
         else if (before is not null)
         {

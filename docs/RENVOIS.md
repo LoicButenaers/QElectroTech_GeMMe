@@ -23,7 +23,7 @@ La colonne **Folios / zones** de la nomenclature associe chaque repère à son e
 1. Dans **Symboles industriels → 10 · Renvois interfolios**, poser **Folio suivant · départ de renvoi** sur la première page. Raccorder le conducteur à sa borne.
 2. Poser **Folio précédent · arrivée de renvoi** sur l’autre page et raccorder sa borne au conducteur qui poursuit le circuit. La touche R oriente la flèche.
 3. Sélectionner chaque flèche, saisir le même **Nom de liaison**, par exemple `COMMANDE_M1`, puis cliquer **Appliquer le renvoi**. Le choix propose également les noms existants.
-4. Le libellé sous chaque flèche affiche le folio et la zone de sa contrepartie. Double-cliquer la flèche, ou utiliser **Aller à…** dans ses propriétés, pour rejoindre cette destination.
+4. La flèche pleine rouge est accompagnée du nom bleu puis de la destination verte sur la même ligne : `DI1.4 / 2 / D9`. Double-cliquer la flèche ou son texte, ou utiliser **Aller à…** dans ses propriétés, pour rejoindre cette destination. Les longues listes de destinations passent sur plusieurs lignes. Les anciens réglages de position des textes sont conservés.
 
 Les noms sont comparés sans tenir compte de la casse ni des espaces de début/fin. Le lien peut rejoindre n’importe quel folio ; il ne dépend pas de la proximité des pages. Une flèche dupliquée reçoit un nom vide pour éviter une connexion involontaire. Le déplacement et la réorganisation des folios recalculent les adresses sans changer les noms.
 

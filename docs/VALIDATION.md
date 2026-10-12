@@ -1,5 +1,19 @@
 # Vérifications de livraison
 
+## Version 0.6 — 12 octobre 2026
+
+Publication autonome au chemin habituel, sans contrôle du PC. **45 scénarios intégrés et 44 vérifications MCP** réussis sur l’exécutable publié ; compilation sans erreur ni avertissement. Le MCP expose 41 outils.
+
+- Jonctions : absence de point avec un seul fil, apparition à la divergence réelle de deux trajets partageant une borne, recalcul après déplacement, suppression et annulation ; dissolution des nœuds de dérivation à deux tronçons compatibles et déplacement avec les segments.
+- Reports : flèche pleine rouge, nom bleu, destination verte et zone cliquable couvrant le texte. Rendu vectoriel commun à l’éditeur, au SVG et au PDF.
+- Symboles : copie indépendante, maintien des bornes raccordées, rejet atomique d’une suppression de borne utilisée, sauvegarde/relecture, échange `.gemsymbol`, BOM et commandes de l’éditeur hors écran.
+- DXF : fixture créée avec netDxf, blocs transformés, cercle, arc et texte ; import sans bornes inventées, pages graphiques exclues des articles BOM. Il ne s’agit pas d’une validation exhaustive des DXF de tous les fabricants ni d’un essai sur une installation EPLAN.
+- QET : fixture de connectivité, rotations et métadonnées ; rejet XML invalide et des déclarations d’entités ; quatre exemples installés convertis, dont un projet de 50 folios. Les statistiques et avertissements sont dans `build/conversion-validation.json`.
+- Performance locale : environ **8 ms pour les jonctions de 1 000 conducteurs sur une même borne**, via un arbre des trajets communs ; environ **222 ms pour lire et convertir le projet QET de 50 folios**. Mesures synthétiques/locales, hors rendu complet et écriture disque. Résultats dans `build/junction-performance.json` et le rapport de conversion.
+- Inspection hors écran du dialogue d’édition et des jonctions ; PDF des deux reports, du schéma industriel QET converti et de la BOM avec symbole personnalisé rendus avec Poppler et contrôlés visuellement.
+
+Les imports utilisent des définitions propres au projet. Aucune modification de bibliothèque globale à l’ouverture, à l’annulation ou pendant les tests. La scène reste en cache au survol ; la liste des copies n’est pas reconstruite lors d’un simple déplacement. Les limites de conversion sont détaillées dans [IMPORTS.md](IMPORTS.md).
+
 ## Version 0.5 — 12 octobre 2026
 
 Publication Windows x64 autonome au même chemin `build/GeMMeElec.exe`, version fichier 0.5.0.0. Travail sur `GeMMeElec`, sans prise de contrôle du PC. Le logiciel utilisateur était fermé avant remplacement de l’exécutable.

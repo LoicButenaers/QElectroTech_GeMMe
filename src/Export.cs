@@ -21,8 +21,9 @@ public static class Export
             if (s.Kind == "line") el = new(ns + "line", new XAttribute("x1", N(s.X)), new XAttribute("y1", N(s.Y)), new XAttribute("x2", N(s.A)), new XAttribute("y2", N(s.B)));
             else if (s.Kind == "rect") el = new(ns + "rect", new XAttribute("x", N(s.X)), new XAttribute("y", N(s.Y)), new XAttribute("width", N(s.A)), new XAttribute("height", N(s.B)));
             else if (s.Kind is "circle" or "dot") el = new(ns + "circle", new XAttribute("cx", N(s.X)), new XAttribute("cy", N(s.Y)), new XAttribute("r", N(s.A)));
+            else if (s.Kind == "triangle") el = new(ns + "polygon", new XAttribute("points", $"{N(s.X)},{N(s.Y)} {N(s.X)},{N(s.Y+s.B)} {N(s.X+s.A)},{N(s.Y+s.B/2)}"));
             else { el = new(ns + "text", new XAttribute("x", N(s.X)), new XAttribute("y", N(s.Y + s.Size)), new XAttribute("font-family", "Segoe UI,Arial,sans-serif"), new XAttribute("font-size", N(s.Size)), s.Text); }
-            el.Add(new XAttribute("fill", s.Kind is "text" or "dot" ? s.Color : s.Kind == "circle" ? "white" : "none"));
+            el.Add(new XAttribute("fill", s.Kind is "text" or "dot" or "triangle" ? s.Color : s.Kind == "circle" ? "white" : "none"));
             if (s.Kind != "text") { el.Add(new XAttribute("stroke", s.Color)); el.Add(new XAttribute("stroke-width", "1.6")); }
             if (s.Rotation != 0) el.Add(new XAttribute("transform", $"rotate({N(s.Rotation)} {N(s.X)} {N(s.Y)})"));
             root.Add(el);
@@ -69,6 +70,7 @@ public static class Export
                         if(!imageObjects.TryGetValue(s.Text,out var entry)) {var bitmap=ImageAssets.Decode(s.Text);entry=("Im"+imageObjects.Count,objects.Count+1);objects.Add(Stream(Convert.FromBase64String(s.Text),$"/Type /XObject /Subtype /Image /Width {bitmap.PixelWidth} /Height {bitmap.PixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode"));imageObjects[s.Text]=entry;}
                         b.AppendLine($"{N(s.A)} 0 0 {N(-s.B)} {N(s.X)} {N(s.Y+s.B)} cm /{entry.Name} Do");break;
                     case "line": b.AppendLine($"{N(s.X)} {N(s.Y)} m {N(s.A)} {N(s.B)} l S"); break;
+                    case "triangle": b.AppendLine($"{N(s.X)} {N(s.Y)} m {N(s.X)} {N(s.Y+s.B)} l {N(s.X+s.A)} {N(s.Y+s.B/2)} l h f"); break;
                     case "rect": b.AppendLine($"{N(s.X)} {N(s.Y)} {N(s.A)} {N(s.B)} re S"); break;
                     case "circle": case "dot":
                         double x = s.X, y = s.Y, r = s.A, k = r * .55228475;

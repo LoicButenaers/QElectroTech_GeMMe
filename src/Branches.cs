@@ -46,7 +46,7 @@ public sealed partial class Editor
                 var stops = existing is null ? points ?? [] : changeFrom ? existing.Waypoints.AsEnumerable().Reverse() : existing.Waypoints;
                 branchPoints = Interior(BranchPath(origin, BranchStops(Sheet, originEnd, stops, hit.Point), route, hit.Point, hit.Segment));
                 if (changeFrom) branchPoints.Reverse();
-                var junction = new Component { Symbol = "junction", Tag = tag, X = hit.Point.X, Y = hit.Point.Y,
+                var junction = new Component { Symbol = "junction", AutoJunction = true, Tag = tag, X = hit.Point.X, Y = hit.Point.Y,
                     TagPlacement = new() { Visible = false }, DetailPlacement = new() { Visible = false }, DescriptionPlacement = new() { Visible = false } };
                 destination = new(junction.Id, "1"); Sheet.Components.Add(junction);
                 var right = new Wire { From = destination, To = target.To, Number = target.Number, Color = target.Color,

@@ -15,6 +15,12 @@ public static class McpTools
     private static JsonObject B(string description) => new() { ["type"] = "boolean", ["description"] = description };
     public static readonly ToolSpec[] Specs =
     [
+        new("symbol_get", "Lire le dessin et les bornes d’un symbole intégré ou du projet.", new() { ["id"] = S("ID du symbole") }, ["id"], true),
+        new("symbol_copy", "Enregistrer une définition éditée comme nouvelle copie du projet ; remplacer éventuellement un composant en conservant ses bornes connectées.", new() { ["definition"] = new JsonObject { ["type"] = "object" }, ["componentId"] = S("ID du composant à remplacer, facultatif") }, ["definition"]),
+        new("symbol_import", "Importer un DXF 2000+ ou un .gemsymbol dans la bibliothèque du projet. Un DXF ne fournit aucune borne électrique ; ajouter les bornes avec symbol_copy.", new() { ["path"] = S("Chemin absolu .dxf ou .gemsymbol"), ["scale"] = N("Échelle du dessin, défaut 1") }, ["path"]),
+        new("symbol_export", "Exporter un symbole autonome réutilisable .gemsymbol.", new() { ["id"] = S("ID du symbole"), ["path"] = S("Chemin absolu .gemsymbol"), ["overwrite"] = B("Autoriser le remplacement") }, ["id", "path"]),
+        new("project_import", "Analyser un .qet ou un folio .dxf et retourner le rapport. apply=true ouvre la conversion ; les fichiers EPLAN natifs ne sont pas pris en charge.", new() { ["path"] = S("Chemin absolu .qet ou .dxf"), ["apply"] = B("Ouvrir le projet converti, défaut false"), ["discardUnsaved"] = B("Autoriser l’abandon du projet modifié") }, ["path"]),
+        new("wire_segment_move", "Déplacer un segment du fil avec ses jonctions automatiques.", new() { ["id"] = S("ID du fil"), ["segment"] = N("Index du segment à partir de 1"), ["x"] = N("X cible"), ["y"] = N("Y cible") }, ["id", "segment", "x", "y"]),
         new("reference_list", "Lire les renvois, noms communs, destinations et adresses folio / zone.", new(), [], true),
         new("reference_update", "Configurer un renvoi du folio actif. Même nom = liaison ; pair : paires triées ; star : une source et ses cibles. Le mode est appliqué au groupe.", new() { ["id"] = S("ID du renvoi"), ["name"] = S("Nom commun, vide pour délier"), ["mode"] = S("pair ou star"), ["order"] = N("Ordre 0..99999"), ["source"] = B("Source de l’étoile") }, ["id", "name", "mode"]),
         new("connection_trace", "Suivre les conducteurs et renvois liés depuis une borne, à travers les folios. Ne traverse pas l’intérieur des appareils.", new() { ["componentId"] = S("ID du composant"), ["portId"] = S("ID de la borne") }, ["componentId", "portId"], true),
@@ -84,13 +90,26 @@ public static class McpTools
         object result;
         switch (name)
         {
+            case "symbol_get": result = CustomSymbols.Resolve(e.Project, Str("id")); break;
+            case "symbol_copy": var definition = a.GetProperty("definition").Deserialize<SymbolDefinition>(ProjectStore.Json) ?? throw new ArgumentException("Définition absente."); result = e.SaveSymbolCopy(definition, Str("componentId").Length > 0 ? Str("componentId") : null); break;
+            case "symbol_import":
+                var symbolPath = Str("path"); if (!Path.IsPathFullyQualified(symbolPath)) throw new ArgumentException("Chemin absolu requis.");
+                var imported = symbolPath.EndsWith(".dxf", StringComparison.OrdinalIgnoreCase) ? DxfImport.Read(symbolPath) : symbolPath.EndsWith(".gemsymbol", StringComparison.OrdinalIgnoreCase) ? new DxfImportResult(CustomSymbols.Load(symbolPath), [], "GeMMeElec") : throw new ArgumentException("Utiliser .dxf ou .gemsymbol.");
+                var copy = e.SaveSymbolCopy(DxfImport.Scale(imported.Symbol, a.TryGetProperty("scale", out _) ? Num("scale") : 1)); result = new { symbol = copy, imported.Warnings, imported.Units }; break;
+            case "symbol_export": CustomSymbols.Export(CustomSymbols.Resolve(e.Project, Str("id")), PathFor(".gemsymbol", true)); result = new { exported = true }; break;
+            case "project_import":
+                var importPath = Str("path"); if (!Path.IsPathFullyQualified(importPath)) throw new ArgumentException("Chemin absolu requis.");
+                if (Flag("apply")) ReplaceCheck();
+                var conversion = importPath.EndsWith(".qet", StringComparison.OrdinalIgnoreCase) ? ProjectImport.Qet(importPath) : importPath.EndsWith(".dxf", StringComparison.OrdinalIgnoreCase) ? ProjectImport.DxfPages([importPath]) : throw new ArgumentException("Utiliser .qet ou .dxf ; EPLAN natif .zw1/.elk/.epj non pris en charge.");
+                if (Flag("apply")) e.ImportProject(conversion.Project); result = new { conversion.Report, conversion.Warnings, sheets = conversion.Project.Sheets.Count, applied = Flag("apply") }; break;
+            case "wire_segment_move": var movingWire = e.Sheet.Wires.Single(w => w.Id == Str("id")); var route = movingWire.Route(e.Sheet); int seg = a.GetProperty("segment").GetInt32(); if (seg < 1 || seg >= route.Count) throw new ArgumentException("Segment absent."); e.Change(() => Junctions.ShiftSegment(e.Sheet, movingWire.Id, route, seg, new(Num("x"), Num("y")))); result = movingWire; break;
             case "reference_list": var links = new CrossReferences(e.Project); result = CrossReferences.Points(e.Project).Select(x => new { sheetId = x.Sheet.Id, id = x.Component.Id, x.Component.LinkName, x.Component.LinkMode, x.Component.LinkOrder, x.Component.LinkSource, address = SheetZones.Address(e.Project, x.Sheet, x.Component), targets = links.Targets(x.Component.Id).Select(t => new { sheetId = t.Sheet.Id, id = t.Component.Id, address = SheetZones.Address(e.Project, t.Sheet, t.Component) }) }).ToArray(); break;
             case "reference_update": e.ConfigureReference(Str("id"), Str("name"), Str("mode"), a.TryGetProperty("order", out var orderValue) ? orderValue.GetInt32() : 0, Flag("source")); result = e.Sheet.Components.Single(c => c.Id == Str("id")); break;
             case "connection_trace": result = CrossReferences.Trace(e.Project, new(Str("componentId"), Str("portId"))); break;
             case "bom_generate": result = e.GenerateBom(e.Project.BomOptions); break;
             case "wire_branch": result = e.Branch(new(Str("fromComponent"), Str("fromPort")), Str("targetWire"), new(Num("x"), Num("y"))); break;
             case "project_get": result = Snapshot(); break;
-            case "library_search": result = new { equipment = Catalog.Search(Str("query"), Str("family"), Str("brand")).ToArray(), symbols = Symbols.All.Values.Where(s => s.Name.Contains(Str("query"), StringComparison.OrdinalIgnoreCase) || s.Id.Contains(Str("query"), StringComparison.OrdinalIgnoreCase)).Select(s => new { s.Id, s.Name, s.Category, s.Prefix, s.Width, s.Height, s.Ports }) }; break;
+            case "library_search": result = new { equipment = Catalog.Search(Str("query"), Str("family"), Str("brand")).ToArray(), symbols = Symbols.All.Values.Concat(e.Project.CustomSymbols.Values).Where(s => Symbols.SearchKey(s.Name + " " + s.Id).Contains(Symbols.SearchKey(Str("query")))).Select(s => new { s.Id, s.Name, s.Category, s.Prefix, s.Width, s.Height, s.Ports }) }; break;
             case "project_new": ReplaceCheck(); e.New(Str("title")); result = Snapshot(); break;
             case "project_open": var loadPath = PathFor(".gemelec", false); ReplaceCheck(); e.Open(loadPath); result = Snapshot(); break;
             case "project_save": e.Save(PathFor(".gemelec", true)); result = new { path = e.FilePath, saved = true }; break;
@@ -220,7 +239,7 @@ public static class McpServer
                 {
                     case "initialize":
                         var requested = request.GetProperty("params").GetProperty("protocolVersion").GetString();
-                        result = new { protocolVersion = requested is "2024-11-05" or "2025-03-26" or "2025-06-18" or "2025-11-25" ? requested : "2025-11-25", capabilities = new { tools = new { listChanged = false } }, serverInfo = new { name = "gemmeelec", version = "0.5.0" }, instructions = "Pilote le projet visible dans GeMMeElec. Lire project_get avant modification. Demander l’accord utilisateur avant d’abandonner des modifications ou écraser un fichier. Les gammes fabricants nécessitent une référence exacte et une vérification de bornage." }; initialized = true; break;
+                        result = new { protocolVersion = requested is "2024-11-05" or "2025-03-26" or "2025-06-18" or "2025-11-25" ? requested : "2025-11-25", capabilities = new { tools = new { listChanged = false } }, serverInfo = new { name = "gemmeelec", version = "0.6.0" }, instructions = "Pilote le projet visible dans GeMMeElec. Lire project_get avant modification. Demander l’accord utilisateur avant d’abandonner des modifications ou écraser un fichier. Les gammes fabricants nécessitent une référence exacte et une vérification de bornage." }; initialized = true; break;
                     case "ping": result = new { }; break;
                     case "tools/list": if (!initialized) throw new InvalidOperationException("initialize requis."); result = McpTools.List(); break;
                     case "tools/call":

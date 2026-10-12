@@ -50,10 +50,22 @@ Pour un autre client MCP acceptant les serveurs locaux stdio :
 | Documents (0.3) | `page_move`, `titleblock_list`, `titleblock_put`, `component_image`, `bom_configure`, `export_bom_html` |
 | Dérivations et folios BOM (0.4) | `wire_branch`, `bom_generate` |
 | Renvois (0.5) | `reference_list`, `reference_update`, `connection_trace` |
+| Symboles, import et routage (0.6) | `symbol_get`, `symbol_copy`, `symbol_import`, `symbol_export`, `project_import`, `wire_segment_move` |
 
 `tools/list` fournit les paramètres, types et champs requis. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.5 expose 35 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
+La version 0.6 expose 41 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports en ligne, le placement du nom ancre l’ensemble nom/destination ; la visibilité de la destination reste indépendante.
+
+## Symboles et imports (0.6)
+
+- `symbol_get` prend `id` et retourne `id`, `name`, `prefix`, `width`, `height`, `category`, `ports` et `shapes`. Une borne contient `id`, `x`, `y`. Une primitive contient `kind` (line/rect/circle/dot/text), `x`, `y`, `a`, `b`, `text`, `rotation`. Pour une ligne A/B sont le second point ; pour un rectangle les dimensions ; pour un cercle A est le rayon ; pour un texte A est la taille.
+- `symbol_copy` prend `definition` complet et `componentId` facultatif. Il crée toujours un nouvel ID. Le composant ne peut être remplacé si une borne raccordée disparaît. Les originaux restent intacts ; l’opération est annulable.
+- `symbol_import` prend `path` absolu `.dxf` ou `.gemsymbol` et `scale` facultatif (défaut 1). Il retourne la copie enregistrée, les unités et avertissements. Un DXF n’a pas de bornes : les ajouter à une copie avant câblage.
+- `symbol_export` prend `id`, `path` absolu `.gemsymbol`, `overwrite` facultatif. Il exporte le dessin et ses bornes sans dépendre du projet.
+- `project_import` prend `path` absolu `.qet` ou `.dxf`. Par défaut il analyse et retourne le rapport sans modifier le projet. `apply: true` ouvre la conversion comme nouveau projet non enregistré ; `discardUnsaved` protège le projet courant. Les formats `.elk`, `.zw1`, `.epj` sont refusés explicitement. Un DXF est graphique, sans reconstruction électrique.
+- `wire_segment_move` prend `id`, `segment` (à partir de 1 dans le tracé orthogonal), `x`, `y`. Il déplace le segment et les nœuds automatiques situés à ses extrémités. Les bornes d’appareils restent fixes ; l’opération est annulable.
+
+`library_search` inclut les copies du projet. `project_get` expose `customSymbols` ; chaque composant les référence par son champ `symbol`. Les définitions sont enregistrées avec le document, sans modifier la bibliothèque intégrée. Les points de jonction sont calculés au rendu et ne constituent pas des articles BOM.
 
 ## Zones et renvois (0.5)
 
