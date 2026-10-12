@@ -2,7 +2,7 @@
 
 ## Version 0.7 — 12 octobre 2026
 
-Compilation Release Windows x64 sans erreur ni avertissement. **51 scénarios intégrés et 44 vérifications MCP** réussis sur l’assembly compilé, sans prise de contrôle du PC. La publication au chemin habituel reste en attente de fermeture de la fenêtre utilisateur « Test », modifiée : l’exécutable 0.6 est verrouillé. `Build.ps1` vérifie désormais cette condition avant la publication.
+Publication Release Windows x64 autonome au même chemin `build/GeMMeElec.exe`, version fichier **0.7.0.0**, après fermeture du logiciel par l’utilisateur. Compilation sans erreur ni avertissement. **51 scénarios intégrés et 44 vérifications MCP** réussis sur l’exécutable publié, sans prise de contrôle du PC. `Build.ps1` vérifie désormais le verrouillage de l’exécutable avant publication.
 
 - Reports : paire explicite depuis le dialogue, rejet des noms déjà occupés, liaison réciproque et continuité électrique, sauvegarde/relecture, annulation ; navigation depuis les quatre modes du schéma. Bibliothèque et exports utilisent les mêmes triangles noirs à raccordements opposés, avec bornes inchangées.
 - Sélection : rectangle englobant les composants, notes et conducteurs, ajout avec Ctrl, conservation du groupe au clic droit, aucune mutation du projet. Déplacement groupé avec translation des points de passage internes et annulation complète.
@@ -11,7 +11,7 @@ Compilation Release Windows x64 sans erreur ni avertissement. **51 scénarios in
 - Fluidité : sélection de 1 000 composants autour de **1,5 ms** sur le jeu local. Le survol sans geste ne modifie pas le brouillon et conserve le dessin mis en cache ; 10 000 appels sur un symbole de 2 000 primitives autour de **8 ms**. Ce dernier chiffre mesure la logique sans rendu, pas la cadence de l’interface. Historique de l’atelier borné à 40 opérations.
 - Audit du dépôt : sources, bibliothèque, documents, logo, configuration et SDK .NET encore nécessaires. Ancien éditeur tabulaire retiré du code, atelier et menus isolés dans leurs fichiers. Plus de 3 Go de restes Qt/MSYS2/CMake identifiés ; suppression refusée par le contrôle automatique avec « blocked by policy ». Aucun de ces restes, aucun projet et aucune préférence utilisateur n’ont été supprimés.
 
-Les tests hors publication se trouvent dans `build/bin/Release/net10.0-windows/win-x64/self-test.json`, avec les aperçus et `interaction-performance.json`. Le contrôle MCP écrit `build/mcp-test.json`. Les primitives dessinables dans l’atelier sont lignes, rectangles, cercles et textes ; les arcs/polylignes DXF restent importables sous forme de segments. Les limites d’import et les modes avancés des renvois sont conservés.
+Les résultats de la livraison se trouvent dans `build/self-test.json`, avec les aperçus et `build/interaction-performance.json`. Le contrôle MCP écrit `build/mcp-test.json`. Les primitives dessinables dans l’atelier sont lignes, rectangles, cercles et textes ; les arcs/polylignes DXF restent importables sous forme de segments. Les limites d’import et les modes avancés des renvois sont conservés.
 
 ## Version 0.6 — 12 octobre 2026
 
