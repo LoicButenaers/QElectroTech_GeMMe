@@ -15,7 +15,7 @@ public sealed class SymbolPreview(string symbol) : FrameworkElement
     {
         var d = Definition ?? Symbols.All[symbol]; double scale = Math.Min(34 / d.Width, 38 / d.Height);
         dc.PushTransform(new TranslateTransform(19, 21)); dc.PushTransform(new ScaleTransform(scale, scale));
-        Drawing.Render(dc, d.Shapes.Select(s => new Ink(s.Kind, s.X, s.Y, s.A, s.B, s.Text, Size: s.A, Rotation: s.Rotation)));
+        Drawing.Render(dc, d.Shapes.Select(s => new Ink(s.Kind, s.X, s.Y, s.A, s.B, s.Text, Size: s.A, Rotation: s.Rotation, Color: symbol is "folio_next" or "folio_previous" ? "#000000" : "#203348")));
         dc.Pop(); dc.Pop();
     }
 }

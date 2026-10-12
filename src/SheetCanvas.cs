@@ -22,8 +22,12 @@ public sealed class SheetCanvas : FrameworkElement
     private Point pointer, dragStart, panStart;
     private Vector panOffset;
     private bool panning;
+    private Point? marqueeStart;
+    private bool marqueeAdd;
     private string? before;
     private readonly Dictionary<string, Point> original = [];
+    private readonly Dictionary<string, List<Position>> originalWaypoints = [];
+    private Rect moveBounds;
     private Endpoint? connection;
     private Endpoint? hoveredPort;
     private string? editingWire;
@@ -38,6 +42,31 @@ public sealed class SheetCanvas : FrameworkElement
     public event Action<string>? Status;
     public event Action<Point>? TextRequested;
     public event Action<string>? ReferenceRequested;
+    public event Action? ContextRequested;
+    internal bool ActivateReference(Point point)
+    {
+        var refs = new CrossReferences(Editor.Project);
+        var c = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && ReferenceDisplay.HitBounds(Editor.Project, c, refs).Contains(point));
+        if (c is null) return false;
+        SetMode("select"); Select(c.Id); ReferenceRequested?.Invoke(c.Id); return true;
+    }
+    internal void SelectRectangle(Rect area, bool add)
+    {
+        if (!add) Selected.Clear();
+        // Whole objects are enclosed: crossing an unrelated wire does not select it.
+        foreach (var c in Editor.Sheet.Components.Where(c => !Junctions.Automatic(c) && area.Contains(c.Bounds()))) Selected.Add(c.Id);
+        foreach (var n in Editor.Sheet.Notes) if (area.Contains(new Rect(new Point(n.X, n.Y), Drawing.Measure(n.Text, 16)))) Selected.Add(n.Id);
+        var index = Editor.Sheet.Components.ToDictionary(c => c.Id);
+        foreach (var w in Editor.Sheet.Wires) if (w.Route(Editor.Sheet, index).All(area.Contains)) Selected.Add(w.Id);
+        SelectionChanged?.Invoke(); InvalidateVisual(); Status?.Invoke($"{Selected.Count} éléments sélectionnés • Ctrl + glisser pour ajouter à la sélection");
+    }
+    internal void ContextAt(Point point)
+    {
+        SetMode("select"); var hit = Hit(point);
+        if (hit is not null && !Selected.Contains(hit)) Select(hit);
+        if (hit is null) { Selected.Clear(); SelectionChanged?.Invoke(); }
+        ContextRequested?.Invoke(); InvalidateVisual();
+    }
     public void CenterOn(double x, double y) { offset = new(ActualWidth / 2 - x * Zoom, ActualHeight / 2 - y * Zoom); InvalidateVisual(); }
     public SheetCanvas(Editor editor)
     {
@@ -122,6 +151,7 @@ public sealed class SheetCanvas : FrameworkElement
             var ghost = new Component { Symbol = Symbol, ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, Symbol), X = Editor.Snap(pointer.X), Y = Editor.Snap(pointer.Y), Tag = "" };
             var r = ghost.Bounds(); dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(30, 0, 127, 134)), pen, r);
         }
+        if (marqueeStart is Point start) dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(25, 0, 127, 134)), new Pen(accent, 1 / Zoom) { DashStyle = DashStyles.Dash }, new Rect(start, pointer));
         dc.Pop(); dc.Pop();
     }
     private Endpoint? HitPort(Point p)
@@ -172,25 +202,40 @@ public sealed class SheetCanvas : FrameworkElement
         return null;
     }
     private static double Distance(Point p, Point a, Point b) { var v = b - a; if (v.LengthSquared < .001) return (p - a).Length; double t = Math.Clamp(Vector.Multiply(p - a, v) / v.LengthSquared, 0, 1); return (p - (a + v * t)).Length; }
+    internal void BeginSelectionMove(Point point)
+    {
+        original.Clear(); originalWaypoints.Clear(); moveBounds = Rect.Empty;
+        foreach (var c in Editor.Sheet.Components.Where(c => Selected.Contains(c.Id) || Junctions.Automatic(c) && Editor.Sheet.Wires.Where(w => w.From.ComponentId == c.Id || w.To.ComponentId == c.Id).All(w => Selected.Contains(w.Id)))) original[c.Id] = new(c.X, c.Y);
+        foreach (var n in Editor.Sheet.Notes.Where(n => Selected.Contains(n.Id))) original[n.Id] = new(n.X, n.Y);
+        foreach (var w in Editor.Sheet.Wires.Where(w => original.ContainsKey(w.From.ComponentId) && original.ContainsKey(w.To.ComponentId))) originalWaypoints[w.Id] = w.Waypoints.ToList();
+        foreach (var p in original.Values.Concat(originalWaypoints.Values.SelectMany(v => v).Select(p => p.Point))) moveBounds.Union(p);
+        if (original.Count > 0) { before = ProjectStore.Serialize(Editor.Project); dragStart = point; Editor.InteractionInProgress = true; }
+    }
+    internal void MoveSelection(Point point)
+    {
+        if (before is null || original.Count == 0) return;
+        sceneCache = null; routeCache = null;
+        double dx = Math.Clamp(Editor.Snap(point.X - dragStart.X), -moveBounds.Left, Editor.Sheet.Width - moveBounds.Right);
+        double dy = Math.Clamp(Editor.Snap(point.Y - dragStart.Y), -moveBounds.Top, Editor.Sheet.Height - moveBounds.Bottom);
+        foreach (var c in Editor.Sheet.Components.Where(c => original.ContainsKey(c.Id))) { c.X = original[c.Id].X + dx; c.Y = original[c.Id].Y + dy; }
+        foreach (var n in Editor.Sheet.Notes.Where(n => original.ContainsKey(n.Id))) { n.X = original[n.Id].X + dx; n.Y = original[n.Id].Y + dy; }
+        foreach (var w in Editor.Sheet.Wires.Where(w => originalWaypoints.ContainsKey(w.Id))) w.Waypoints = originalWaypoints[w.Id].Select(p => new Position(p.X + dx, p.Y + dy)).ToList();
+    }
     protected override void OnMouseDown(MouseButtonEventArgs e)
     {
         Focus(); pointer = World(e.GetPosition(this));
         if (e.ChangedButton == MouseButton.Middle) { panning = true; panStart = e.GetPosition(this); panOffset = offset; CaptureMouse(); return; }
-        if (e.ChangedButton == MouseButton.Right) { SetMode("select"); return; }
+        if (e.ChangedButton == MouseButton.Right) { ContextAt(pointer); e.Handled = true; return; }
         if (e.ChangedButton != MouseButton.Left) return;
         if (Editor.Sheet.BomPage is not null) { Status?.Invoke("Folio de nomenclature : Projet → Nomenclature pour actualiser son contenu."); return; }
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
-            if (e.ClickCount == 2 && Mode == "select")
-            {
-                var refs = new CrossReferences(Editor.Project);
-                var reference = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && ReferenceDisplay.HitBounds(Editor.Project, c, refs).Contains(pointer));
-                if (reference is not null) { ReferenceRequested?.Invoke(reference.Id); return; }
-            }
+            if (e.ClickCount == 2 && ActivateReference(pointer)) { e.Handled = true; return; }
+            if (Mode == "place" && Hit(pointer) is string existing && Editor.Sheet.Components.Any(c => c.Id == existing && CrossReferences.IsPoint(c))) { SetMode("select"); Select(existing); return; }
             var port = HitPort(pointer);
             if (connection is not null) { if (port is not null) CompleteConnection(port); else if (HitWire(pointer) is { } target) CompleteBranch(target); else { waypoints.Add(new(Editor.Snap(pointer.X), Editor.Snap(pointer.Y))); InvalidateVisual(); } return; }
-            if (Mode == "select") foreach (var w in Editor.Sheet.Wires.Where(w => Selected.Contains(w.Id)))
+            if (Mode == "select" && Selected.Count == 1) foreach (var w in Editor.Sheet.Wires.Where(w => Selected.Contains(w.Id)))
             {
                 var route = w.Route(Editor.Sheet);
                 if ((route[0] - pointer).Length < 8 / Zoom) { StartConnection(w.To, e, w.Id, true); return; }
@@ -202,22 +247,21 @@ public sealed class SheetCanvas : FrameworkElement
             if (Mode == "text") { TextRequested?.Invoke(pointer); return; }
             if (Mode == "wire") return;
             var hit = Hit(pointer); var ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
-            if (hit is null) { Selected.Clear(); SelectionChanged?.Invoke(); InvalidateVisual(); return; }
+            if (hit is null) { marqueeStart = pointer; marqueeAdd = ctrl; Editor.InteractionInProgress = true; CaptureMouse(); InvalidateVisual(); return; }
             if (ctrl && Selected.Contains(hit)) { Selected.Remove(hit); SelectionChanged?.Invoke(); InvalidateVisual(); return; }
             if (!ctrl && !Selected.Contains(hit)) Selected.Clear(); Selected.Add(hit); SelectionChanged?.Invoke();
             var selectedWire = Editor.Sheet.Wires.FirstOrDefault(w => w.Id == hit);
-            if (selectedWire is not null && !ctrl) { var route = selectedWire.Route(Editor.Sheet); var index = Enumerable.Range(1, route.Count - 1).OrderBy(i => Distance(pointer, route[i - 1], route[i])).First(); StartSegment(selectedWire, index); return; }
-            original.Clear();
-            foreach (var c in Editor.Sheet.Components.Where(c => Selected.Contains(c.Id))) original[c.Id] = new(c.X, c.Y);
-            foreach (var n in Editor.Sheet.Notes.Where(c => Selected.Contains(c.Id))) original[n.Id] = new(n.X, n.Y);
-            if (original.Count > 0) { before = ProjectStore.Serialize(Editor.Project); dragStart = pointer; Editor.InteractionInProgress = true; CaptureMouse(); }
+            if (selectedWire is not null && !ctrl && Selected.Count == 1) { var route = selectedWire.Route(Editor.Sheet); var index = Enumerable.Range(1, route.Count - 1).OrderBy(i => Distance(pointer, route[i - 1], route[i])).First(); StartSegment(selectedWire, index); return; }
+            BeginSelectionMove(pointer); if (before is not null) CaptureMouse();
             InvalidateVisual();
         }
         catch (Exception ex) { CancelDrag(); Status?.Invoke(ex.Message); }
     }
     protected override void OnMouseMove(MouseEventArgs e)
     {
-        pointer = World(e.GetPosition(this)); hoveredPort = HitPort(pointer); hoveredWire = connection is not null && hoveredPort is null ? HitWire(pointer) : null;
+        pointer = World(e.GetPosition(this));
+        if (marqueeStart is not null) { InvalidateVisual(); return; }
+        hoveredPort = HitPort(pointer); hoveredWire = connection is not null && hoveredPort is null ? HitWire(pointer) : null;
         if (panning) { offset = panOffset + (e.GetPosition(this) - panStart); InvalidateVisual(); return; }
         if (connectionPressed && (e.GetPosition(this) - pressPosition).Length > 4) connectionMoved = true;
         if (before is not null && editingWire is not null && originalRoute is not null)
@@ -227,12 +271,7 @@ public sealed class SheetCanvas : FrameworkElement
         }
         else if (before is not null)
         {
-            sceneCache=null; routeCache=null;
-            double dx = Editor.Snap(pointer.X - dragStart.X), dy = Editor.Snap(pointer.Y - dragStart.Y);
-            dx = Math.Clamp(dx, -original.Values.Min(p => p.X), Editor.Sheet.Width - original.Values.Max(p => p.X));
-            dy = Math.Clamp(dy, -original.Values.Min(p => p.Y), Editor.Sheet.Height - original.Values.Max(p => p.Y));
-            foreach (var c in Editor.Sheet.Components.Where(c => original.ContainsKey(c.Id))) { c.X = original[c.Id].X + dx; c.Y = original[c.Id].Y + dy; }
-            foreach (var n in Editor.Sheet.Notes.Where(c => original.ContainsKey(c.Id))) { n.X = original[n.Id].X + dx; n.Y = original[n.Id].Y + dy; }
+            MoveSelection(pointer);
         }
         Cursor = hoveredPort is not null || connection is not null ? Cursors.Cross : Mode == "select" ? Cursors.Arrow : Cursors.Cross;
         InvalidateVisual();
@@ -241,6 +280,7 @@ public sealed class SheetCanvas : FrameworkElement
     {
         if (e.ChangedButton == MouseButton.Middle) { panning = false; if (before is null && !connectionPressed) ReleaseMouseCapture(); return; }
         if (e.ChangedButton != MouseButton.Left) return;
+        if (marqueeStart is Point start) { marqueeStart = null; Editor.InteractionInProgress = false; SelectRectangle(new Rect(start, World(e.GetPosition(this))), marqueeAdd); ReleaseMouseCapture(); return; }
         try
         {
             if (connectionPressed)
@@ -258,15 +298,15 @@ public sealed class SheetCanvas : FrameworkElement
         catch (Exception ex) { CancelDrag(); Status?.Invoke(ex.Message); }
         if (before is null && !panning && !connectionPressed) ReleaseMouseCapture();
     }
-    protected override void OnLostMouseCapture(MouseEventArgs e) { base.OnLostMouseCapture(e); if (before is not null || connectionPressed) CancelDrag(); panning = false; }
+    protected override void OnLostMouseCapture(MouseEventArgs e) { base.OnLostMouseCapture(e); if (before is not null || connectionPressed || marqueeStart is not null) CancelDrag(); panning = false; }
     public void CancelDrag()
     {
-        var snapshot = before; before = null; originalRoute = null; editingWire = null; connection = null; hoveredWire = null; connectionPressed = false; connectionMoved = false; waypoints.Clear(); panning = false; Editor.InteractionInProgress = false;
+        var snapshot = before; before = null; marqueeStart = null; originalRoute = null; editingWire = null; connection = null; hoveredWire = null; connectionPressed = false; connectionMoved = false; waypoints.Clear(); panning = false; Editor.InteractionInProgress = false;
         ReleaseMouseCapture(); if (snapshot is not null) Editor.CancelPreview(snapshot); InvalidateVisual();
     }
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
-        if (before is not null || connectionPressed) return;
+        if (before is not null || connectionPressed || marqueeStart is not null) return;
         var screen = e.GetPosition(this); var world = World(screen); Zoom = Math.Clamp(Zoom * (e.Delta > 0 ? 1.15 : 1 / 1.15), .08, 4);
         offset = new(screen.X - world.X * Zoom, screen.Y - world.Y * Zoom); InvalidateVisual(); e.Handled = true;
     }

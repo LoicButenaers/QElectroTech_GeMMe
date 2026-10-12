@@ -88,6 +88,16 @@ public sealed class CrossReferences
 
 public sealed partial class Editor
 {
+    public void LinkReferencePair(string firstId, string secondId, string name)
+    {
+        var points = CrossReferences.Points(Project).Select(p => p.Component).ToList();
+        var first = points.Single(c => c.Id == firstId); var second = points.Single(c => c.Id == secondId);
+        name = name.Trim();
+        if (first.Id == second.Id || first.Symbol == second.Symbol) throw new ArgumentException("Choisir un départ et une arrivée distincts.");
+        if (name.Length == 0) throw new ArgumentException("Saisir un nom de liaison.");
+        if (points.Any(c => c.Id != firstId && c.Id != secondId && c.LinkName.Trim().Equals(name, StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("Ce nom appartient déjà à d’autres reports. Choisir un nom unique pour cette paire, ou utiliser les propriétés pour une liaison en étoile.");
+        Change(() => { foreach (var c in new[] { first, second }) { c.LinkName = name; c.LinkMode = "pair"; c.LinkSource = false; c.LinkOrder = 0; } });
+    }
     public void ConfigureReference(string id, string name, string mode, int order, bool source)
     {
         var c = Sheet.Components.Single(x => x.Id == id && CrossReferences.IsPoint(x));

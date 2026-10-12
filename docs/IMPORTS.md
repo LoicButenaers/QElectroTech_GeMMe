@@ -1,12 +1,14 @@
-# Symboles personnalisés et imports — version 0.6
+# Symboles personnalisés et imports — version 0.7
 
 ## Modifier un symbole
 
 Sélectionner un appareil et utiliser **Propriétés → Modifier le symbole en copie…**. Le menu **Insérer → Modifier un symbole en copie…** utilise le composant sélectionné, ou à défaut le dernier symbole choisi dans la bibliothèque.
 
-L’éditeur contient deux tableaux, **Dessin** et **Bornes électriques**, avec aperçu. Ajouter ou retirer des lignes, rectangles, cercles et textes ; modifier leurs coordonnées. Les coordonnées sont relatives au centre du symbole. Pour déplacer un objet, sélectionner sa ligne et cliquer dans l’aperçu. Sur l’onglet Bornes, ce clic déplace la borne sélectionnée. **Actualiser l’aperçu** valide les cellules et met à jour le dessin ; une cellule invalide est refusée.
+**Insérer → Nouveau symbole…** ouvre un dessin vide. L’atelier comporte une palette d’outils, une liste de parties, une grande grille et un panneau de propriétés. Choisir Ligne, Rectangle ou Cercle, puis maintenir le bouton gauche et tirer. Pour Texte ou Borne, cliquer à l’endroit souhaité. Le texte initial se modifie dans les propriétés. En mode Sélection, glisser une partie ou ses poignées ; les objets tournés se règlent par leurs champs numériques. Les coordonnées sont relatives au centre du symbole, avec accrochage facultatif de 5 unités. Les bornes portent des IDs uniques, éditables.
 
-Renseigner le nom, le préfixe et l’encombrement du symbole. **Appliquer l’échelle** multiplie géométrie, bornes, dimensions et tailles de texte. **Enregistrer la copie** l’ajoute à **Bibliothèque → Mes symboles** dans le projet courant. Le remplacement facultatif du composant sélectionné conserve ses propriétés et raccordements ; la suppression d’une borne déjà raccordée est refusée. Les jonctions et reports sont des éléments spécialisés, modifiables par leurs propres propriétés plutôt que par cet éditeur.
+La molette zoome autour du pointeur ; le bouton central déplace la vue ; **Ajuster la vue** recadre. Les changements à la souris sont immédiats ; les champs précis se valident avec **Appliquer à la partie**. Échap annule un geste et revient à la sélection. Ctrl+Z / Ctrl+Y dans la zone de dessin et les boutons Annuler / Rétablir parcourent l’historique local (40 opérations). Suppr et le clic droit agissent sur la partie sélectionnée. Fermer sans enregistrer ne change pas le projet.
+
+Renseigner le nom, le préfixe et l’encombrement du symbole. **Appliquer** valide ces champs ; **Redimensionner** multiplie géométrie, bornes, dimensions et tailles de texte par le facteur Échelle ×. **Enregistrer la copie** l’ajoute à **Bibliothèque → Mes symboles** dans le projet courant. Le remplacement facultatif du composant sélectionné conserve ses propriétés et raccordements ; la suppression d’une borne déjà raccordée est refusée. Les jonctions et reports sont des éléments spécialisés, modifiables par leurs propres propriétés plutôt que par cet éditeur.
 
 Le fichier `.gemelec` embarque les copies. **Exporter .gemsymbol…** permet de réutiliser une copie dans d’autres projets via **Insérer → Importer un symbole DXF / GeMMeElec…**. La bibliothèque intégrée n’est jamais remplacée. Les fichiers échangés contiennent le dessin et les bornes, pas un catalogue fabricant ni des caractéristiques commerciales vérifiées.
 

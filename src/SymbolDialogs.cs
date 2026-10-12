@@ -1,89 +1,121 @@
 using Microsoft.Win32;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Input;
 using System.Windows.Media;
 
 namespace GeMMeElec;
 
-public sealed class EditableShape
-{
-    public string Kind { get; set; } = "line"; public double X { get; set; } public double Y { get; set; } public double A { get; set; } = 20; public double B { get; set; } public string Text { get; set; } = ""; public double Rotation { get; set; }
-    public Shape Shape() => new(Kind, X, Y, A, B, Text) { Rotation = Rotation };
-    public static EditableShape From(Shape s) => new() { Kind=s.Kind, X=s.X, Y=s.Y, A=s.A, B=s.B, Text=s.Text, Rotation=s.Rotation };
-}
-public sealed class EditablePort { public string Id { get; set; } = "1"; public double X { get; set; } public double Y { get; set; } }
-public sealed class SymbolEditPreview : FrameworkElement
-{
-    public Func<SymbolDefinition>? Read; public Action<System.Windows.Point>? Click; private double scale = 1; private Vector origin;
-    protected override void OnRender(DrawingContext dc)
-    {
-        dc.DrawRectangle(Brushes.WhiteSmoke, new Pen(Brushes.LightGray, 1), new(0,0,ActualWidth,ActualHeight));
-        SymbolDefinition? d; try { d=Read?.Invoke(); if(d is not null)CustomSymbols.Validate(d); } catch { return; } if(d is null)return;
-        scale=Math.Clamp(Math.Min((ActualWidth-70)/d.Width,(ActualHeight-70)/d.Height),.01,4); origin=new(ActualWidth/2,ActualHeight/2);
-        dc.PushTransform(new TranslateTransform(origin.X,origin.Y));dc.PushTransform(new ScaleTransform(scale,scale));
-        dc.DrawLine(new Pen(Brushes.LightGray,1/scale),new(-d.Width/2,0),new(d.Width/2,0));dc.DrawLine(new Pen(Brushes.LightGray,1/scale),new(0,-d.Height/2),new(0,d.Height/2));
-        Drawing.Render(dc,d.Shapes.Select(s=>new Ink(s.Kind,s.X,s.Y,s.A,s.B,s.Text,Size:s.A,Rotation:s.Rotation)));
-        foreach(var p in d.Ports){dc.DrawEllipse(Brushes.White,new Pen(Brushes.Teal,1.5/scale),new(p.X,p.Y),4/scale,4/scale);Drawing.Render(dc,[new("text",p.X+5/scale,p.Y-14/scale,Text:p.Id,Size:11/scale,Color:"#007F86")]);}dc.Pop();dc.Pop();
-    }
-    protected override void OnMouseDown(MouseButtonEventArgs e) { if(e.ChangedButton==MouseButton.Left) {var p=e.GetPosition(this);Click?.Invoke(new(Math.Round((p.X-origin.X)/scale,2),Math.Round((p.Y-origin.Y)/scale,2)));} }
-}
 public sealed partial class MainWindow
 {
+    private void NewSymbol() => EditSymbol(new("draft", "Nouveau symbole", "X", 100, 100, [], []));
     private void SymbolEditor()
     {
-        Canvas.CancelDrag(); var c=Editor.Sheet.Components.FirstOrDefault(c=>Canvas.Selected.Contains(c.Id));
-        string id=c?.Symbol ?? Canvas.Symbol;
-        if(id is "junction" or "folio_next" or "folio_previous")throw new ArgumentException("Sélectionner un symbole d’appareil ; les reports et jonctions se règlent dans leurs propriétés.");
-        EditSymbol(CustomSymbols.Resolve(Editor.Project,id),c?.Id);
+        Canvas.CancelDrag(); var c = Editor.Sheet.Components.FirstOrDefault(c => Canvas.Selected.Contains(c.Id));
+        string id = c?.Symbol ?? Canvas.Symbol;
+        if (id is "junction" or "folio_next" or "folio_previous") throw new ArgumentException("Les reports et jonctions se règlent dans leurs propriétés.");
+        EditSymbol(CustomSymbols.Resolve(Editor.Project, id), c?.Id);
     }
     private async void ImportSymbol()
     {
-        Canvas.CancelDrag();var picker=new OpenFileDialog{Filter="Symboles DXF / GeMMeElec|*.dxf;*.gemsymbol",Title="Importer un symbole"};if(picker.ShowDialog(this)!=true)return;
+        Canvas.CancelDrag(); var picker = new OpenFileDialog { Filter = "Symboles DXF / GeMMeElec|*.dxf;*.gemsymbol", Title = "Importer un symbole" }; if (picker.ShowDialog(this) != true) return;
         try
         {
-            IsEnabled=false;status.Text="Lecture du symbole…";
-            var result=await Task.Run(()=>picker.FileName.EndsWith(".dxf",StringComparison.OrdinalIgnoreCase)?DxfImport.Read(picker.FileName):new DxfImportResult(CustomSymbols.Load(picker.FileName),[],"unités GeMMeElec"));
-            IsEnabled=true;EditSymbol(result.Symbol,null,string.Join("\n",new[]{"Unité du fichier : "+result.Units}.Concat(result.Warnings)));
-        } catch(Exception ex){MessageBox.Show(this,ex.Message,"Import du symbole");}finally{IsEnabled=true;status.Text="Prêt";}
+            IsEnabled = false; status.Text = "Lecture du symbole…";
+            var result = await Task.Run(() => picker.FileName.EndsWith(".dxf", StringComparison.OrdinalIgnoreCase) ? DxfImport.Read(picker.FileName) : new DxfImportResult(CustomSymbols.Load(picker.FileName), [], "unités GeMMeElec"));
+            IsEnabled = true; EditSymbol(result.Symbol, null, string.Join("\n", new[] { "Unité du fichier : " + result.Units }.Concat(result.Warnings)));
+        }
+        catch (Exception ex) { MessageBox.Show(this, ex.Message, "Import du symbole"); }
+        finally { IsEnabled = true; status.Text = "Prêt"; }
     }
-    internal void EditSymbol(SymbolDefinition source,string? replace=null,string warnings="")
+    private sealed record SymbolPart(int Shape, int Port, string Label);
+    internal void EditSymbol(SymbolDefinition source, string? replace = null, string warnings = "")
     {
-        var dialog=DocumentWindow("Symbole · modifier et enregistrer une copie",1230,830);var root=new DockPanel{Margin=new(16)};dialog.Content=root;
-        var top=new StackPanel();DockPanel.SetDock(top,Dock.Top);root.Children.Add(top);
-        top.Children.Add(Hint("La copie conserve ses bornes et son dessin dans le projet. Exporter en .gemsymbol permet de la réutiliser dans un autre projet. Les symboles d’origine restent disponibles."));
-        var fields=new WrapPanel();top.Children.Add(fields);
-        TextBox Field(string label,string value,int width){fields.Children.Add(new TextBlock{Text=label,VerticalAlignment=VerticalAlignment.Center,Margin=new(5)});var box=new TextBox{Text=value,Width=width,Margin=new(3),Padding=new(5)};fields.Children.Add(box);return box;}
-        var name=Field("Nom",source.Name+" · copie",280);var prefix=Field("Préfixe",source.Prefix,55);var width=Field("Largeur",source.Width.ToString(CultureInfo.InvariantCulture),70);var height=Field("Hauteur",source.Height.ToString(CultureInfo.InvariantCulture),70);var factor=Field("Échelle ×","1",60);
-        var shapes=new ObservableCollection<EditableShape>(source.Shapes.Select(EditableShape.From));var ports=new ObservableCollection<EditablePort>(source.Ports.Select(p=>new EditablePort{Id=p.Id,X=p.X,Y=p.Y}));
-        var actions=new WrapPanel();DockPanel.SetDock(actions,Dock.Bottom);root.Children.Add(actions);
-        var body=new Grid();body.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});body.ColumnDefinitions.Add(new(){Width=new GridLength(380)});root.Children.Add(body);
-        var left=new DockPanel();body.Children.Add(left);var bar=new WrapPanel();DockPanel.SetDock(bar,Dock.Top);left.Children.Add(bar);
-        var tabs=new TabControl();left.Children.Add(tabs);var drawingGrid=GridFor(shapes,[("Type","Kind",70),("X","X",55),("Y","Y",55),("X2 / L / R / taille","A",115),("Y2 / hauteur","B",95),("Texte","Text",160),("Rotation","Rotation",70)]);var portGrid=GridFor(ports,[("ID de borne","Id",130),("X","X",90),("Y","Y",90)]);
-        tabs.Items.Add(new TabItem{Header="Dessin",Content=drawingGrid});tabs.Items.Add(new TabItem{Header="Bornes électriques",Content=portGrid});
-        var side=new DockPanel{Margin=new(12,0,0,0)};Grid.SetColumn(side,1);body.Children.Add(side);var hint=Hint("Ligne : X/Y → X2/Y2. Rectangle : largeur/hauteur. Cercle : rayon. Texte : taille et contenu.\nSélectionner une borne puis cliquer l’aperçu pour la positionner. Une ligne du dessin peut aussi être déplacée par clic.");DockPanel.SetDock(hint,Dock.Top);side.Children.Add(hint);
-        if(warnings.Length>0){var warningBox=new TextBox{Text=warnings,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,MaxHeight=150,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,BorderThickness=new(0),Background=Brushes.LemonChiffon};DockPanel.SetDock(warningBox,Dock.Bottom);side.Children.Add(warningBox);}
-        double Number(string s)=>double.Parse(s.Replace(',','.'),CultureInfo.InvariantCulture);
-        SymbolDefinition Read()=>new("draft",name.Text,prefix.Text,Number(width.Text),Number(height.Text),ports.Select(p=>new Port(p.Id,p.X,p.Y)).ToList(),shapes.Select(s=>s.Shape()).ToList()){Category="Mes symboles"};
-        var preview=new SymbolEditPreview{MinHeight=300,Read=Read};side.Children.Add(preview);
-        void Commit(){if(!drawingGrid.CommitEdit(DataGridEditingUnit.Cell,true)||!drawingGrid.CommitEdit(DataGridEditingUnit.Row,true)||!portGrid.CommitEdit(DataGridEditingUnit.Cell,true)||!portGrid.CommitEdit(DataGridEditingUnit.Row,true))throw new ArgumentException("Corriger la cellule avant de continuer.");}
-        void Redraw(){Commit();CustomSymbols.Validate(Read());preview.InvalidateVisual();}
-        foreach(var kind in new[]{"line","rect","circle","text"})bar.Children.Add(DocButton(kind switch{"line"=>"+ Ligne","rect"=>"+ Rectangle","circle"=>"+ Cercle",_=>"+ Texte"},dialog,()=>{var s=new EditableShape{Kind=kind,B=kind=="rect"?20:0,A=kind=="text"?12:20,Text=kind=="text"?"Texte":""};shapes.Add(s);drawingGrid.SelectedItem=s;tabs.SelectedIndex=0;preview.InvalidateVisual();}));
-        bar.Children.Add(DocButton("+ Borne",dialog,()=>{int n=1;while(ports.Any(p=>p.Id==n.ToString()))n++;var port=new EditablePort{Id=n.ToString()};ports.Add(port);portGrid.SelectedItem=port;tabs.SelectedIndex=1;preview.InvalidateVisual();}));
-        bar.Children.Add(DocButton("Supprimer",dialog,()=>{Commit();if(tabs.SelectedIndex==0&&drawingGrid.SelectedItem is EditableShape s)shapes.Remove(s);else if(portGrid.SelectedItem is EditablePort p)ports.Remove(p);preview.InvalidateVisual();}));
-        preview.Click=p=>{try{Commit();if(tabs.SelectedIndex==1&&portGrid.SelectedItem is EditablePort port){port.X=p.X;port.Y=p.Y;portGrid.Items.Refresh();}else if(drawingGrid.SelectedItem is EditableShape shape){double dx=p.X-shape.X,dy=p.Y-shape.Y;shape.X=p.X;shape.Y=p.Y;if(shape.Kind=="line"){shape.A+=dx;shape.B+=dy;}drawingGrid.Items.Refresh();}preview.InvalidateVisual();}catch(Exception ex){MessageBox.Show(dialog,ex.Message);}};
-        fields.Children.Add(DocButton("Appliquer l’échelle",dialog,()=>{Commit();var scaled=DxfImport.Scale(Read(),Number(factor.Text));CustomSymbols.Validate(scaled);shapes.Clear();foreach(var s in scaled.Shapes)shapes.Add(EditableShape.From(s));ports.Clear();foreach(var p in scaled.Ports)ports.Add(new(){Id=p.Id,X=p.X,Y=p.Y});width.Text=scaled.Width.ToString(CultureInfo.InvariantCulture);height.Text=scaled.Height.ToString(CultureInfo.InvariantCulture);factor.Text="1";preview.InvalidateVisual();}));
-        actions.Children.Add(DocButton("Actualiser l’aperçu",dialog,Redraw));var replaceBox=new CheckBox{Content="Remplacer le composant sélectionné",IsEnabled=replace is not null,IsChecked=replace is not null,VerticalAlignment=VerticalAlignment.Center,Margin=new(12)};actions.Children.Add(replaceBox);
-        actions.Children.Add(DocButton("Exporter .gemsymbol…",dialog,()=>{Commit();var d=CustomSymbols.Copy(Read(),name.Text);CustomSymbols.Validate(d);var save=new SaveFileDialog{Filter="Symbole GeMMeElec|*.gemsymbol",DefaultExt=".gemsymbol",FileName="symbole.gemsymbol"};if(save.ShowDialog(dialog)==true)CustomSymbols.Export(d,save.FileName);}));
-        actions.Children.Add(DocButton("Enregistrer la copie",dialog,()=>{Commit();var d=Editor.SaveSymbolCopy(Read(),replaceBox.IsChecked==true?replace:null);Canvas.Symbol=d.Id;Canvas.CatalogId=null;libraryMode.SelectedIndex=2;Filter();dialog.Close();}));actions.Children.Add(DocButton("Annuler",dialog,dialog.Close));
-        ShowDocumentDialog(dialog);
-    }
-    private static DataGrid GridFor(object items,(string Label,string Field,int Width)[] columns)
-    {
-        var grid=new DataGrid{ItemsSource=(System.Collections.IEnumerable)items,AutoGenerateColumns=false,CanUserAddRows=false,CanUserDeleteRows=false,EnableRowVirtualization=true,SelectionMode=DataGridSelectionMode.Single};
-        foreach(var c in columns)grid.Columns.Add(new DataGridTextColumn{Header=c.Label,Width=c.Width,Binding=new Binding(c.Field){UpdateSourceTrigger=UpdateSourceTrigger.LostFocus,ValidatesOnExceptions=true}});return grid;
+        var dialog = DocumentWindow("Atelier de symboles · dessin et bornes", 1450, 900);
+        dialog.Resources.Add(typeof(Button), ButtonStyle()); dialog.Resources.Add(typeof(TextBox), TextBoxStyle());
+        var draft = new SymbolDraft(source with { Name = source.Id == "draft" ? source.Name : source.Name + " · copie" });
+        var canvas = new SymbolCanvas(draft); var root = new DockPanel { Margin = new(12) }; dialog.Content = root;
+        var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top); root.Children.Add(top);
+        var fields = new WrapPanel(); top.Children.Add(fields);
+        TextBox Field(string label, string value, int size)
+        {
+            fields.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, Margin = new(5) });
+            var box = new TextBox { Text = value, Width = size, Margin = new(3), Padding = new(5) }; fields.Children.Add(box); return box;
+        }
+        string Num(double n) => n.ToString("0.###", CultureInfo.InvariantCulture);
+        double Number(string s) => double.Parse(s.Replace(',', '.'), CultureInfo.InvariantCulture);
+        var name = Field("Nom", draft.Definition.Name, 230); var prefix = Field("Préfixe", source.Prefix, 40);
+        var width = Field("Largeur", Num(source.Width), 60); var height = Field("Hauteur", Num(source.Height), 60); var factor = Field("Échelle ×", "1", 40);
+        SymbolDefinition Read() => draft.Definition with { Name = name.Text, Prefix = prefix.Text, Width = Number(width.Text), Height = Number(height.Text), Category = "Mes symboles" };
+        fields.Children.Add(DocButton("Appliquer", dialog, () => { canvas.Cancel(); draft.Change(_ => Read()); }));
+        fields.Children.Add(DocButton("Redimensionner", dialog, () => { canvas.Cancel(); var scaled = DxfImport.Scale(Read(), Number(factor.Text)); draft.Change(_ => scaled); factor.Text = "1"; canvas.Fit(); }));
+        var bar = new WrapPanel(); top.Children.Add(bar);
+        bar.Children.Add(DocButton("↶ Annuler", dialog, () => { canvas.Cancel(); draft.Undo(); canvas.SelectPart(-1, -1); }));
+        bar.Children.Add(DocButton("↷ Rétablir", dialog, () => { canvas.Cancel(); draft.Redo(); canvas.SelectPart(-1, -1); }));
+        bar.Children.Add(DocButton("Dupliquer", dialog, canvas.DuplicateSelection)); bar.Children.Add(DocButton("Supprimer", dialog, canvas.DeleteSelection));
+        bar.Children.Add(DocButton("Ajuster la vue", dialog, canvas.Fit));
+        var snap = new CheckBox { Content = "Accrochage 5 unités", IsChecked = true, VerticalAlignment = VerticalAlignment.Center, Margin = new(10) }; snap.Click += (_, _) => canvas.SnapToGrid = snap.IsChecked == true; bar.Children.Add(snap);
+        var bottom = new StackPanel(); DockPanel.SetDock(bottom, Dock.Bottom); root.Children.Add(bottom);
+        var tip = Hint("Clic gauche maintenu : dessiner / déplacer • Poignées : dimensions • Molette : zoom • Bouton central : vue • Échap : sélection"); bottom.Children.Add(tip); canvas.Status += text => tip.Text = text;
+        if (warnings.Length > 0) bottom.Children.Add(new TextBox { Text = warnings, IsReadOnly = true, TextWrapping = TextWrapping.Wrap, MaxHeight = 60, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Background = Brushes.LemonChiffon });
+        var actions = new WrapPanel(); bottom.Children.Add(actions);
+        var replaceBox = new CheckBox { Content = "Remplacer le composant sélectionné", IsEnabled = replace is not null, IsChecked = replace is not null, VerticalAlignment = VerticalAlignment.Center, Margin = new(10) }; actions.Children.Add(replaceBox);
+        actions.Children.Add(DocButton("Exporter .gemsymbol…", dialog, () => { canvas.Cancel(); var d = CustomSymbols.Copy(Read(), name.Text); CustomSymbols.Validate(d); var save = new SaveFileDialog { Filter = "Symbole GeMMeElec|*.gemsymbol", DefaultExt = ".gemsymbol", FileName = "symbole.gemsymbol" }; if (save.ShowDialog(dialog) == true) CustomSymbols.Export(d, save.FileName); }));
+        actions.Children.Add(DocButton("Enregistrer la copie", dialog, () => { canvas.Cancel(); var d = Editor.SaveSymbolCopy(Read(), replaceBox.IsChecked == true ? replace : null); Canvas.Symbol = d.Id; Canvas.CatalogId = null; libraryMode.SelectedIndex = 2; Filter(); dialog.Close(); }));
+        actions.Children.Add(DocButton("Fermer sans enregistrer", dialog, dialog.Close));
+        var body = new Grid(); body.ColumnDefinitions.Add(new() { Width = new GridLength(180) }); body.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) }); body.ColumnDefinitions.Add(new() { Width = new GridLength(225) }); root.Children.Add(body);
+        var left = new DockPanel { Margin = new(0, 4, 8, 0) }; body.Children.Add(left);
+        var toolPanel = new StackPanel(); DockPanel.SetDock(toolPanel, Dock.Top); left.Children.Add(toolPanel);
+        var toolButtons = new Dictionary<string, Button>();
+        foreach (var (kind, label) in new[] { ("select", "↖ Sélection"), ("line", "+ Ligne"), ("rect", "+ Rectangle"), ("circle", "+ Cercle"), ("text", "+ Texte"), ("port", "+ Borne") })
+        {
+            var button = DocButton(label, dialog, () => { canvas.SetTool(kind); canvas.Focus(); }); toolPanel.Children.Add(button); toolButtons[kind] = button;
+        }
+        canvas.ToolChanged += () => { foreach (var pair in toolButtons) pair.Value.Background = pair.Key == canvas.Tool ? Brushes.LightCyan : Brushes.White; }; canvas.SetTool("select");
+        toolPanel.Children.Add(Heading("PARTIES DU SYMBOLE"));
+        var parts = new ListBox { DisplayMemberPath = "Label", Margin = new(0, 8, 0, 0) }; left.Children.Add(parts);
+        var border = new Border { BorderBrush = Brushes.LightGray, BorderThickness = new(1), Child = canvas, Margin = new(0, 4, 0, 0) }; Grid.SetColumn(border, 1); body.Children.Add(border);
+        var prop = new StackPanel { Margin = new(12, 4, 0, 0) }; var scroll = new ScrollViewer { Content = prop, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; Grid.SetColumn(scroll, 2); body.Children.Add(scroll);
+        bool syncing = false;
+        void Properties()
+        {
+            prop.Children.Clear(); prop.Children.Add(Heading("PROPRIÉTÉS DE LA PARTIE"));
+            var d = draft.Definition; int si = canvas.ShapeIndex, pi = canvas.PortIndex;
+            if (si < 0 && pi < 0) { prop.Children.Add(Hint("Choisir un outil puis dessiner sur la grille. Cliquer une partie ou son nom pour la déplacer et régler ses coordonnées.\n\nLes bornes vertes sont les points de raccordement des conducteurs. Leur identifiant doit rester unique.\n\nLe cadre pointillé indique l’encombrement du symbole.")); return; }
+            var s = si >= 0 ? d.Shapes[si] : null; var p = pi >= 0 ? d.Ports[pi] : null;
+            var x = DocField(prop, "X", Num(s?.X ?? p!.X)); var y = DocField(prop, "Y", Num(s?.Y ?? p!.Y));
+            TextBox? a = null, b = null, text = null, rotation = null, portId = null;
+            if (p is not null) portId = DocField(prop, "Identifiant de borne", p.Id);
+            else if (s is not null)
+            {
+                a = DocField(prop, s.Kind switch { "line" => "X de l’extrémité", "rect" => "Largeur", "circle" or "dot" => "Rayon", _ => "Taille du texte" }, Num(s.A));
+                if (s.Kind is "line" or "rect") b = DocField(prop, s.Kind == "line" ? "Y de l’extrémité" : "Hauteur", Num(s.B));
+                if (s.Kind == "text") text = DocField(prop, "Texte", s.Text);
+                if (s.Kind is "text" or "rect") rotation = DocField(prop, "Rotation (degrés)", Num(s.Rotation));
+            }
+            prop.Children.Add(DocButton("Appliquer à la partie", dialog, () =>
+            {
+                if (p is not null) draft.Change(d => { var ports = d.Ports.ToList(); ports[pi] = new(portId!.Text, Number(x.Text), Number(y.Text)); return d with { Ports = ports }; });
+                else draft.Change(d => { var shapes = d.Shapes.ToList(); shapes[si] = s! with { X = Number(x.Text), Y = Number(y.Text), A = Number(a!.Text), B = b is null ? s!.B : Number(b.Text), Text = text?.Text ?? s!.Text, Rotation = rotation is null ? s!.Rotation : Number(rotation.Text) }; return d with { Shapes = shapes }; });
+            }));
+            prop.Children.Add(Hint("Les modifications à la souris sont immédiates. Pour les champs ci-dessus, cliquer Appliquer à la partie."));
+        }
+        // Geometry changes must not discard metadata currently being typed.
+        var displayed = draft.Definition;
+        void RefreshParts()
+        {
+            syncing = true; var d = draft.Definition;
+            if (displayed.Name != d.Name) name.Text = d.Name; if (displayed.Prefix != d.Prefix) prefix.Text = d.Prefix;
+            if (displayed.Width != d.Width) width.Text = Num(d.Width); if (displayed.Height != d.Height) height.Text = Num(d.Height); displayed = d;
+            parts.ItemsSource = d.Shapes.Select((s, i) => new SymbolPart(i, -1, $"{i + 1} · " + (s.Kind switch { "line" => "Ligne", "rect" => "Rectangle", "circle" => "Cercle", "text" => s.Text, _ => "Point" }))).Concat(d.Ports.Select((p, i) => new SymbolPart(-1, i, "Borne " + p.Id))).ToList();
+            parts.SelectedItem = parts.Items.Cast<SymbolPart>().FirstOrDefault(p => p.Shape == canvas.ShapeIndex && p.Port == canvas.PortIndex); syncing = false; Properties();
+        }
+        parts.SelectionChanged += (_, _) => { if (!syncing && parts.SelectedItem is SymbolPart p) canvas.SelectPart(p.Shape, p.Port); };
+        canvas.SelectionChanged += () => { syncing = true; parts.SelectedItem = parts.Items.Cast<SymbolPart>().FirstOrDefault(p => p.Shape == canvas.ShapeIndex && p.Port == canvas.PortIndex); syncing = false; Properties(); };
+        draft.Changed += RefreshParts;
+        var context = new ContextMenu();
+        foreach (var (label, action) in new (string, Action)[] { ("Dupliquer", canvas.DuplicateSelection), ("Supprimer", canvas.DeleteSelection), ("Ajuster la vue", canvas.Fit) }) { var item = new MenuItem { Header = label }; item.Click += (_, _) => action(); context.Items.Add(item); }
+        canvas.ContextMenu = context;
+        dialog.Closed += (_, _) => canvas.Cancel(); RefreshParts(); ShowDocumentDialog(dialog);
     }
 }

@@ -239,7 +239,7 @@ public static class McpServer
                 {
                     case "initialize":
                         var requested = request.GetProperty("params").GetProperty("protocolVersion").GetString();
-                        result = new { protocolVersion = requested is "2024-11-05" or "2025-03-26" or "2025-06-18" or "2025-11-25" ? requested : "2025-11-25", capabilities = new { tools = new { listChanged = false } }, serverInfo = new { name = "gemmeelec", version = "0.6.0" }, instructions = "Pilote le projet visible dans GeMMeElec. Lire project_get avant modification. Demander l’accord utilisateur avant d’abandonner des modifications ou écraser un fichier. Les gammes fabricants nécessitent une référence exacte et une vérification de bornage." }; initialized = true; break;
+                        result = new { protocolVersion = requested is "2024-11-05" or "2025-03-26" or "2025-06-18" or "2025-11-25" ? requested : "2025-11-25", capabilities = new { tools = new { listChanged = false } }, serverInfo = new { name = "gemmeelec", version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!.ToString(3) }, instructions = "Pilote le projet visible dans GeMMeElec. Lire project_get avant modification. Demander l’accord utilisateur avant d’abandonner des modifications ou écraser un fichier. Les gammes fabricants nécessitent une référence exacte et une vérification de bornage." }; initialized = true; break;
                     case "ping": result = new { }; break;
                     case "tools/list": if (!initialized) throw new InvalidOperationException("initialize requis."); result = McpTools.List(); break;
                     case "tools/call":

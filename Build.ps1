@@ -1,6 +1,11 @@
 param([switch]$Test)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+$app = Join-Path $root 'build/GeMMeElec.exe'
+if (Test-Path -LiteralPath $app) {
+ try { $lockCheck = [IO.File]::Open($app, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None); $lockCheck.Dispose() }
+ catch { throw 'GeMMeElec.exe est verrouillé ou non accessible en écriture. Enregistrer et fermer GeMMeElec avant de publier.' }
+}
 $dotnet = Join-Path $root 'build/dotnet/dotnet.exe'
 if (!(Test-Path $dotnet)) {
  New-Item -ItemType Directory -Path (Join-Path $root 'build') -Force | Out-Null

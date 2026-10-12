@@ -19,6 +19,7 @@ public sealed partial class MainWindow
     private void ReferenceInspector(Component c)
     {
         properties.Children.Add(Hint("Emplacement : " + SheetZones.Address(Editor.Project, Editor.Sheet, c)));
+        properties.Children.Add(Button("Lier à un autre report…", () => LinkReferenceDialog(c.Id)));
         properties.Children.Add(Hint("Le nom commun relie les flèches, même sur des folios éloignés. Exemple : +24V ou COMMANDE_M1. R fait tourner le symbole."));
         properties.Children.Add(new TextBlock { Text = "Nom de liaison", Margin = new(0, 10, 0, 4) });
         var names = new ComboBox { IsEditable = true, ItemsSource = CrossReferences.Points(Editor.Project).Select(x => x.Component.LinkName).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToArray(), Text = c.LinkName, Padding = new(5) }; properties.Children.Add(names);
@@ -37,7 +38,23 @@ public sealed partial class MainWindow
     private void FollowReference(string id)
     {
         var targets = new CrossReferences(Editor.Project).Targets(id);
-        if (targets.Count == 1) GoToReference(targets[0]); else if (targets.Count > 1) ReferenceNavigator(); else status.Text = "Renvoi non lié : renseigner le même nom sur sa contrepartie.";
+        if (targets.Count == 1) GoToReference(targets[0]); else if (targets.Count > 1) ReferenceNavigator(); else LinkReferenceDialog(id);
+    }
+    internal void LinkReferenceDialog(string id)
+    {
+        Canvas.SetMode("select");
+        var c = CrossReferences.Points(Editor.Project).Single(p => p.Component.Id == id).Component;
+        var dialog = DocumentWindow("Lier les reports de folio", 720, 540); var root = new DockPanel { Margin = new(18) }; dialog.Content = root;
+        var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top); root.Children.Add(top);
+        top.Children.Add(Hint("Choisir la contrepartie, puis nommer la liaison. Le double-clic sur une flèche ou son nom ouvre ensuite le report lié. Une liaison existante des deux reports choisis sera remplacée."));
+        var name = DocField(top, "Nom commun aux deux reports", c.LinkName.Length > 0 ? c.LinkName : c.Tag);
+        var bottom = new WrapPanel(); DockPanel.SetDock(bottom, Dock.Bottom); root.Children.Add(bottom);
+        var list = new ListBox(); root.Children.Add(list);
+        foreach (var p in CrossReferences.Points(Editor.Project).Where(p => p.Component.Symbol != c.Symbol))
+            list.Items.Add(new ListBoxItem { Tag = p, Content = $"{SheetZones.Address(Editor.Project, p.Sheet, p.Component)}  ·  {p.Sheet.Title}  ·  {p.Component.LinkName} ({p.Component.Tag})", Padding = new(8) });
+        if (list.Items.Count == 0) top.Children.Add(Hint("Placer d’abord un report de sens complémentaire depuis la bibliothèque, sur le folio souhaité."));
+        bottom.Children.Add(DocButton("Lier les reports", dialog, () => { if (list.SelectedItem is not ListBoxItem { Tag: ReferencePoint target }) throw new ArgumentException("Sélectionner un report dans la liste."); Editor.LinkReferencePair(id, target.Component.Id, name.Text); dialog.Close(); }));
+        bottom.Children.Add(DocButton("Annuler", dialog, dialog.Close)); ShowDocumentDialog(dialog);
     }
     private sealed record ReferenceRow(ReferencePoint Point, string Name, string Type, string Address, string Mode, int Order, string Targets);
     private void ReferenceNavigator()

@@ -44,7 +44,7 @@ public sealed partial class MainWindow : Window
         AddMenu(menu, "_Fichier", ("Nouveau projet…", NewProject), ("Ouvrir…", Open), ("Enregistrer", () => Save(false)), ("Enregistrer sous…", () => Save(true)), ("Informations du projet…", ProjectInfo), ("Exemple de départ moteur", Demo), ("Quitter", Close));
         AddMenu(menu, "_Édition", ("Annuler    Ctrl+Z", Editor.Undo), ("Rétablir    Ctrl+Y", Editor.Redo), ("Dupliquer    Ctrl+D", Duplicate), ("Rotation 90°    R", Rotate), ("Supprimer    Suppr", Delete));
         AddMenu(menu, "_Folio", ("Ajouter…", AddPage), ("Propriétés du folio…", SheetInfo), ("Cartouches…", TitleBlockEditor), ("Repérage lignes / colonnes…", ZonesDialog), ("Monter dans le projet", () => MovePage(-1)), ("Descendre dans le projet", () => MovePage(1)), ("Renommer…", RenamePage), ("Supprimer le folio", DeletePage));
-        AddMenu(menu, "_Insérer", ("Conducteur    W", () => Canvas.SetMode("wire")), ("Texte    T", () => Canvas.SetMode("text")), ("Sélection    V", () => Canvas.SetMode("select")), ("Modifier un symbole en copie…", SymbolEditor), ("Importer un symbole DXF / GeMMeElec…", ImportSymbol));
+        AddMenu(menu, "_Insérer", ("Conducteur    W", () => Canvas.SetMode("wire")), ("Texte    T", () => Canvas.SetMode("text")), ("Sélection    V", () => Canvas.SetMode("select")), ("Nouveau symbole…", NewSymbol), ("Modifier un symbole en copie…", SymbolEditor), ("Importer un symbole DXF / GeMMeElec…", ImportSymbol));
         AddMenu(menu, "_Importer", ("Projet QElectroTech (.qet)…", () => ImportDrawingProject(false)), ("Folios EPLAN / CAO exportés en DXF…", () => ImportDrawingProject(true)));
         AddMenu(menu, "_Projet", ("Vérifier les connexions et les repères", Validate), ("Cartouches…", TitleBlockEditor), ("Nomenclature configurable…", Bom), ("Navigateur des renvois…", ReferenceNavigator));
         AddMenu(menu, "E_xporter", ("Tous les folios en PDF…", () => ExportFile("pdf")), ("Folio courant en SVG…", () => ExportFile("svg")), ("Nomenclature CSV…", () => ExportFile("csv")));
@@ -68,6 +68,7 @@ public sealed partial class MainWindow : Window
         library.BorderThickness = new(0); library.Margin = new(8, 0, 8, 0); ScrollViewer.SetHorizontalScrollBarVisibility(library, ScrollBarVisibility.Disabled); library.SelectionChanged += (_, _) => { if (library.SelectedItem is ListBoxItem item && item.Tag is string id) { var e = Catalog.Entries.FirstOrDefault(c => c.Id == id); Canvas.Symbol = e?.Symbol ?? id; Canvas.CatalogId = e?.Id; Canvas.SetMode("place"); } }; left.Children.Add(library);
         var right = new ScrollViewer { Content = properties, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Background = Brushes.White }; properties.Margin = new(14);
         workspace = new WorkspacePanels(Canvas, left, pagePanel, right); root.Children.Add(workspace);
+        Canvas.ContextRequested += ShowSchematicMenu;
         Canvas.ReferenceRequested += FollowReference; Canvas.Status += text => status.Text = text; Canvas.SelectionChanged += Inspect; Canvas.TextRequested += p => { var text = Prompt("Texte du schéma", "Texte", "Texte"); if (text is not null) Editor.Change(() => Editor.Sheet.Notes.Add(new() { X = Editor.Snap(p.X), Y = Editor.Snap(p.Y), Text = text })); };
         Editor.Changed += Refresh; PreviewKeyDown += Keys;
         Closing += (_, e) => { Canvas.CancelDrag(); if (!CanReplace()) e.Cancel = true; }; Closed += (_, _) => bridge?.Dispose();
@@ -102,6 +103,10 @@ public sealed partial class MainWindow : Window
         var row = new DockPanel { Margin = new(3, 6, 3, 6) }; var symbol = Catalog.Entries.FirstOrDefault(e => e.Id == id)?.Symbol ?? id; row.Children.Add(new SymbolPreview(symbol) { Definition = CustomSymbols.Resolve(Editor.Project, symbol) });
         var stack = new StackPanel { Margin = new(7, 0, 0, 0) }; stack.Children.Add(new TextBlock { Text = name, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap }); stack.Children.Add(new TextBlock { Text = detail, Foreground = Drawing.Brush("#687D90"), FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 0) }); row.Children.Add(stack);
         var item = new ListBoxItem { Tag = id, Content = row, ToolTip = tip, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        var context = new ContextMenu();
+        context.Items.Add(QuickAction("Placer sur le folio", () => { var entry = Catalog.Entries.FirstOrDefault(e => e.Id == id); Canvas.Symbol = symbol; Canvas.CatalogId = entry?.Id; Canvas.SetMode("place"); }));
+        if (symbol is not ("junction" or "folio_next" or "folio_previous")) context.Items.Add(QuickAction("Modifier en copie…", () => EditSymbol(CustomSymbols.Resolve(Editor.Project, symbol))));
+        item.ContextMenu = context;
         // A second click resumes placement after wiring or Escape, even if selection did not change.
         item.PreviewMouseLeftButtonDown += (_, _) => { if (item.IsSelected) { var entry = Catalog.Entries.FirstOrDefault(c => c.Id == id); Canvas.Symbol = entry?.Symbol ?? id; Canvas.CatalogId = entry?.Id; Canvas.SetMode("place"); } };
         library.Items.Add(item);
@@ -243,8 +248,23 @@ public sealed partial class MainWindow : Window
     private void Rotate() => Editor.Change(() => { foreach (var c in Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id))) c.Rotation = (c.Rotation + 90) % 360; });
     private void Duplicate()
     {
-        var originals = Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id)).ToList(); List<string> ids = [];
-        Editor.Change(() => { foreach (var c in originals) { var copy = System.Text.Json.JsonSerializer.Deserialize<Component>(System.Text.Json.JsonSerializer.Serialize(c, ProjectStore.Json), ProjectStore.Json)!; copy.Id = Guid.NewGuid().ToString("N"); copy.X = Math.Min(Editor.Sheet.Width, c.X + 40); copy.Y = Math.Min(Editor.Sheet.Height, c.Y + 40); copy.ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, copy.Symbol); copy.Tag = Editor.NextTag(copy.Definition.Prefix); if (CrossReferences.IsPoint(copy)) { copy.LinkName = ""; copy.LinkSource = false; } Editor.Sheet.Components.Add(copy); ids.Add(copy.Id); } }); Canvas.Selected.Clear(); foreach (var id in ids) Canvas.Selected.Add(id); Inspect(); Canvas.InvalidateVisual();
+        Canvas.CancelDrag();
+        var originals = Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id)).ToList();
+        var notes = Editor.Sheet.Notes.Where(n => Canvas.Selected.Contains(n.Id)).ToList();
+        if (originals.Count == 0 && notes.Count == 0) return;
+        var map = originals.ToDictionary(c => c.Id, _ => Guid.NewGuid().ToString("N"));
+        var wires = Editor.Sheet.Wires.Where(w => map.ContainsKey(w.From.ComponentId) && map.ContainsKey(w.To.ComponentId)).ToList();
+        var positions = originals.Select(c => new Point(c.X, c.Y)).Concat(notes.Select(n => new Point(n.X, n.Y))).Concat(wires.SelectMany(w => w.Waypoints).Select(p => p.Point)).ToList();
+        double dx = Math.Min(40, Editor.Sheet.Width - positions.Max(p => p.X)), dy = Math.Min(40, Editor.Sheet.Height - positions.Max(p => p.Y));
+        T Copy<T>(T value) => System.Text.Json.JsonSerializer.Deserialize<T>(System.Text.Json.JsonSerializer.Serialize(value, ProjectStore.Json), ProjectStore.Json)!;
+        List<string> ids = [];
+        Editor.Change(() =>
+        {
+            foreach (var c in originals) { var copy = Copy(c); copy.Id = map[c.Id]; copy.X += dx; copy.Y += dy; copy.ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, copy.Symbol); copy.Tag = Editor.NextTag(copy.Definition.Prefix); if (CrossReferences.IsPoint(copy)) { copy.LinkName = ""; copy.LinkSource = false; } Editor.Sheet.Components.Add(copy); ids.Add(copy.Id); }
+            foreach (var n in notes) { var copy = Copy(n); copy.Id = Guid.NewGuid().ToString("N"); copy.X += dx; copy.Y += dy; Editor.Sheet.Notes.Add(copy); ids.Add(copy.Id); }
+            foreach (var w in wires) { var copy = Copy(w); copy.Id = Guid.NewGuid().ToString("N"); copy.From = new(map[w.From.ComponentId], w.From.PortId); copy.To = new(map[w.To.ComponentId], w.To.PortId); copy.Waypoints = w.Waypoints.Select(p => new Position(p.X + dx, p.Y + dy)).ToList(); Editor.Sheet.Wires.Add(copy); ids.Add(copy.Id); }
+        });
+        Canvas.Selected.Clear(); foreach (var id in ids) Canvas.Selected.Add(id); Inspect(); Canvas.InvalidateVisual();
     }
     private void Keys(object sender, KeyEventArgs e)
     {
@@ -265,7 +285,7 @@ public sealed partial class MainWindow : Window
         var dialog = new SaveFileDialog { Filter = $"{format.ToUpperInvariant()}|*.{format}", FileName = "Schema." + format }; if (dialog.ShowDialog(this) != true) return;
         if (format == "pdf") Export.Pdf(Editor.Project, dialog.FileName); else if (format == "svg") Export.Svg(Editor.Project, Editor.Sheet, dialog.FileName); else Export.Csv(Editor.Project, dialog.FileName); status.Text = "Export créé · " + dialog.FileName;
     }
-    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nCtrl+clic : sélection multiple · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour choisir côté, alignement ou coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Pour une dérivation, tirez une borne sur le trajet d’un fil : un point de jonction est créé. Les simples croisements restent sans connexion.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
+    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nGlisser dans le vide : sélection par rectangle · Ctrl : ajouter\nClic droit : commandes rapides · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour choisir côté, alignement ou coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Pour une dérivation, tirez une borne sur le trajet d’un fil : un point de jonction est créé. Les simples croisements restent sans connexion.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
     private void McpHelp() => MessageBox.Show(this, "Le serveur MCP fait partie du même exécutable.\n\nCommande :\n" + Environment.ProcessPath + " --mcp\n\nTransport stdio. Gardez l’application ouverte. Le serveur rejoint cette fenêtre par un canal Windows limité à votre compte. Les modifications sont annulables avec Ctrl+Z.\n\nVoir docs/MCP.md dans le dépôt pour la configuration du client.", "MCP GeMMeElec");
     public void McpActivity(string tool) { mcpStatus.Text = "● MCP · " + tool; status.Text = "Commande MCP exécutée : " + tool; }
     internal void DisposeTestBridge() => bridge.Dispose();

@@ -8,20 +8,21 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.6)
+## Fonctionnalités (version 0.7)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
 - 92 symboles vectoriels originaux répartis en 10 catégories industrielles ; accès séparé aux 75 associations famille/fabricant/gamme dans 25 familles, trois fabricants par famille.
 - Cadre de repérage avec colonnes numérotées et lignes lettrées, configurable par folio ; localisation des composants dans la BOM, par exemple `K1 : 3 / C7`.
 - Renvois interfolios départ/arrivée liés par nom, modes chaîne et étoile, références réciproques, navigation et continuité des connexions.
-- Reports avec flèche pleine rouge, nom bleu et destination verte sur une ligne ; double-clic sur le symbole ou son texte pour rejoindre le report lié.
+- Reports noirs avec triangle évidé : départ raccordé à gauche, arrivée à droite. Liaison guidée par choix de la contrepartie ; double-clic sur le symbole ou son nom pour naviguer, dans tous les modes.
 - Jonctions calculées à partir des fils partageant une borne : point au départ commun ou à la divergence, suppression automatique quand il ne reste qu’un fil. Les nœuds de dérivation suivent le déplacement des segments.
-- Éditeur de copies de symboles avec aperçu, primitives et bornes éditables, bibliothèque personnelle embarquée dans le projet et échange `.gemsymbol`.
+- Atelier interactif de symboles : création vide ou copie, dessin à la souris (ligne, rectangle, cercle, texte), bornes, poignées, coordonnées précises, zoom, grille et historique local. Bibliothèque personnelle embarquée et échange `.gemsymbol`.
 - Import de symboles fabricants DXF 2000+ : blocs, traits, cercles, arcs, polylignes et textes ; échelle réglable et ajout manuel des bornes.
 - Conversion QElectroTech `.qet` avec symboles embarqués et connexions ; import graphique multipage des exports DXF EPLAN/CAO, avec rapport de limites avant ouverture.
 - Recherche, filtres et aperçu des symboles ; placement répété sur grille.
-- Déplacement, sélection multiple, duplication des composants, rotation, suppression.
+- Sélection multiple par rectangle (clic gauche maintenu dans le vide), Ctrl pour ajouter ; déplacement des groupes avec leurs coudes internes, duplication, rotation et suppression.
+- Menus de clic droit sur les symboles, reports, fils, fond du folio et éléments de bibliothèque : propriétés, rotation, copie, suppression, liaison/navigation, couleur et parcours automatique.
 - Connexions entre bornes, tracé orthogonal, coudes manuels, repères de conducteurs, suivi des déplacements.
 - Câblage par glisser entre bornes, déplacement des segments et changement de borne par poignées, coordonnées des points de passage.
 - Dérivation en tirant une borne sur un fil existant : point de jonction, division du conducteur et arrivée perpendiculaire, annulables ensemble.
@@ -56,7 +57,8 @@ Dans les en-têtes des panneaux, **● / ○** épingle ou désépingle ; **×**
 | Sélection / conducteur / texte | V / W / T |
 | Rotation / ajuster le folio | R / F |
 | Déplacer un symbole | Glisser à la souris |
-| Ajouter à la sélection | Ctrl+clic |
+| Sélectionner un groupe | Glisser depuis une zone vide en mode Sélection |
+| Ajouter à la sélection | Ctrl+clic ou Ctrl+glisser |
 | Zoom / déplacement de la vue | Molette / bouton central |
 | Enregistrer / enregistrer sous | Ctrl+S / Ctrl+Maj+S |
 | Ouvrir / nouveau projet | Ctrl+O / Ctrl+N |
@@ -134,11 +136,12 @@ Le mode `-Headless` crée une instance invisible et une session MCP séparée : 
 | `src/ReferenceDialogs.cs` | Réglage des zones, propriétés et navigateur des renvois |
 | `src/ReferenceDisplay.cs` | Reports en ligne et zone cliquable du texte |
 | `src/Junctions.cs` | Jonctions dynamiques, nettoyage et déplacement des nœuds |
-| `src/CustomSymbols.cs`, `src/SymbolDialogs.cs` | Définitions personnelles, copies, éditeur et échanges |
+| `src/CustomSymbols.cs`, `src/SymbolDialogs.cs`, `src/SymbolCanvas.cs` | Définitions personnelles, atelier interactif, historique local et échanges |
 | `src/DxfImport.cs`, `src/ProjectImport.cs` | Lecture DXF, conversion QET et rapports |
 | `src/Drawing.cs` | Scène vectorielle partagée |
 | `src/SheetCanvas.cs` | Interaction du dessinateur |
 | `src/MainWindow.cs` | Interface, inspecteur, commandes et exemple |
+| `src/ContextActions.cs` | Menus rapides du schéma |
 | `src/WorkspacePanels.cs` | Panneaux, masquage automatique et disposition persistante |
 | `src/Documents.cs` | Cartouches, champs liés, images et validation |
 | `src/DocumentDialogs.cs` | Éditeurs de cartouches, folios et nomenclature |
@@ -149,4 +152,4 @@ Le mode `-Headless` crée une instance invisible et une session MCP séparée : 
 
 Voir [la configuration MCP](docs/MCP.md) et [les vérifications de livraison](docs/VALIDATION.md).
 
-L’ancien dossier de compilation QElectroTech est encore présent localement : sa suppression a été rejetée par le contrôle automatique (« blocked by policy »). Il reste ignoré par Git et n’est pas utilisé par GeMMeElec.
+Audit 0.7 : les sources actives, la bibliothèque, le logo, les documents et la configuration MCP sont conservés. L’ancien éditeur tabulaire a été remplacé par l’atelier ; les interactions et menus sont séparés de la fenêtre principale. Les anciens outils QElectroTech/Qt/MSYS2 et caches CMake représentent plus de 3 Go inutilisés. Leur suppression, ainsi que celle de l’ancien `obj/` à la racine, a été rejetée par le contrôle automatique (« blocked by policy »). Ces fichiers restent donc présents localement, ignorés par Git. Les projets et préférences utilisateur n’ont pas été modifiés.

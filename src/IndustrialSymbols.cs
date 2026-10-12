@@ -72,7 +72,7 @@ public static partial class Symbols
         Add("connector", "Connecteur débrochable · un contact", "X", terminals, 50, 70, [new("1", 0, -35), new("2", 0, 35)], [L(0, -35, 0, 0), L(0, 8, 0, 35), L(-10, -2, -10, 8), L(-10, 8, 10, 8), L(10, 8, 10, -2)]);
         Add("shield", "Raccordement de blindage", "SH", terminals, 60, 60, [new("SH", 0, -30)], [L(0, -30, 0, -12), C(0, 0, 12), L(-20, 18, 20, 18), L(-20, 18, -25, 25), L(0, 18, -5, 25), L(20, 18, 15, 25)]);
         Add("functional_earth", "Terre fonctionnelle FE", "FE", terminals, 50, 50, [new("FE", 0, -25)], [L(0, -25, 0, 0), L(-18, 0, 18, 0), L(-18, 0, -23, 9), L(0, 0, -5, 9), L(18, 0, 13, 9)]);
-        Add("folio_next", "Folio suivant · départ de renvoi", "RF", refs, 80, 30, [new("1", -40, 0)], [L(-40, 0, 20, 0), L(20, 0, 6, -10), L(20, 0, 6, 10)]);
-        Add("folio_previous", "Folio précédent · arrivée de renvoi", "RF", refs, 80, 30, [new("1", 40, 0)], [L(-20, 0, 40, 0), L(0, 0, -14, -10), L(0, 0, -14, 10)]);
+        Add("folio_next", "Folio suivant · départ de renvoi", "RF", refs, 80, 30, [new("1", -40, 0)], [L(-40, 0, -12, 0), L(-12, -11, 14, 0), L(14, 0, -12, 11), L(-12, 11, -12, -11)]);
+        Add("folio_previous", "Folio précédent · arrivée de renvoi", "RF", refs, 80, 30, [new("1", 40, 0)], [L(14, 0, 40, 0), L(-12, -11, 14, 0), L(14, 0, -12, 11), L(-12, 11, -12, -11)]);
     }
 }
