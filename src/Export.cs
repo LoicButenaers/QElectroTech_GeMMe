@@ -16,6 +16,7 @@ public static class Export
         root.Add(new XElement(ns + "rect", new XAttribute("width", "100%"), new XAttribute("height", "100%"), new XAttribute("fill", "white")));
         foreach (var s in Drawing.Scene(p, sheet))
         {
+            if(s.Kind=="image") { root.Add(new XElement(ns+"image",new XAttribute("x",N(s.X)),new XAttribute("y",N(s.Y)),new XAttribute("width",N(s.A)),new XAttribute("height",N(s.B)),new XAttribute("href","data:image/jpeg;base64,"+s.Text)));continue; }
             XElement el;
             if (s.Kind == "line") el = new(ns + "line", new XAttribute("x1", N(s.X)), new XAttribute("y1", N(s.Y)), new XAttribute("x2", N(s.A)), new XAttribute("y2", N(s.B)));
             else if (s.Kind == "rect") el = new(ns + "rect", new XAttribute("x", N(s.X)), new XAttribute("y", N(s.Y)), new XAttribute("width", N(s.A)), new XAttribute("height", N(s.B)));
@@ -30,11 +31,7 @@ public static class Export
     }
     public static string Bom(Project p)
     {
-        string Cell(string v) { if (v.TrimStart().StartsWith('=') || v.TrimStart().StartsWith('+') || v.TrimStart().StartsWith('-') || v.TrimStart().StartsWith('@')) v = "'" + v; return "\"" + v.Replace("\"", "\"\"") + "\""; }
-        var rows = p.Sheets.SelectMany(s => s.Components.Where(c => c.Symbol is not ("junction" or "earth" or "source")).Select(c => (s, c))).GroupBy(x => new { x.c.Brand, x.c.Range, x.c.Reference, x.c.Description, x.c.Rating });
-        var b = new StringBuilder("Quantité;Repères;Folios;Description;Fabricant;Gamme;Référence;Caractéristiques\r\n");
-        foreach (var row in rows) b.AppendLine(string.Join(';', new[] { row.Count().ToString(), string.Join(", ", row.Select(x => x.c.Tag)), string.Join(", ", row.Select(x => x.s.Title).Distinct()), row.Key.Description, row.Key.Brand, row.Key.Range, row.Key.Reference, row.Key.Rating }.Select(Cell)));
-        return b.ToString();
+        return BomReport.Csv(p,p.BomOptions);
     }
     public static void Csv(Project p, string path) => ProjectStore.AtomicWrite(path, "\uFEFF" + Bom(p));
     // A3 vector PDF, with a Unicode Type0 font built from the installed Segoe UI.
@@ -44,7 +41,6 @@ public static class Export
         var typeface = new System.Windows.Media.Typeface("Segoe UI");
         if (!typeface.TryGetGlyphTypeface(out var font)) throw new InvalidOperationException("Police Segoe UI introuvable.");
         byte[] fontData = File.ReadAllBytes(font.FontUri.LocalPath);
-        var used = Drawing.Scene(project, project.Sheets[0]);
         var glyphMap = new SortedDictionary<ushort, char>();
         string Glyphs(string text)
         {
@@ -56,6 +52,7 @@ public static class Export
         byte[] Bytes(string s) => Encoding.ASCII.GetBytes(s);
         byte[] Stream(byte[] data, string extra = "") { using var m = new MemoryStream(); m.Write(Bytes($"<< /Length {data.Length} {extra} >>\nstream\n")); m.Write(data); m.Write(Bytes("\nendstream")); return m.ToArray(); }
         List<int> pages = [];
+        var imageObjects=new Dictionary<string,(string Name,int Id)>();
         foreach (var sheet in project.Sheets)
         {
             var b = new StringBuilder(); double scale = Math.Min(1190.55 / sheet.Width, 841.89 / sheet.Height);
@@ -68,6 +65,9 @@ public static class Export
                 if (s.Rotation != 0) { double a = s.Rotation * Math.PI / 180, cos = Math.Cos(a), sin = Math.Sin(a); b.AppendLine($"{N(cos)} {N(sin)} {N(-sin)} {N(cos)} {N(s.X - cos * s.X + sin * s.Y)} {N(s.Y - sin * s.X - cos * s.Y)} cm"); }
                 switch (s.Kind)
                 {
+                    case "image":
+                        if(!imageObjects.TryGetValue(s.Text,out var entry)) {var bitmap=ImageAssets.Decode(s.Text);entry=("Im"+imageObjects.Count,objects.Count+1);objects.Add(Stream(Convert.FromBase64String(s.Text),$"/Type /XObject /Subtype /Image /Width {bitmap.PixelWidth} /Height {bitmap.PixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode"));imageObjects[s.Text]=entry;}
+                        b.AppendLine($"{N(s.A)} 0 0 {N(-s.B)} {N(s.X)} {N(s.Y+s.B)} cm /{entry.Name} Do");break;
                     case "line": b.AppendLine($"{N(s.X)} {N(s.Y)} m {N(s.A)} {N(s.B)} l S"); break;
                     case "rect": b.AppendLine($"{N(s.X)} {N(s.Y)} {N(s.A)} {N(s.B)} re S"); break;
                     case "circle": case "dot":
@@ -79,7 +79,8 @@ public static class Export
             }
             b.AppendLine("Q");
             int contentId = objects.Count + 1; objects.Add(Stream(Bytes(b.ToString())));
-            int pageId = objects.Count + 1; pages.Add(pageId); objects.Add(Bytes($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.55 841.89] /Resources << /Font << /F1 3 0 R >> >> /Contents {contentId} 0 R >>"));
+            var imageResources=string.Join(' ',imageObjects.Values.Select(i=>$"/{i.Name} {i.Id} 0 R"));
+            int pageId = objects.Count + 1; pages.Add(pageId); objects.Add(Bytes($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.55 841.89] /Resources << /Font << /F1 3 0 R >> /XObject << {imageResources} >> >> /Contents {contentId} 0 R >>"));
         }
         objects[0] = Bytes("<< /Type /Catalog /Pages 2 0 R >>");
         objects[1] = Bytes($"<< /Type /Pages /Count {pages.Count} /Kids [{string.Join(' ', pages.Select(p => $"{p} 0 R"))}] >>");

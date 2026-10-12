@@ -10,3 +10,5 @@
 - Catalogue : distinguer symboles fonctionnels, gammes et références commandables.
   Ne pas inventer de caractéristiques fabricant ni annoncer une exhaustivité non vérifiée.
 - Tester sauvegarde, connexions, annulation et MCP après modification du modèle.
+- Éviter le contrôle souris/clavier du PC sauf nécessité réelle. Préférer les tests hors écran et `Test-Mcp.ps1 -Headless` ; préserver toute fenêtre et tout projet utilisateur ouverts.
+- À chaque évolution, vérifier la fluidité : éviter de reconstruire le schéma au survol, borner les caches et mesurer les traitements coûteux sur un jeu de données représentatif.

@@ -33,18 +33,35 @@ public sealed class Project
     public string Title { get; set; } = "Nouveau projet";
     public string Author { get; set; } = "";
     public string Revision { get; set; } = "A";
+    public string Customer { get; set; } = "";
+    public string DocumentNumber { get; set; } = "";
+    public string Date { get; set; } = "";
+    public Dictionary<string, string> CustomFields { get; set; } = [];
+    public List<TitleBlockTemplate> TitleBlocks { get; set; } = TitleBlocksDefaults.Create();
+    public Dictionary<string, string> Images { get; set; } = [];
+    public BomOptions BomOptions { get; set; } = new();
     public List<Sheet> Sheets { get; set; } = [new()];
 }
 public sealed class Sheet
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Title { get; set; } = "Schéma de puissance";
+    public string Number { get; set; } = "";
+    public string Author { get; set; } = "";
+    public string CheckedBy { get; set; } = "";
+    public string ApprovedBy { get; set; } = "";
+    public string Date { get; set; } = "";
+    public string Revision { get; set; } = "";
+    public string Location { get; set; } = "";
+    public string Function { get; set; } = "";
+    public string TitleBlockId { get; set; } = "simple";
+    public Dictionary<string, string> CustomFields { get; set; } = [];
     public double Width { get; set; } = 1400;
     public double Height { get; set; } = 990;
     public List<Component> Components { get; set; } = [];
     public List<Wire> Wires { get; set; } = [];
     public List<Annotation> Notes { get; set; } = [];
-    [JsonIgnore] public string Display => Title;
+    [JsonIgnore] public string Display => Number.Length == 0 ? Title : Number + " · " + Title;
 }
 public sealed class Component
 {
@@ -58,6 +75,7 @@ public sealed class Component
     public string Reference { get; set; } = "";
     public string Rating { get; set; } = "";
     public string Source { get; set; } = "";
+    public string ImageId { get; set; } = "";
     public double X { get; set; }
     public double Y { get; set; }
     public int Rotation { get; set; }
@@ -121,10 +139,10 @@ public sealed class Wire
     public string Number { get; set; } = "";
     public string Color { get; set; } = "#243B53";
     public List<Position> Waypoints { get; set; } = [];
-    public List<Point> Route(Sheet sheet)
+    public List<Point> Route(Sheet sheet, IReadOnlyDictionary<string,Component>? components = null)
     {
-        var a = sheet.Components.Single(c => c.Id == From.ComponentId).PortPoint(From.PortId);
-        var b = sheet.Components.Single(c => c.Id == To.ComponentId).PortPoint(To.PortId);
+        var a = (components is null ? sheet.Components.Single(c => c.Id == From.ComponentId) : components[From.ComponentId]).PortPoint(From.PortId);
+        var b = (components is null ? sheet.Components.Single(c => c.Id == To.ComponentId) : components[To.ComponentId]).PortPoint(To.PortId);
         List<Point> route = [a];
         foreach (var target in Waypoints.Select(p => p.Point).Append(b))
         {
@@ -203,6 +221,7 @@ public static class ProjectStore
         if (p.Format != "GeMMeElec" || p.Version != 1) throw new InvalidDataException("Format ou version de projet non pris en charge.");
         void Text(string? value) { if (value is null || value.Length > 2000) throw new InvalidDataException("Champ texte absent ou trop long."); }
         Text(p.Title); Text(p.Author); Text(p.Revision);
+        DocumentModel.Validate(p);
         if (p.Sheets is null || p.Sheets.Count is < 1 or > 100) throw new InvalidDataException("Le projet doit contenir entre 1 et 100 folios.");
         var ids = new HashSet<string>();
         void Id(string id) { if (string.IsNullOrWhiteSpace(id) || !ids.Add(id)) throw new InvalidDataException("Identifiant absent ou dupliqué."); }
@@ -225,6 +244,7 @@ public static class ProjectStore
                 c.TagPlacement.Validate(); c.DetailPlacement.Validate(); c.DescriptionPlacement.Validate();
                 foreach (var label in c.PortLabels) { Text(label.Value); if (!c.Definition.Ports.Any(port => port.Id == label.Key)) throw new InvalidDataException("Libellé de borne inconnue."); }
             }
+            var componentIndex=s.Components.ToDictionary(c=>c.Id);
             foreach (var w in s.Wires)
             {
                 if (w is null) throw new InvalidDataException("Conducteur vide.");
@@ -234,7 +254,7 @@ public static class ProjectStore
                 if (w.From is null || w.To is null || w.From == w.To) throw new InvalidDataException("Connexion invalide.");
                 foreach (var end in new[] { w.From, w.To })
                 {
-                    var c = s.Components.FirstOrDefault(x => x.Id == end.ComponentId) ?? throw new InvalidDataException("Connexion vers un symbole absent.");
+                    var c = componentIndex.GetValueOrDefault(end.ComponentId) ?? throw new InvalidDataException("Connexion vers un symbole absent.");
                     if (!c.Definition.Ports.Any(x => x.Id == end.PortId)) throw new InvalidDataException("Connexion vers une borne absente.");
                 }
                 if (w.Waypoints is null || w.Waypoints.Count > 100 || w.Waypoints.Any(x => x is null || !double.IsFinite(x.X) || !double.IsFinite(x.Y) || x.X < 0 || x.X > s.Width || x.Y < 0 || x.Y > s.Height)) throw new InvalidDataException("Parcours de conducteur invalide.");
@@ -305,7 +325,7 @@ public sealed class Editor
     public void Commit(string before)
     {
         ProjectStore.ValidateStructure(Project);
-        if (before != ProjectStore.Serialize(Project)) { undo.Add(before); if (undo.Count > 100) undo.RemoveAt(0); redo.Clear(); }
+        if (before != ProjectStore.Serialize(Project)) { undo.Add(before); redo.Clear(); TrimHistory(); }
         Notify();
     }
     public void CancelPreview(string before) { Project = ProjectStore.Deserialize(before); InteractionInProgress = false; RepairSelection(); Notify(); }
@@ -317,12 +337,19 @@ public sealed class Editor
     public void Undo()
     {
         if (!CanUndo || InteractionInProgress) return;
-        redo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(undo[^1]); undo.RemoveAt(undo.Count - 1); RepairSelection(); Notify();
+        redo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(undo[^1]); undo.RemoveAt(undo.Count - 1); TrimHistory(); RepairSelection(); Notify();
     }
     public void Redo()
     {
         if (!CanRedo || InteractionInProgress) return;
-        undo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(redo[^1]); redo.RemoveAt(redo.Count - 1); RepairSelection(); Notify();
+        undo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(redo[^1]); redo.RemoveAt(redo.Count - 1); TrimHistory(); RepairSelection(); Notify();
+    }
+    private void TrimHistory()
+    {
+        // Large embedded images must not multiply indefinitely through undo snapshots.
+        while(undo.Count>100)undo.RemoveAt(0);while(redo.Count>100)redo.RemoveAt(0);
+        long bytes=undo.Concat(redo).Sum(s=>(long)s.Length*2);
+        while(bytes>64_000_000 && undo.Count+redo.Count>1){var list=undo.Count>1?undo:redo.Count>1?redo:undo.Count>0?undo:redo;bytes-=(long)list[0].Length*2;list.RemoveAt(0);}
     }
     private void RepairSelection() { if (!Project.Sheets.Any(s => s.Id == CurrentSheetId)) CurrentSheetId = Project.Sheets[0].Id; }
     public Sheet AddSheet(string title)
@@ -368,7 +395,7 @@ public sealed class Editor
             if (c.Brand.Length > 0 && c.Reference.Length == 0) list.Add(new("Article", s.Id, c.Id, $"{c.Tag} : référence exacte à renseigner ({c.Brand} {c.Range})"));
             var free = c.Definition.Ports.Count(p => !s.Wires.Any(w => w.From == new Endpoint(c.Id, p.Id) || w.To == new Endpoint(c.Id, p.Id)));
             if (free > 0) list.Add(new("Connexion", s.Id, c.Id, $"{c.Tag} : {free} borne(s) non raccordée(s)"));
-            var bounds = c.Bounds(); if (bounds.Left < 30 || bounds.Top < 40 || bounds.Right > s.Width - 30 || bounds.Bottom > s.Height - 90) list.Add(new("Mise en page", s.Id, c.Id, $"{c.Tag} : symbole hors de la zone de dessin"));
+            var bounds = c.Bounds(); if (bounds.Left < 30 || bounds.Top < 40 || bounds.Right > s.Width - 30 || bounds.Bottom > DocumentModel.DrawingBottom(Project,s)) list.Add(new("Mise en page", s.Id, c.Id, $"{c.Tag} : symbole hors de la zone de dessin"));
         }
         return list;
     }

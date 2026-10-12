@@ -27,13 +27,14 @@ public sealed class SheetCanvas : FrameworkElement
     private Point pressPosition;
     private readonly List<Position> waypoints = [];
     private string previousSheet = "";
+    private DrawingGroup? sceneCache;
     public event Action? SelectionChanged;
     public event Action<string>? Status;
     public event Action<Point>? TextRequested;
     public SheetCanvas(Editor editor)
     {
         Editor = editor; previousSheet = editor.Sheet.Id; Focusable = true; ClipToBounds = true;
-        Editor.Changed += () => { if (previousSheet != Editor.Sheet.Id) { previousSheet = Editor.Sheet.Id; Selected.Clear(); SetMode("select"); Fit(); } InvalidateVisual(); };
+        Editor.Changed += () => { sceneCache=null; if (previousSheet != Editor.Sheet.Id) { previousSheet = Editor.Sheet.Id; Selected.Clear(); SetMode("select"); Fit(); } InvalidateVisual(); };
         Loaded += (_, _) => Fit();
     }
     public void SetMode(string mode)
@@ -58,8 +59,9 @@ public sealed class SheetCanvas : FrameworkElement
         dc.DrawRectangle(Drawing.Brush("#CBD5E1"), null, new(6, 7, sheet.Width, sheet.Height));
         dc.DrawRectangle(Brushes.White, null, new(0, 0, sheet.Width, sheet.Height));
         double step = Zoom > .7 ? 10 : 50;
-        for (double x = 40; x < sheet.Width - 30; x += step) for (double y = 40; y < sheet.Height - 90; y += step) dc.DrawEllipse(Drawing.Brush("#D8E2EC"), null, new(x, y), .65 / Zoom, .65 / Zoom);
-        Drawing.Render(dc, Drawing.Scene(Editor.Project, sheet));
+        for (double x = 40; x < sheet.Width - 30; x += step) for (double y = 40; y < DocumentModel.DrawingBottom(Editor.Project,sheet); y += step) dc.DrawEllipse(Drawing.Brush("#D8E2EC"), null, new(x, y), .65 / Zoom, .65 / Zoom);
+        if(sceneCache is null) {sceneCache=new();using(var context=sceneCache.Open())Drawing.Render(context,Drawing.Scene(Editor.Project,sheet));sceneCache.Freeze();}
+        dc.DrawDrawing(sceneCache);
         var accent = Drawing.Brush("#007F86"); var pen = new Pen(accent, 2 / Zoom);
         foreach (var c in sheet.Components)
         {
@@ -170,10 +172,12 @@ public sealed class SheetCanvas : FrameworkElement
         if (connectionPressed && (e.GetPosition(this) - pressPosition).Length > 4) connectionMoved = true;
         if (before is not null && editingWire is not null && originalRoute is not null)
         {
+            sceneCache=null;
             if ((pointer - dragStart).Length * Zoom > 3) Editor.Sheet.Wires.Single(w => w.Id == editingWire).Waypoints = WireRouting.ShiftSegment(originalRoute, segmentIndex, new(Math.Clamp(pointer.X, 0, Editor.Sheet.Width), Math.Clamp(pointer.Y, 0, Editor.Sheet.Height)));
         }
         else if (before is not null)
         {
+            sceneCache=null;
             double dx = Editor.Snap(pointer.X - dragStart.X), dy = Editor.Snap(pointer.Y - dragStart.Y);
             dx = Math.Clamp(dx, -original.Values.Min(p => p.X), Editor.Sheet.Width - original.Values.Max(p => p.X));
             dy = Math.Clamp(dy, -original.Values.Min(p => p.Y), Editor.Sheet.Height - original.Values.Max(p => p.Y));

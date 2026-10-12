@@ -9,7 +9,7 @@ using Microsoft.Win32;
 
 namespace GeMMeElec;
 
-public sealed class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
     public Editor Editor { get; } = new();
     public SheetCanvas Canvas { get; }
@@ -41,9 +41,9 @@ public sealed class MainWindow : Window
         var menu = new Menu { Background = Brushes.White, Padding = new(12, 3, 12, 3) };
         AddMenu(menu, "_Fichier", ("Nouveau projet…", NewProject), ("Ouvrir…", Open), ("Enregistrer", () => Save(false)), ("Enregistrer sous…", () => Save(true)), ("Informations du projet…", ProjectInfo), ("Exemple de départ moteur", Demo), ("Quitter", Close));
         AddMenu(menu, "_Édition", ("Annuler    Ctrl+Z", Editor.Undo), ("Rétablir    Ctrl+Y", Editor.Redo), ("Dupliquer    Ctrl+D", Duplicate), ("Rotation 90°    R", Rotate), ("Supprimer    Suppr", Delete));
-        AddMenu(menu, "_Folio", ("Ajouter…", AddPage), ("Renommer…", RenamePage), ("Supprimer le folio", DeletePage));
+        AddMenu(menu, "_Folio", ("Ajouter…", AddPage), ("Propriétés du folio…", SheetInfo), ("Cartouches…", TitleBlockEditor), ("Monter dans le projet", () => MovePage(-1)), ("Descendre dans le projet", () => MovePage(1)), ("Renommer…", RenamePage), ("Supprimer le folio", DeletePage));
         AddMenu(menu, "_Insérer", ("Conducteur    W", () => Canvas.SetMode("wire")), ("Texte    T", () => Canvas.SetMode("text")), ("Sélection    V", () => Canvas.SetMode("select")));
-        AddMenu(menu, "_Projet", ("Vérifier les connexions et les repères", Validate), ("Nomenclature", Bom));
+        AddMenu(menu, "_Projet", ("Vérifier les connexions et les repères", Validate), ("Cartouches…", TitleBlockEditor), ("Nomenclature configurable…", Bom));
         AddMenu(menu, "E_xporter", ("Tous les folios en PDF…", () => ExportFile("pdf")), ("Folio courant en SVG…", () => ExportFile("svg")), ("Nomenclature CSV…", () => ExportFile("csv")));
         AddMenu(menu, "_Affichage", ("Ajuster le folio    F", Canvas.Fit), ("Bibliothèque", () => workspace?.Show("library")), ("Propriétés", () => workspace?.Show("properties")), ("Folios", () => workspace?.Show("pages")), ("Rétablir les panneaux", () => workspace?.Reset()));
         AddMenu(menu, "_Aide", ("Raccourcis et utilisation", Help), ("Connexion MCP", McpHelp));
@@ -117,6 +117,8 @@ public sealed class MainWindow : Window
             properties.Children.Add(Button("Appliquer les propriétés", () => { var values = fields.ToDictionary(x => x.Key, x => x.Value.Text); Editor.Change(() => { c.Tag = values["tag"]; c.Description = values["description"]; c.Brand = values["brand"]; c.Range = values["range"]; c.Reference = values["reference"]; c.Rating = values["rating"]; foreach (var p in c.Definition.Ports) c.PortLabels[p.Id] = values["port:" + p.Id]; }); }));
             if (Uri.TryCreate(c.Source, UriKind.Absolute, out var uri) && uri.Scheme == "https") properties.Children.Add(Button("Documentation fabricant ↗", () => Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true })));
             TextPositionEditor(c);
+            properties.Children.Add(Button(c.ImageId.Length > 0 ? "Remplacer l’image BOM…" : "Ajouter une image BOM…", () => ComponentImage(c.Id)));
+            if (c.ImageId.Length > 0) { properties.Children.Add(new Image { Source = ImageAssets.Decode(Editor.Project.Images[c.ImageId]), Height = 90, Margin = new(8), Stretch = Stretch.Uniform }); properties.Children.Add(Button("Retirer l’image BOM", () => Editor.Change(() => c.ImageId = ""))); }
             properties.Children.Add(new TextBlock { Text = "Bornes fonctionnelles : adapter les libellés à la référence choisie.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Drawing.Brush("#7C6B4B"), Margin = new(0, 14, 0, 0) });
             foreach (var p in c.Definition.Ports) Field("port:" + p.Id, "Borne " + p.Id, c.PortLabels.GetValueOrDefault(p.Id, p.Id));
         }
@@ -136,7 +138,7 @@ public sealed class MainWindow : Window
             properties.Children.Add(new TextBlock { Text = Editor.Project.Title, FontSize = 22, TextWrapping = TextWrapping.Wrap, Margin = new(0, 18, 0, 12) });
             properties.Children.Add(new TextBlock { Text = "Dessinez votre premier circuit", FontSize = 16, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
             properties.Children.Add(new TextBlock { Text = "1   Choisissez un équipement dans la bibliothèque.\n\n2   Cliquez sur le folio pour le placer.\n\n3   Activez Conducteur et reliez les bornes.\n\n4   Sélectionnez un appareil pour renseigner sa référence.", TextWrapping = TextWrapping.Wrap, Foreground = Drawing.Brush("#61758A"), Margin = new(0, 14, 0, 20) });
-            properties.Children.Add(Button("Informations du projet", ProjectInfo)); properties.Children.Add(Button("Charger un exemple", Demo));
+            properties.Children.Add(Button("Informations du projet", ProjectInfo)); properties.Children.Add(Button("Propriétés du folio", SheetInfo)); properties.Children.Add(Button("Cartouches", TitleBlockEditor)); properties.Children.Add(Button("Nomenclature", Bom)); properties.Children.Add(Button("Charger un exemple", Demo));
         }
     }
     private static string Number(double value) => value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
@@ -207,7 +209,7 @@ public sealed class MainWindow : Window
         if (saveAs || path is null) { var dialog = new SaveFileDialog { Filter = "Projet GeMMeElec|*.gemelec", DefaultExt = ".gemelec", FileName = path is null ? "Projet.gemelec" : Path.GetFileName(path) }; if (dialog.ShowDialog(this) != true) return false; path = dialog.FileName; }
         Editor.Save(path); status.Text = "Projet enregistré · " + path; return true;
     }
-    private void ProjectInfo() { var name = Prompt("Projet", "Nom", Editor.Project.Title); if (name is null) return; var author = Prompt("Projet", "Auteur", Editor.Project.Author.Length > 0 ? Editor.Project.Author : "GeMMe"); if (author is null) return; var rev = Prompt("Projet", "Révision", Editor.Project.Revision); if (rev is not null) Editor.Change(() => { Editor.Project.Title = name; Editor.Project.Author = author; Editor.Project.Revision = rev; }); }
+    private void ProjectInfo() => MetadataDialog(false);
     private void AddPage() { var title = Prompt("Ajouter un folio", "Titre", $"Folio {Editor.Project.Sheets.Count + 1}"); if (title is not null) Editor.AddSheet(title); }
     private void RenamePage() { var name = Prompt("Renommer le folio", "Titre", Editor.Sheet.Title); if (name is not null) Editor.Change(() => Editor.Sheet.Title = name); }
     private void DeletePage() { if (Editor.Project.Sheets.Count == 1) throw new InvalidOperationException("Conserver au moins un folio."); if (MessageBox.Show(this, "Supprimer ce folio et son contenu ? Cette opération peut être annulée.", "Folio", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { var id = Editor.Sheet.Id; Editor.Change(() => Editor.Project.Sheets.RemoveAll(s => s.Id == id)); Editor.SelectSheet(Editor.Project.Sheets[0].Id); } }
@@ -231,7 +233,7 @@ public sealed class MainWindow : Window
         var findings = Editor.Validate(); var list = new ListBox { Margin = new(16) }; foreach (var f in findings) list.Items.Add(new ListBoxItem { Content = $"{f.Level}  ·  {f.Message}", Tag = f }); if (findings.Count == 0) list.Items.Add("Aucune anomalie de structure ou de repérage détectée.");
         var dialog = new Window { Owner = this, Title = "Vérification du schéma · double-clic pour localiser", Width = 760, Height = 460, Content = list, WindowStartupLocation = WindowStartupLocation.CenterOwner }; list.MouseDoubleClick += (_, _) => { if (list.SelectedItem is ListBoxItem i && i.Tag is Finding f) { Editor.SelectSheet(f.SheetId); Canvas.Select(f.ComponentId); dialog.Close(); } }; dialog.ShowDialog();
     }
-    private void Bom() { var box = new TextBox { Text = Export.Bom(Editor.Project), IsReadOnly = true, FontFamily = new("Consolas"), Margin = new(16), HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; new Window { Owner = this, Title = "Nomenclature · export CSV disponible dans le menu Exporter", Width = 950, Height = 480, Content = box, WindowStartupLocation = WindowStartupLocation.CenterOwner }.ShowDialog(); }
+    private void Bom() => BomDialog();
     private void ExportFile(string format)
     {
         var dialog = new SaveFileDialog { Filter = $"{format.ToUpperInvariant()}|*.{format}", FileName = "Schema." + format }; if (dialog.ShowDialog(this) != true) return;
@@ -240,6 +242,7 @@ public sealed class MainWindow : Window
     private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nCtrl+clic : sélection multiple · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour choisir côté, alignement ou coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Les croisements ne sont pas des jonctions : utilisez le symbole Jonction pour créer une dérivation.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
     private void McpHelp() => MessageBox.Show(this, "Le serveur MCP fait partie du même exécutable.\n\nCommande :\n" + Environment.ProcessPath + " --mcp\n\nTransport stdio. Gardez l’application ouverte. Le serveur rejoint cette fenêtre par un canal Windows limité à votre compte. Les modifications sont annulables avec Ctrl+Z.\n\nVoir docs/MCP.md dans le dépôt pour la configuration du client.", "MCP GeMMeElec");
     public void McpActivity(string tool) { mcpStatus.Text = "● MCP · " + tool; status.Text = "Commande MCP exécutée : " + tool; }
+    internal void DisposeTestBridge() => bridge.Dispose();
     private void Demo()
     {
         if (!CanReplace()) return; Editor.New("Exemple · départ moteur triphasé"); Examples.Motor(Editor); Canvas.Fit();

@@ -47,12 +47,26 @@ Pour un autre client MCP acceptant les serveurs locaux stdio :
 | Annotation | `note_add` |
 | Exports | `export_svg`, `export_pdf`, `export_bom` |
 | Historique et vue | `history_undo`, `history_redo`, `view_fit` |
+| Documents (0.3) | `page_move`, `titleblock_list`, `titleblock_put`, `component_image`, `bom_configure`, `export_bom_html` |
 
 `tools/list` fournit les paramètres, types et champs requis. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.2 expose 24 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
+La version 0.3 expose 30 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
 
 `wire_update` prend `id` et les champs facultatifs `number`, `color`, `fromComponent`, `fromPort`, `toComponent`, `toPort`, `waypoints` (tableau de `{ "x": 320, "y": 250 }`). Un tableau vide rétablit le tracé automatique. Les mises à jour de texte et de conducteur sont atomiques, validées et annulables ; un raccordement dupliqué est refusé.
+
+## Cartouches, métadonnées et BOM (0.3)
+
+- `project_update` accepte aussi `customer`, `documentNumber`, `date`, `customFields` (dictionnaire de textes, remplace les champs personnalisés).
+- `page_update` accepte les champs facultatifs `title`, `number`, `author`, `checkedBy`, `approvedBy`, `date`, `revision`, `location`, `function`, `titleBlockId`, `customFields`. Auteur/date/révision vides héritent du projet. `number` vide utilise l’ordre courant ; `titleBlockId` vide masque le cartouche.
+- `page_move` déplace le folio actif à `index`, de 1 au nombre de folios.
+- `titleblock_list` retourne les modèles, les champs disponibles et les valeurs résolues du folio courant.
+- `titleblock_put` reçoit `template` : `id`, `name`, `height`, `cells`. Chaque cellule comprend `x`, `y`, `width`, `height` en pourcentage, `text`, `fontSize`, `align` (left/center/right), `vertical` (top/center/bottom), `border`, `imageId`. L’ID existant est remplacé, sinon ajouté. Utiliser des champs comme `{sheet.title}` dans `text`. Les folios sont affectés avec `page_update`.
+- `component_image` reçoit `id` et `path`, chemin absolu PNG/JPEG/BMP. Il retourne l’`imageId` réutilisable dans une cellule de cartouche. Un chemin vide retire l’image du composant. Aucun téléchargement réseau.
+- `bom_configure` reçoit `options` complet : `columns` (liste ordonnée de `{key,label,enabled}`), `groupArticles`, `includeAuxiliary`, `sheetId` (vide = tous), `brand` (vide = tous). Clés : quantity, image, tags, pages, description, brand, range, reference, rating, symbol, catalog, source.
+- `export_bom_html` reçoit `path` absolu `.html` et `overwrite` facultatif. Il utilise les options du projet et intègre les images. `export_bom` utilise les mêmes options pour le CSV, avec description textuelle de l’image.
+
+Les limites sont contrôlées par le modèle commun : 100 cartouches, 300 cellules par modèle, hauteur de 20 à 500 unités, cellules dans 0–100 %, 200 images et 12 Mo encodés au total. Les imports d’images sont normalisés à 512 pixels et dédupliqués. Toutes les modifications passent par l’historique.
 
 ## Procédure conseillée
 
@@ -91,4 +105,4 @@ Les versions négociées sont `2024-11-05`, `2025-03-26`, `2025-06-18` et `2025-
 - « Folio actif » : appeler `page_select` avec l’ID voulu.
 - « Le fichier existe déjà » : choisir un autre chemin ou autoriser explicitement l’écrasement.
 
-Le test `Test-Mcp.ps1` utilise le vrai transport stdio et la fenêtre réelle ; il ne simule pas les appels du serveur.
+`Test-Mcp.ps1 -Headless` utilise le vrai transport stdio et une instance WPF invisible, séparée de la session utilisateur. Le mode de test a son propre fichier de session et s’arrête après les essais (au plus trois minutes). Aucun contrôle souris/clavier. Sans `-Headless`, le test utilise la fenêtre réelle et protège le projet courant.

@@ -8,7 +8,7 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.2)
+## Fonctionnalités (version 0.3)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
@@ -19,12 +19,15 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Câblage par glisser entre bornes, déplacement des segments et changement de borne par poignées, coordonnées des points de passage.
 - Position indépendante du repère, des caractéristiques et de la description : côtés, alignements, décalages précis et visibilité ; rendu commun à l’écran, au SVG et au PDF.
 - Panneaux Bibliothèque, Folios et Propriétés épinglables, masquables automatiquement et fermables ; largeur réglable et disposition mémorisée.
+- Cartouches personnalisables : cellules, dimensions, texte multiligne, alignements, logo, champs liés, modèles Simple et Technique, import/export `.gemcartouche`.
+- Propriétés détaillées des folios : numéro automatique ou libre, titre, auteur, vérificateur, approbateur, date, révision, fonction, localisation et champs personnalisés. Ordre modifiable.
+- BOM configurable : choix et ordre des colonnes, regroupement, filtres folio/fabricant, photos intégrées ou symboles ; export HTML autonome imprimable et CSV.
 - Repères et propriétés des appareils, référence commerciale libre, caractéristiques, libellés de bornes, documentation fabricant.
 - Annotations, zoom à la molette, déplacement de la vue, ajustement du folio.
-- Historique commun à l’interface et au MCP : 100 annulations/rétablissements.
+- Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec un budget mémoire de 64 Mo pour les projets contenant des images.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
-- Serveur MCP local avec 24 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Serveur MCP local avec 30 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Dessiner
 
@@ -56,6 +59,20 @@ Les fabricants sont une sélection industrielle pertinente en Europe, **pas un c
 
 Cette base ne comprend pas encore le dimensionnement électrique, la simulation, les renvois interfolios, les borniers automatiques, l’import QET/EPLAN, la gestion de câbles multicœurs, les implantations d’armoires, ni les catalogues complets des fabricants. Elle ne revendique pas une certification IEC/RGIE ou une équivalence à EPLAN.
 
+## Cartouches, folios et nomenclature
+
+**Folio → Propriétés du folio** renseigne les données de la page et choisit son cartouche. Un numéro vide suit automatiquement l’ordre des folios ; un numéro libre comme `01-A` reste inchangé lors d’un déplacement. L’auteur, la date et la révision vides héritent du projet. **Fichier → Informations du projet** renseigne les valeurs communes, le client et le numéro du document. Les champs personnalisés se saisissent sous la forme `nom=valeur`, un par ligne.
+
+**Folio → Cartouches** ouvre l’éditeur. Dupliquer **Technique · révisions** pour partir d’une grille inspirée du style de l’exemple `see-technical.titleblock`, ou créer un modèle vide. Chaque ligne du tableau est une cellule : coordonnées X/Y et largeur/hauteur en pourcentage du cartouche, texte multiligne, taille, alignements, bordure et image. Une cellule plus grande représente une zone fusionnée ; retirer les cellules couvertes pour éviter les superpositions. Double-cliquer la cellule Texte pour la modifier ; Entrée y ajoute une ligne. L’aperçu se met à jour après validation de la cellule. Le texte est réduit automatiquement pour tenir dans sa zone.
+
+Insérer des champs comme `{project.title}`, `{sheet.title}`, `{sheet.number}`, `{sheet.total}`, `{sheet.author}`, `{sheet.checkedBy}` ou `{sheet.custom.armoire}`. Un champ inconnu reste visible entre accolades. Les valeurs sont recalculées à l’écran et dans les exports SVG/PDF. Enregistrer affecte le modèle au folio actif, ou à tous les folios avec la case dédiée. Modifier un modèle partagé met à jour tous les folios qui l’utilisent ; dupliquer le modèle pour une variante locale. **Exporter / Importer modèle** échange des fichiers `.gemcartouche` avec leurs images. Le fichier QElectroTech fourni sert de référence de style ; son import direct et ses logos ne sont pas intégrés.
+
+**Projet → Nomenclature configurable** permet de cocher, renommer et réordonner les colonnes, choisir un folio ou fabricant, regrouper les articles identiques et inclure les symboles auxiliaires. Cliquer **Actualiser l’aperçu** après modification et **Mémoriser ces options** pour les sauvegarder dans le projet. Les articles ne sont regroupés que si symbole, fabricant, gamme, référence, description, caractéristiques, image, ID catalogue et source concordent. Les appareils sans référence exacte restent donc des articles à compléter.
+
+**Propriétés du composant → Ajouter une image BOM** intègre une photo PNG/JPEG/BMP ; sinon la BOM affiche le symbole fonctionnel. Les images sont ramenées à 512 pixels et conservées dans le projet, une seule fois par contenu. Le HTML contient les images, fonctionne hors ligne et peut être imprimé depuis le navigateur. Le CSV contient les données et une indication textuelle de l’image ; il n’embarque pas de photo. L’export XLSX natif et la création de folios BOM ne sont pas encore proposés.
+
+Pour garder l’éditeur réactif : scène vectorielle réutilisée pendant le survol/zoom, index des composants pour les fils, caches bornés pour les textes et images, tableaux virtualisés et aperçu du cartouche temporisé. Les projets 0.2 restent lisibles.
+
 ## Compiler et vérifier
 
 Depuis le dépôt, sous PowerShell 7 :
@@ -68,13 +85,13 @@ Le script installe si nécessaire le SDK officiel .NET 10.0.401 dans `build/dotn
 
 Le choix .NET 10/WPF permet un éditeur Windows natif, un rendu vectoriel et un exécutable autonome ; [SDK officiel .NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
 
-Les tests intégrés écrivent `build/self-test.json`. Pour le test d’intégration MCP, ouvrir GeMMeElec sur un projet vierge puis exécuter :
+Les tests intégrés écrivent `build/self-test.json`. Pour le test d’intégration MCP sans ouvrir de fenêtre :
 
 ```powershell
-./Test-Mcp.ps1
+./Test-Mcp.ps1 -Headless
 ```
 
-Le test crée un circuit de commande dans la fenêtre, vérifie les refus d’entrées invalides et la protection des fichiers, puis écrit `build/mcp-test.json`, un projet et ses exports. Il refuse de remplacer un autre projet non vide ou non enregistré. Il peut reprendre son propre fichier de test enregistré.
+Le mode `-Headless` crée une instance invisible et une session MCP séparée : aucune manipulation du PC, aucun projet utilisateur remplacé. Il écrit `build/mcp-test.json` et `build/MCP-headless-demo.*`. Sans ce commutateur, le test utilise la fenêtre ouverte et refuse de remplacer un autre projet non vide ou non enregistré. Les tests intégrés produisent aussi des aperçus hors écran des fenêtres documentaires et `build/document-performance.json`.
 
 ## Structure
 
@@ -86,6 +103,9 @@ Le test crée un circuit de commande dans la fenêtre, vérifie les refus d’en
 | `src/SheetCanvas.cs` | Interaction du dessinateur |
 | `src/MainWindow.cs` | Interface, inspecteur, commandes et exemple |
 | `src/WorkspacePanels.cs` | Panneaux, masquage automatique et disposition persistante |
+| `src/Documents.cs` | Cartouches, champs liés, images et validation |
+| `src/DocumentDialogs.cs` | Éditeurs de cartouches, folios et nomenclature |
+| `src/Bom.cs` | Regroupement et exports configurables CSV/HTML |
 | `src/Export.cs` | SVG, PDF, nomenclature |
 | `src/Mcp.cs` | MCP stdio et canal local vers l’interface |
 | `library/catalog.json` | Gammes et sources officielles |

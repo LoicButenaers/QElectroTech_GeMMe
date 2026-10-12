@@ -1,5 +1,19 @@
 # Vérifications de livraison
 
+## Version 0.3 — 12 octobre 2026
+
+Publication Windows x64 autonome au même chemin `build/GeMMeElec.exe`, sans erreur ni avertissement de compilation. Aucun contrôle souris/clavier du PC pour cette livraison.
+
+- **22 scénarios intégrés réussis** : sauvegarde, connexions et historique existants ; héritage des métadonnées, numéro libre et automatique, ordre des folios, champs personnalisés, rollback des cellules invalides, affectation de modèles, lecture des projets 0.2 ; regroupement/filtrage/ordre des colonnes BOM, échappement HTML et protection contre les formules CSV ; import et déduplication des images, persistance, images PDF/SVG/HTML ; création et rendu hors écran des quatre dialogues, duplication de cartouche, ajout de cellule et affectation par leurs commandes.
+- **22 vérifications MCP réussies**, dans une instance WPF invisible isolée : 30 outils déclarés, métadonnées, modèle de cartouche, refus de cellule hors limites, déplacement de folio, import d’image, BOM HTML et sauvegarde/relecture complète, en plus des tests de connexion et d’historique.
+- Les aperçus `build/ui-titleblock.png`, `build/ui-bom.png`, `build/ui-sheet.png` et `build/ui-project.png` sont générés hors écran. Contrôle visuel des tableaux, boutons, champs, photo et symbole de remplacement. Il ne s’agit pas d’une session de manipulation manuelle des fenêtres.
+- Le cartouche du PDF de test est rendu séparément avec Poppler pour contrôler le logo et les textes. Le fichier de référence QElectroTech a été lu pour analyser sa grille et ses champs ; aucun importeur `.titleblock` n’est annoncé.
+- Mesure locale de reconstruction de scène : **15,6 ms** pour 1 000 composants, 999 conducteurs et 12 012 primitives ; calcul BOM : **0,65 ms**. Il s’agit d’un jeu synthétique, pas d’une garantie de cadence pour tous les projets. Résultat détaillé : `build/document-performance.json`.
+
+Optimisations : cache de scène WPF invalidé sur modification, index des composants pour les connexions, caches bornés de texte/images, virtualisation des tableaux, aperçu temporisé (250 ms), budget mémoire de 64 Mo pour l’historique. Les photos sont ramenées à 512 pixels et stockées une fois par contenu.
+
+Limites : édition de cartouche par cellules et coordonnées avec aperçu, sans dessin libre à la souris ; texte réduit pour tenir dans la cellule ; historique de révisions composé de cellules éditables ; HTML imprimable et CSV pour la BOM, sans export XLSX natif ni génération de folios BOM.
+
 ## Version 0.2 — 12 octobre 2026
 
 Windows x64, SDK .NET 10.0.401. Publication Release autonome au même chemin `build/GeMMeElec.exe`.

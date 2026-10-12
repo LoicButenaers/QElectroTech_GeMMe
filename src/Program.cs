@@ -10,6 +10,15 @@ public static class Program
     {
         if (args.Contains("--mcp")) return McpServer.Run().GetAwaiter().GetResult();
         if (args.Contains("--self-test")) return SelfTests.Run();
+        if (args.Contains("--test-host"))
+        {
+            // Hidden, isolated integration host; no mouse/keyboard or user project is touched.
+            Environment.SetEnvironmentVariable("GEMMEELEC_TEST_SESSION", "1");
+            var testApp=new Application();var testWindow=new MainWindow();
+            var lifetime=new System.Windows.Threading.DispatcherTimer {Interval=TimeSpan.FromMinutes(3)};
+            lifetime.Tick+=(_,_)=>testApp.Shutdown();lifetime.Start();
+            try{return testApp.Run();}finally{testWindow.DisposeTestBridge();}
+        }
         using var single = new Mutex(true, "Local\\GeMMeElec-" + Environment.UserName, out var first);
         if (!first) { MessageBox.Show("GeMMeElec est déjà ouvert. Utilisez la fenêtre existante.", "GeMMeElec"); return 0; }
         try

@@ -63,6 +63,7 @@ public static class SelfTests
             var path = Path.Combine(dir, "self-test-labels.svg"); Export.Svg(e.Project, e.Sheet, path); var xml = XDocument.Load(path); var text = xml.Descendants().Single(x => x.Name.LocalName == "text" && x.Value == c.Tag); Assert(text.Attribute("x")!.Value == "212.5", "Export SVG");
             c.TagPlacement.Visible = false; Assert(!Drawing.Scene(e.Project, e.Sheet).Any(x => x.Text == c.Tag), "Texte masqué");
         });
+        DocumentTests.Run(Test,Assert,Reject,dir);
         File.WriteAllText(Path.Combine(dir, "self-test.json"), JsonSerializer.Serialize(new { passed = failures == 0, failures, results }, ProjectStore.Json)); return failures == 0 ? 0 : 1;
     }
 }

@@ -23,16 +23,12 @@ public static class Drawing
     public static List<Ink> Scene(Project project, Sheet sheet)
     {
         List<Ink> result = [new("rect", 30, 30, sheet.Width - 60, sheet.Height - 60, Color: "#53677B")];
-        var y = sheet.Height - 90;
-        result.Add(new("line", 30, y, sheet.Width - 30, y));
-        result.Add(new("text", 46, y + 12, Text: project.Title, Size: 20));
-        result.Add(new("text", 46, y + 40, Text: sheet.Title, Size: 12));
-        result.Add(new("text", sheet.Width - 360, y + 12, Text: $"GeMMeElec  |  Révision {project.Revision}", Size: 13));
-        result.Add(new("text", sheet.Width - 360, y + 38, Text: $"{project.Author}  •  Folio {project.Sheets.IndexOf(sheet) + 1}/{project.Sheets.Count}", Size: 12));
+        result.AddRange(DocumentModel.Scene(project,sheet));
         for (int col = 1; col < 10; col++) result.Add(new("text", sheet.Width * col / 10, 10, Text: col.ToString(), Color: "#8293A5", Size: 10));
+        var components = sheet.Components.ToDictionary(c => c.Id);
         foreach (var wire in sheet.Wires)
         {
-            var path = wire.Route(sheet);
+            var path = wire.Route(sheet, components);
             for (int i = 1; i < path.Count; i++) result.Add(new("line", path[i - 1].X, path[i - 1].Y, path[i].X, path[i].Y, Color: wire.Color));
             var segment = Enumerable.Range(1, path.Count - 1).OrderByDescending(i => (path[i] - path[i - 1]).Length).First();
             var mid = new Point((path[segment - 1].X + path[segment].X) / 2, (path[segment - 1].Y + path[segment].Y) / 2);
@@ -63,30 +59,34 @@ public static class Drawing
     public static Ink? Label(Component component, LabelPlacement placement, string text, double size, string color)
     {
         if (!placement.Visible || text.Length == 0) return null;
-        var metrics = new FormattedText(text, CultureInfo.GetCultureInfo("fr-BE"), FlowDirection.LeftToRight, new Typeface("Segoe UI"), size, Brushes.Black, 1);
-        var origin = placement.Origin(component, metrics.WidthIncludingTrailingWhitespace, metrics.Height);
+        var metrics = Measure(text,size);
+        var origin = placement.Origin(component, metrics.Width, metrics.Height);
         return new("text", origin.X, origin.Y, Text: text, Size: size, Color: color);
     }
     private static void AddLabel(List<Ink> scene, Component c, LabelPlacement p, string text, double size, string color) { var label = Label(c, p, text, size, color); if (label is not null) scene.Add(label); }
-    public static Brush Brush(string color)
-    {
-        try { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)); } catch { return Brushes.DarkSlateGray; }
-    }
+    private static readonly Dictionary<string,Brush> BrushesCache = [];
+    private static readonly Dictionary<(string,double,string),FormattedText> TextCache = [];
+    private static readonly Typeface TextFace = new("Segoe UI");
+    private static readonly CultureInfo TextCulture = CultureInfo.GetCultureInfo("fr-BE");
+    public static Brush Brush(string color) { if(BrushesCache.TryGetValue(color,out var cached))return cached;try{var brush=new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));brush.Freeze();if(BrushesCache.Count>=256)BrushesCache.Clear();return BrushesCache[color]=brush;}catch{return Brushes.DarkSlateGray;} }
+    private static FormattedText Text(string text,double size,string color) { var key=(text,Math.Max(.5,size),color);if(TextCache.TryGetValue(key,out var cached))return cached;if(TextCache.Count>=4096)TextCache.Clear();return TextCache[key]=new FormattedText(text,TextCulture,FlowDirection.LeftToRight,TextFace,key.Item2,Brush(color),1); }
+    public static Size Measure(string text,double size) {var value=Text(text,size,"#203348");return new(value.WidthIncludingTrailingWhitespace,value.Height);}
     public static void Render(DrawingContext dc, IEnumerable<Ink> scene)
     {
         foreach (var s in scene)
         {
             var brush = Brush(s.Color); var pen = new Pen(brush, 1.6);
-            dc.PushTransform(new RotateTransform(s.Rotation, s.X, s.Y));
+            if(s.Rotation!=0)dc.PushTransform(new RotateTransform(s.Rotation, s.X, s.Y));
             switch (s.Kind)
             {
                 case "line": dc.DrawLine(pen, new(s.X, s.Y), new(s.A, s.B)); break;
                 case "rect": dc.DrawRectangle(null, pen, new(s.X, s.Y, s.A, s.B)); break;
                 case "circle": dc.DrawEllipse(Brushes.White, pen, new(s.X, s.Y), s.A, s.A); break;
                 case "dot": dc.DrawEllipse(brush, null, new(s.X, s.Y), s.A, s.A); break;
-                case "text": dc.DrawText(new FormattedText(s.Text, CultureInfo.GetCultureInfo("fr-BE"), FlowDirection.LeftToRight, new Typeface("Segoe UI"), Math.Max(8, s.Size), brush, 1.0), new(s.X, s.Y)); break;
+                case "text": dc.DrawText(Text(s.Text,s.Size,s.Color), new(s.X, s.Y)); break;
+                case "image": dc.DrawImage(ImageAssets.Decode(s.Text),new(s.X,s.Y,s.A,s.B)); break;
             }
-            dc.Pop();
+            if(s.Rotation!=0)dc.Pop();
         }
     }
 }

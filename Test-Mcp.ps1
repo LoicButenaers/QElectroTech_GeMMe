@@ -1,7 +1,31 @@
-param()
+param([switch]$Headless, [string]$AssemblyPath = '')
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$start = [System.Diagnostics.ProcessStartInfo]::new((Join-Path $root 'build/GeMMeElec.exe'), '--mcp')
+$stem = if ($Headless) { 'MCP-headless-demo' } else { 'MCP-demo' }
+$hostProcess = $null
+function ProcessInfo([string]$mode) {
+    $info = [System.Diagnostics.ProcessStartInfo]::new()
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    if ($AssemblyPath) { $info.FileName = Join-Path $root 'build/dotnet/dotnet.exe'; $info.ArgumentList.Add($AssemblyPath) }
+    else { $info.FileName = Join-Path $root 'build/GeMMeElec.exe' }
+    $info.ArgumentList.Add($mode)
+    if ($Headless) { $info.Environment['GEMMEELEC_TEST_SESSION'] = '1' }
+    return $info
+}
+if ($Headless) {
+    $sessionDir = if ($AssemblyPath) { Split-Path $AssemblyPath } else { Join-Path $root 'build' }
+    $sessionFile = Join-Path $sessionDir 'GeMMeElec.test-session.json'
+    $hostProcess = [System.Diagnostics.Process]::Start((ProcessInfo '--test-host'))
+    $ready = $false
+    for ($i=0; $i -lt 100; $i++) {
+        if ($hostProcess.HasExited) { throw 'Hôte MCP de test arrêté au démarrage.' }
+        if (Test-Path $sessionFile) { try { $session = Get-Content -Raw $sessionFile | ConvertFrom-Json; if ($session.processId -eq $hostProcess.Id) { $ready = $true; break } } catch {} }
+        Start-Sleep -Milliseconds 100
+    }
+    if (!$ready) { $hostProcess.Kill(); throw 'Hôte MCP de test indisponible.' }
+}
+$start = ProcessInfo '--mcp'
 $start.UseShellExecute = $false
 $start.CreateNoWindow = $true
 $start.RedirectStandardInput = $true
@@ -39,9 +63,9 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 24) '24 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 30) '30 outils déclarés avec schémas'
     $current = Call 'project_get'
-    if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root 'build/MCP-demo.gemelec'))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
+    if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
     $lib = Call 'library_search' @{ query = 'TeSys' }
     Assert ($lib.equipment.Count -ge 3) 'Recherche catalogue'
@@ -79,7 +103,27 @@ try {
     $firstPage = (Call 'project_get').currentSheetId
     $null = Call 'page_add' @{ title = 'Deuxième folio · réserves' }
     $null = Call 'page_select' @{ id = $firstPage }
-    $path = Join-Path $root 'build/MCP-demo.gemelec'
+    $null = Call 'project_update' @{ author = 'GeMMe'; customer = 'Atelier'; documentNumber = 'ELEC-2026'; customFields = @{ affaire = 'BE-001' } }
+    $null = Call 'page_update' @{ number = '01-A'; checkedBy = 'Vérificateur'; titleBlockId = 'technical'; customFields = @{ armoire = 'AR1' } }
+    $templates = Call 'titleblock_list'
+    Assert ($templates.values.'sheet.author' -eq 'GeMMe' -and $templates.values.'sheet.number' -eq '01-A' -and $templates.values.'sheet.custom.armoire' -eq 'AR1') 'Métadonnées et héritage des champs de cartouche'
+    $template = @{ id = 'integration'; name = 'Essai technique'; height = 140; cells = @(@{ x=0; y=0; width=100; height=100; text='{project.title} / {sheet.number}'; align='center'; vertical='center'; fontSize=18; border=$true; imageId='' }) }
+    $null = Call 'titleblock_put' @{ template = $template }
+    $null = Call 'page_update' @{ titleBlockId = 'integration' }
+    $template.cells[0].width = 101
+    $null = Call 'titleblock_put' @{ template = $template } -ExpectError
+    Assert (((Call 'titleblock_list').templates | Where-Object id -eq 'integration').cells[0].width -eq 100) 'Cartouche éditable et rejet atomique des cellules hors limites'
+    $null = Call 'page_move' @{ index = 2 }
+    Assert ((Call 'titleblock_list').values.'sheet.index' -eq '2') 'Ordre des folios et numéro explicite indépendant'
+    $null = Call 'page_move' @{ index = 1 }
+    $image = Call 'component_image' @{ id=$coil.id; path=(Join-Path $root 'assets/logo.png') }
+    Assert ($image.imageId.Length -gt 0) 'Image intégrée au composant'
+    $null = Call 'bom_configure' @{ options = @{ columns = @(@{ key='image'; label='Photo / symbole'; enabled=$true }, @{ key='quantity'; label='Qté'; enabled=$true }, @{ key='reference'; label='Référence'; enabled=$true }); groupArticles=$true; includeAuxiliary=$false; sheetId=''; brand='' } }
+    $htmlPath = Join-Path $root "build/$stem.html"
+    $null = Call 'export_bom_html' @{ path=$htmlPath; overwrite=$true }
+    Assert ((Get-Content -Raw $htmlPath).Contains('data:image/jpeg;base64,') -and (Get-Content -Raw $htmlPath).Contains('<svg')) 'BOM HTML avec photo intégrée et symboles de remplacement'
+    $null = Call 'export_bom_html' @{ path=$htmlPath } -ExpectError
+    $path = Join-Path $root "build/$stem.gemelec"
     $null = Call 'project_save' @{ path = $path; overwrite = $true }
     $null = Call 'project_open' @{ path = $path }
     $state = Call 'project_get'
@@ -87,9 +131,10 @@ try {
     Assert ($state.project.title -eq 'Essai MCP · circuit de commande' -and $state.project.sheets[1].title -eq 'Deuxième folio · réserves') 'Transport UTF-8 et accents'
     $placement = ($state.project.sheets[0].components | Where-Object id -eq $coil.id).tagPlacement
     Assert ($placement.side -eq 'top' -and $placement.offsetX -eq 12.5 -and $placement.offsetY -eq -8.25) 'Positions de texte précises conservées après relecture'
+    Assert ($state.project.sheets[0].number -eq '01-A' -and $state.project.bomOptions.columns[0].key -eq 'image' -and $state.project.images.PSObject.Properties.Count -gt 0) 'Cartouches, options BOM et images conservés après relecture'
     foreach ($format in @('svg','pdf','bom')) {
         $ext = if ($format -eq 'bom') { 'csv' } else { $format }
-        $out = Join-Path $root "build/MCP-demo.$ext"
+        $out = Join-Path $root "build/$stem.$ext"
         $null = Call "export_$format" @{ path = $out; overwrite = $true }
         Assert ((Get-Item -LiteralPath $out).Length -gt 100) "Export $ext"
         $null = Call "export_$format" @{ path = $out } -ExpectError
@@ -106,4 +151,5 @@ finally {
     $client.StandardInput.Close()
     if (!$client.WaitForExit(5000)) { $client.Kill() }
     $client.Dispose()
+    if ($hostProcess) { if (!$hostProcess.HasExited) { $hostProcess.Kill(); $hostProcess.WaitForExit() }; $hostProcess.Dispose() }
 }
