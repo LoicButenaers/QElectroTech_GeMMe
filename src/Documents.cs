@@ -66,7 +66,7 @@ public static class DocumentModel
         return d;
     }
     public static string Resolve(string text, IReadOnlyDictionary<string,string> values) => Tokens.Replace(text, m => values.TryGetValue(m.Groups[1].Value, out var value) ? value : m.Value);
-    public static TitleBlockTemplate? Template(Project p,Sheet s) => p.TitleBlocks.FirstOrDefault(t=>t.Id==s.TitleBlockId);
+    public static TitleBlockTemplate? Template(Project p,Sheet s) => s.BomPage is null ? p.TitleBlocks.FirstOrDefault(t=>t.Id==s.TitleBlockId) : null;
     public static double DrawingBottom(Project p,Sheet s) => s.Height-30-(Template(p,s)?.Height??0);
     public static List<Ink> Scene(Project p,Sheet s,TitleBlockTemplate? template=null)
     {

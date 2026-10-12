@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 30) '30 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 32) '32 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -140,6 +140,23 @@ try {
         $null = Call "export_$format" @{ path = $out } -ExpectError
     }
     $null = Call 'view_fit'
+    $null = Call 'wire_branch' @{ fromComponent=$coil.id; fromPort='A2'; targetWire=$w1.id; x=320; y=290 }
+    $state = Call 'project_get'
+    Assert ($state.project.sheets[0].wires.Count -eq 4 -and @($state.project.sheets[0].components | Where-Object symbol -eq 'junction').Count -eq 1) 'Dérivation réelle sur le trajet du conducteur'
+    $null = Call 'history_undo'
+    Assert ((Call 'project_get').project.sheets[0].wires.Count -eq 2) 'Annulation atomique de la dérivation'
+    $null = Call 'history_redo'
+    $null = Call 'bom_generate'
+    $state = Call 'project_get'
+    Assert ($state.project.sheets.Count -eq 3 -and $state.project.sheets[2].titleBlockId -eq '' -and $null -ne $state.project.sheets[2].bomPage) 'Folio BOM intégré sans cartouche'
+    $null = Call 'component_add' @{ symbol='coil'; x=200; y=200 } -ExpectError
+    $null = Call 'bom_generate'
+    Assert ((Call 'project_get').project.sheets.Count -eq 3) 'Actualisation BOM sans duplication des folios'
+    $null = Call 'project_save' @{ path=$path; overwrite=$true }
+    $null = Call 'project_open' @{ path=$path }
+    $state = Call 'project_get'
+    Assert ($state.project.sheets[0].wires.Count -eq 4 -and $state.project.sheets[2].bomPage.rows.Count -gt 0) 'Dérivation et nomenclature conservées après relecture'
+    $null = Call 'export_pdf' @{ path=(Join-Path $root "build/$stem.pdf"); overwrite=$true }
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

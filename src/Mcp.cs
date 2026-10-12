@@ -15,6 +15,8 @@ public static class McpTools
     private static JsonObject B(string description) => new() { ["type"] = "boolean", ["description"] = description };
     public static readonly ToolSpec[] Specs =
     [
+        new("bom_generate", "Ajouter ou actualiser les folios BOM selon les options enregistrées. Pagination sans cartouche, opération annulable.", new(), []),
+        new("wire_branch", "Raccorder une borne au trajet d’un fil, créer une jonction et scinder ce fil en conservant son tracé.", new() { ["fromComponent"] = S("Composant source"), ["fromPort"] = S("Borne source"), ["targetWire"] = S("Conducteur cible"), ["x"] = N("X sur le fil"), ["y"] = N("Y sur le fil") }, ["fromComponent", "fromPort", "targetWire", "x", "y"]),
         new("project_get", "Lire le projet ouvert, le folio actif, les IDs et les bornes en coordonnées absolues.", new(), [], true),
         new("library_search", "Rechercher les gammes fabricants et les symboles génériques. Les gammes ne sont pas des références de commande.", new() { ["query"] = S("Recherche libre"), ["family"] = S("Famille exacte, facultatif"), ["brand"] = S("Fabricant exact, facultatif") }, [], true),
         new("project_new", "Créer un projet. Refuse d’abandonner les modifications non enregistrées sans discardUnsaved.", new() { ["title"] = S("Nom du projet"), ["discardUnsaved"] = B("Autoriser la perte des modifications courantes") }, ["title"]),
@@ -79,6 +81,8 @@ public static class McpTools
         object result;
         switch (name)
         {
+            case "bom_generate": result = e.GenerateBom(e.Project.BomOptions); break;
+            case "wire_branch": result = e.Branch(new(Str("fromComponent"), Str("fromPort")), Str("targetWire"), new(Num("x"), Num("y"))); break;
             case "project_get": result = Snapshot(); break;
             case "library_search": result = new { equipment = Catalog.Search(Str("query"), Str("family"), Str("brand")).ToArray(), symbols = Symbols.All.Values.Where(s => s.Name.Contains(Str("query"), StringComparison.OrdinalIgnoreCase) || s.Id.Contains(Str("query"), StringComparison.OrdinalIgnoreCase)).Select(s => new { s.Id, s.Name, s.Prefix, s.Width, s.Height, s.Ports }) }; break;
             case "project_new": ReplaceCheck(); e.New(Str("title")); result = Snapshot(); break;
@@ -210,7 +214,7 @@ public static class McpServer
                 {
                     case "initialize":
                         var requested = request.GetProperty("params").GetProperty("protocolVersion").GetString();
-                        result = new { protocolVersion = requested is "2024-11-05" or "2025-03-26" or "2025-06-18" or "2025-11-25" ? requested : "2025-11-25", capabilities = new { tools = new { listChanged = false } }, serverInfo = new { name = "gemmeelec", version = "0.3.0" }, instructions = "Pilote le projet visible dans GeMMeElec. Lire project_get avant modification. Demander l’accord utilisateur avant d’abandonner des modifications ou écraser un fichier. Les gammes fabricants nécessitent une référence exacte et une vérification de bornage." }; initialized = true; break;
+                        result = new { protocolVersion = requested is "2024-11-05" or "2025-03-26" or "2025-06-18" or "2025-11-25" ? requested : "2025-11-25", capabilities = new { tools = new { listChanged = false } }, serverInfo = new { name = "gemmeelec", version = "0.4.0" }, instructions = "Pilote le projet visible dans GeMMeElec. Lire project_get avant modification. Demander l’accord utilisateur avant d’abandonner des modifications ou écraser un fichier. Les gammes fabricants nécessitent une référence exacte et une vérification de bornage." }; initialized = true; break;
                     case "ping": result = new { }; break;
                     case "tools/list": if (!initialized) throw new InvalidOperationException("initialize requis."); result = McpTools.List(); break;
                     case "tools/call":

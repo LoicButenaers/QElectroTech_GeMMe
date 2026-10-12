@@ -1,5 +1,16 @@
 # Vérifications de livraison
 
+## Version 0.4 — 12 octobre 2026
+
+Publication autonome au même chemin `build/GeMMeElec.exe`. Travail sur `GeMMeElec`, sans contrôle souris/clavier ni modification d’un projet utilisateur.
+
+- **29 scénarios intégrés** : aux validations précédentes s’ajoutent division du fil avec conservation du tracé, vraie connexion à trois branches, point plein, arrivée perpendiculaire et sortie extérieure de la borne source ; réutilisation d’une borne, reconnexion, undo/redo et rollback ; folios BOM multipages avec photos, en-têtes répétés, sauvegarde, régénération sans doublons, longues lignes continuées intégralement, protection des pages générées et limite de 100 folios ; persistance de la grille et de la palette ; commandes des dialogues hors écran. Le PDF est identique octet pour octet avec la grille affichée ou masquée.
+- **27 vérifications MCP** via l’exécutable publié et une session invisible isolée : 32 outils, dérivation, annulation, génération/régénération BOM, refus de placer un composant dans une BOM et relecture de la topologie avec les folios générés.
+- Contrôle visuel hors écran des dialogues Grille, Palette et BOM. PDF de 8 pages (schéma + 7 folios BOM pour 70 articles avec images), première et dernière pages de nomenclature rendues avec Poppler ; inspection du PDF de dérivation, point plein et arrivée en T. Aucun cartouche sur la nomenclature.
+- Jeux synthétiques : 1 000 articles sur 42 pages sans images, pagination autour de **298 ms** ; recherche du point sur 999 tracés en cache autour de **0,93 ms**. Les durées exactes sont dans `build/workflow-performance.json`. Le rendu bitmap WPF hors écran du folio dense est également mesuré (`offscreenRasterMs`) ; cette mesure logicielle incluant la copie des pixels ne représente pas la cadence GPU de l’interface.
+
+La grille et la scène sont mises en cache ; les tracés nécessaires au survol d’un fil sont calculés une fois après modification. La pagination ne se déclenche que sur demande. Les folios BOM sont des instantanés : actualiser après modification des composants, du regroupement ou de l’ordre des folios. Les croisements ordinaires restent sans connexion ; le routage ne contourne pas automatiquement tous les obstacles du schéma. Les limites des anciennes versions ci-dessous décrivent leur état historique.
+
 ## Version 0.3 — 12 octobre 2026
 
 Publication Windows x64 autonome au même chemin `build/GeMMeElec.exe`, sans erreur ni avertissement de compilation. Aucun contrôle souris/clavier du PC pour cette livraison.

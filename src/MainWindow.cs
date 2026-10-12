@@ -29,7 +29,7 @@ public sealed partial class MainWindow : Window
         Background = Drawing.Brush("#F5F7FA"); FontFamily = new("Segoe UI"); FontSize = 13; Foreground = Drawing.Brush("#203348");
         Icon = new BitmapImage(new Uri("pack://application:,,,/assets/logo.png"));
         Resources.Add(typeof(Button), ButtonStyle()); Resources.Add(typeof(TextBox), TextBoxStyle());
-        Canvas = new(Editor);
+        Canvas = new(Editor) { GridVisible = preferences.GridVisible, GridIntensity = preferences.GridIntensity }; Editor.CurrentWireColor = preferences.WireColor;
         var root = new DockPanel(); Content = root;
         var header = new DockPanel { Background = Drawing.Brush("#152B40"), LastChildFill = true, Height = 64 };
         var logo = new Image { Source = Icon, Width = 38, Height = 38, Margin = new(20, 0, 14, 0) }; header.Children.Add(logo);
@@ -45,7 +45,7 @@ public sealed partial class MainWindow : Window
         AddMenu(menu, "_Insérer", ("Conducteur    W", () => Canvas.SetMode("wire")), ("Texte    T", () => Canvas.SetMode("text")), ("Sélection    V", () => Canvas.SetMode("select")));
         AddMenu(menu, "_Projet", ("Vérifier les connexions et les repères", Validate), ("Cartouches…", TitleBlockEditor), ("Nomenclature configurable…", Bom));
         AddMenu(menu, "E_xporter", ("Tous les folios en PDF…", () => ExportFile("pdf")), ("Folio courant en SVG…", () => ExportFile("svg")), ("Nomenclature CSV…", () => ExportFile("csv")));
-        AddMenu(menu, "_Affichage", ("Ajuster le folio    F", Canvas.Fit), ("Bibliothèque", () => workspace?.Show("library")), ("Propriétés", () => workspace?.Show("properties")), ("Folios", () => workspace?.Show("pages")), ("Rétablir les panneaux", () => workspace?.Reset()));
+        AddMenu(menu, "_Affichage", ("Ajuster le folio    F", Canvas.Fit), ("Grille du plan…", GridDialog), ("Palette des conducteurs…", () => PaletteDialog()), ("Bibliothèque", () => workspace?.Show("library")), ("Propriétés", () => workspace?.Show("properties")), ("Folios", () => workspace?.Show("pages")), ("Rétablir les panneaux", () => workspace?.Reset()));
         AddMenu(menu, "_Aide", ("Raccourcis et utilisation", Help), ("Connexion MCP", McpHelp));
         DockPanel.SetDock(menu, Dock.Top); root.Children.Add(menu);
         var toolbar = new WrapPanel { Background = Brushes.White, Margin = new(0, 1, 0, 1) };
@@ -125,6 +125,7 @@ public sealed partial class MainWindow : Window
         else if (wire is not null)
         {
             Field("number", "Numéro du conducteur", wire.Number); Field("color", "Couleur (#RRGGBB)", wire.Color);
+            properties.Children.Add(Button("Palette de couleurs…", () => PaletteDialog(fields["color"].Text, color => fields["color"].Text = color)));
             properties.Children.Add(Button("Appliquer", () => { string n = fields["number"].Text, color = fields["color"].Text; Editor.Change(() => { wire.Number = n; wire.Color = color; }); }));
             properties.Children.Add(Button("Rétablir le parcours automatique", () => Editor.Change(() => wire.Waypoints.Clear())));
             properties.Children.Add(new TextBlock { Text = "Tirez une poignée carrée pour déplacer un segment. Tirez une poignée ronde vers une borne pour changer le raccordement.", TextWrapping = TextWrapping.Wrap, Margin = new(0, 12, 0, 10), Foreground = Drawing.Brush("#61758A") });
@@ -133,6 +134,13 @@ public sealed partial class MainWindow : Window
             properties.Children.Add(new TextBlock { Text = "Coordonnées du folio, en unités de dessin. Un champ vide rétablit le tracé automatique.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new(0, 6, 0, 0) });
         }
         else if (note is not null) { Field("text", "Annotation", note.Text); properties.Children.Add(Button("Appliquer", () => { var t = fields["text"].Text; Editor.Change(() => note.Text = t); })); }
+        else if (Editor.Sheet.BomPage is not null)
+        {
+            properties.Children.Add(new TextBlock { Text = "Folio de nomenclature", FontSize = 20, TextWrapping = TextWrapping.Wrap, Margin = new(0, 18, 0, 12) });
+            properties.Children.Add(Hint("Ce tableau est enregistré dans le projet et inclus dans l’export PDF, sans cartouche. Après une modification du schéma, ouvrir la nomenclature et cliquer Ajouter / actualiser les folios BOM."));
+            properties.Children.Add(Button("Configurer / actualiser la nomenclature", Bom));
+            properties.Children.Add(Button("Propriétés du folio", SheetInfo));
+        }
         else
         {
             properties.Children.Add(new TextBlock { Text = Editor.Project.Title, FontSize = 22, TextWrapping = TextWrapping.Wrap, Margin = new(0, 18, 0, 12) });
@@ -239,7 +247,7 @@ public sealed partial class MainWindow : Window
         var dialog = new SaveFileDialog { Filter = $"{format.ToUpperInvariant()}|*.{format}", FileName = "Schema." + format }; if (dialog.ShowDialog(this) != true) return;
         if (format == "pdf") Export.Pdf(Editor.Project, dialog.FileName); else if (format == "svg") Export.Svg(Editor.Project, Editor.Sheet, dialog.FileName); else Export.Csv(Editor.Project, dialog.FileName); status.Text = "Export créé · " + dialog.FileName;
     }
-    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nCtrl+clic : sélection multiple · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour choisir côté, alignement ou coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Les croisements ne sont pas des jonctions : utilisez le symbole Jonction pour créer une dérivation.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
+    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nCtrl+clic : sélection multiple · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour choisir côté, alignement ou coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Pour une dérivation, tirez une borne sur le trajet d’un fil : un point de jonction est créé. Les simples croisements restent sans connexion.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
     private void McpHelp() => MessageBox.Show(this, "Le serveur MCP fait partie du même exécutable.\n\nCommande :\n" + Environment.ProcessPath + " --mcp\n\nTransport stdio. Gardez l’application ouverte. Le serveur rejoint cette fenêtre par un canal Windows limité à votre compte. Les modifications sont annulables avec Ctrl+Z.\n\nVoir docs/MCP.md dans le dépôt pour la configuration du client.", "MCP GeMMeElec");
     public void McpActivity(string tool) { mcpStatus.Text = "● MCP · " + tool; status.Text = "Commande MCP exécutée : " + tool; }
     internal void DisposeTestBridge() => bridge.Dispose();

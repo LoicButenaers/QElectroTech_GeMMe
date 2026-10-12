@@ -22,6 +22,7 @@ public static class Drawing
 {
     public static List<Ink> Scene(Project project, Sheet sheet)
     {
+        if (sheet.BomPage is not null) return BomFolios.Scene(project, sheet);
         List<Ink> result = [new("rect", 30, 30, sheet.Width - 60, sheet.Height - 60, Color: "#53677B")];
         result.AddRange(DocumentModel.Scene(project,sheet));
         for (int col = 1; col < 10; col++) result.Add(new("text", sheet.Width * col / 10, 10, Text: col.ToString(), Color: "#8293A5", Size: 10));
@@ -42,7 +43,7 @@ public static class Drawing
                 if (shape.Kind == "line") { var b = c.Transform(shape.A, shape.B); result.Add(new("line", p.X, p.Y, b.X, b.Y)); }
                 else result.Add(new(shape.Kind, p.X, p.Y, shape.A, shape.B, shape.Text, Size: shape.A, Rotation: c.Rotation));
             }
-            foreach (var port in c.Definition.Ports)
+            foreach (var port in c.Definition.Ports.Where(_ => c.Symbol != "junction"))
             {
                 var p = c.PortPoint(port.Id);
                 result.Add(new("circle", p.X, p.Y, 2));

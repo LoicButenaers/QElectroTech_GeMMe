@@ -44,6 +44,7 @@ public sealed class Project
 }
 public sealed class Sheet
 {
+    public BomPage? BomPage { get; set; }
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Title { get; set; } = "Schéma de puissance";
     public string Number { get; set; } = "";
@@ -232,6 +233,7 @@ public static class ProjectStore
             Id(s.Id);
             if (!double.IsFinite(s.Width) || !double.IsFinite(s.Height) || s.Width is < 200 or > 10000 || s.Height is < 200 or > 10000) throw new InvalidDataException("Dimensions de folio invalides.");
             if (s.Components is null || s.Wires is null || s.Notes is null || s.Components.Count > 10000 || s.Wires.Count > 20000 || s.Notes.Count > 5000) throw new InvalidDataException("Contenu du folio invalide ou trop volumineux.");
+            BomFolios.Validate(p, s);
             foreach (var c in s.Components)
             {
                 if (c is null) throw new InvalidDataException("Composant vide.");
@@ -283,8 +285,9 @@ public static class ProjectStore
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
 }
-public sealed class Editor
+public sealed partial class Editor
 {
+    public string CurrentWireColor { get; set; } = "#243B53";
     public Project Project { get; private set; } = new();
     public string CurrentSheetId { get; private set; }
     public string? FilePath { get; private set; }
@@ -370,11 +373,11 @@ public sealed class Editor
             CatalogId = entry?.Id ?? "", Brand = entry?.Brand ?? "", Range = entry?.Range ?? "", Reference = entry?.Reference ?? "", Source = entry?.Source ?? "" };
         Change(() => Sheet.Components.Add(c)); return c;
     }
-    public Wire Connect(Endpoint from, Endpoint to, IEnumerable<Position>? points = null, string number = "")
+    public Wire Connect(Endpoint from, Endpoint to, IEnumerable<Position>? points = null, string number = "", string? color = null)
     {
         if (from == to) throw new ArgumentException("Choisir deux bornes distinctes.");
         if (Sheet.Wires.Any(w => (w.From == from && w.To == to) || (w.To == from && w.From == to))) throw new ArgumentException("Ces bornes sont déjà reliées.");
-        var w = new Wire { From = from, To = to, Waypoints = points?.ToList() ?? [], Number = number.Length > 0 ? number : $"W{NextWireNumber()}" };
+        var w = new Wire { From = from, To = to, Waypoints = points?.ToList() ?? [], Number = number.Length > 0 ? number : $"W{NextWireNumber()}", Color = color ?? CurrentWireColor };
         Change(() => Sheet.Wires.Add(w)); return w;
     }
     private int NextWireNumber() { var used = Project.Sheets.SelectMany(s => s.Wires).Select(w => w.Number).ToHashSet(); int i = 1; while (used.Contains($"W{i}")) i++; return i; }

@@ -48,10 +48,15 @@ Pour un autre client MCP acceptant les serveurs locaux stdio :
 | Exports | `export_svg`, `export_pdf`, `export_bom` |
 | Historique et vue | `history_undo`, `history_redo`, `view_fit` |
 | Documents (0.3) | `page_move`, `titleblock_list`, `titleblock_put`, `component_image`, `bom_configure`, `export_bom_html` |
+| Dérivations et folios BOM (0.4) | `wire_branch`, `bom_generate` |
 
 `tools/list` fournit les paramètres, types et champs requis. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.3 expose 30 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
+La version 0.4 expose 32 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
+
+`wire_branch` reçoit `fromComponent`, `fromPort`, `targetWire`, `x`, `y` sur le folio actif. Le point est projeté sur le segment le plus proche et aligné le long de ce segment. Une position à plus de 100 unités est refusée. Le fil cible est divisé sans perte de son tracé, numéro ou couleur ; la nouvelle branche arrive perpendiculairement à une jonction commune. Si le point est déjà une extrémité, celle-ci est réutilisée. L’ensemble est annulable en une action.
+
+`bom_generate` n’a pas de paramètres : il utilise `project.bomOptions`, remplace les folios BOM existants et sélectionne le premier nouveau folio. Les folios sont enregistrés dans `sheet.bomPage`, sans cartouche, et inclus dans `export_pdf`. Ils sont des instantanés : relancer après modification du schéma. Les composants et annotations y sont interdits. La limite de 100 folios s’applique avec rejet atomique en cas de dépassement.
 
 `wire_update` prend `id` et les champs facultatifs `number`, `color`, `fromComponent`, `fromPort`, `toComponent`, `toPort`, `waypoints` (tableau de `{ "x": 320, "y": 250 }`). Un tableau vide rétablit le tracé automatique. Les mises à jour de texte et de conducteur sont atomiques, validées et annulables ; un raccordement dupliqué est refusé.
 

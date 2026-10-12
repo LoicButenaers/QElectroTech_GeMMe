@@ -58,7 +58,7 @@ public static class Symbols
         Add("terminal", "Borne de passage", "X", 40, 40, [new("1", 0, -20), new("2", 0, 20)], [L(0, -20, 0, 20), C(0, 0, 6)]);
         Add("terminal_pe", "Borne de protection PE", "X", 50, 60, [new("1", 0, -30), new("2", 0, 30)], [L(0, -30, 0, 30), C(0, 0, 6), L(0, 10, 18, 10), L(18, 0, 18, 20), L(23, 3, 23, 17), L(28, 6, 28, 14)]);
         Add("earth", "Terre de protection", "PE", 40, 40, [new("PE", 0, -20)], [L(0, -20, 0, 0), L(-18, 0, 18, 0), L(-12, 6, 12, 6), L(-6, 12, 6, 12)]);
-        Add("junction", "Jonction électrique", "J", 20, 20, [new("1", 0, 0)], [new("dot", 0, 0, 3)]);
+        Add("junction", "Jonction électrique", "J", 20, 20, [new("1", 0, 0)], [new("dot", 0, 0, 4)]);
         Add("source", "Arrivée d’alimentation", "L", 50, 40, [new("1", 0, 20)], [L(0, -10, 0, 20), L(-8, -2, 0, -10), L(8, -2, 0, -10)]);
         Add("motor", "Moteur triphasé", "M", 120, 120, [new("U1", -20, -60), new("V1", 0, -60), new("W1", 20, -60), new("PE", 60, 20)], [C(0, 0, 38), T(-10, -20, "M", 24), T(-10, 10, "3~", 15), L(-20, -60, -20, -33), L(0, -60, 0, -38), L(20, -60, 20, -33), L(33, 20, 60, 20)]);
         void Block(string id, string name, string prefix, string label, string[] top, string[] bottom)

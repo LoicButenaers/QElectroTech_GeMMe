@@ -8,7 +8,7 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.3)
+## Fonctionnalités (version 0.4)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
@@ -17,27 +17,32 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Déplacement, sélection multiple, duplication des composants, rotation, suppression.
 - Connexions entre bornes, tracé orthogonal, coudes manuels, repères de conducteurs, suivi des déplacements.
 - Câblage par glisser entre bornes, déplacement des segments et changement de borne par poignées, coordonnées des points de passage.
+- Dérivation en tirant une borne sur un fil existant : point de jonction, division du conducteur et arrivée perpendiculaire, annulables ensemble.
+- Grille réglable (affichage et intensité), réservée à l’éditeur ; palette de conducteurs avec couleurs personnalisées enregistrées.
 - Position indépendante du repère, des caractéristiques et de la description : côtés, alignements, décalages précis et visibilité ; rendu commun à l’écran, au SVG et au PDF.
 - Panneaux Bibliothèque, Folios et Propriétés épinglables, masquables automatiquement et fermables ; largeur réglable et disposition mémorisée.
 - Cartouches personnalisables : cellules, dimensions, texte multiligne, alignements, logo, champs liés, modèles Simple et Technique, import/export `.gemcartouche`.
 - Propriétés détaillées des folios : numéro automatique ou libre, titre, auteur, vérificateur, approbateur, date, révision, fonction, localisation et champs personnalisés. Ordre modifiable.
 - BOM configurable : choix et ordre des colonnes, regroupement, filtres folio/fabricant, photos intégrées ou symboles ; export HTML autonome imprimable et CSV.
+- Folios BOM intégrés au projet et au PDF, pagination automatique, en-têtes répétés, longues lignes poursuivies sur la page suivante, sans cartouche.
 - Repères et propriétés des appareils, référence commerciale libre, caractéristiques, libellés de bornes, documentation fabricant.
 - Annotations, zoom à la molette, déplacement de la vue, ajustement du folio.
 - Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec un budget mémoire de 64 Mo pour les projets contenant des images.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
-- Serveur MCP local avec 30 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Serveur MCP local avec 32 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Dessiner
 
-Cliquer un équipement dans la bibliothèque puis cliquer le folio. Échap termine la pose. Pour câbler, maintenir le bouton gauche sur une borne, tirer vers une autre borne et relâcher : cela fonctionne en mode Sélection et immédiatement après la pose. Une borne survolée se colore. Un relâchement dans le vide annule la liaison. Le mode Conducteur permet aussi de cliquer une première borne, des points de passage facultatifs, puis la borne d’arrivée. Les croisements n’établissent pas de liaison électrique : utiliser un symbole **Jonction électrique** pour créer une dérivation.
+Cliquer un équipement dans la bibliothèque puis cliquer le folio. Échap termine la pose. Pour câbler, maintenir le bouton gauche sur une borne, tirer vers une autre borne et relâcher : cela fonctionne en mode Sélection et immédiatement après la pose. Pour une **dérivation**, relâcher sur le trajet d’un conducteur : un point coloré prévisualise la jonction. Le conducteur cible est scindé en conservant son tracé, sa couleur et son numéro ; le nouveau fil arrive perpendiculairement au point. Une borne ou jonction déjà présente est réutilisée. Un relâchement dans le vide annule la liaison. Le mode Conducteur permet aussi de cliquer une première borne, des points de passage facultatifs, puis la borne ou le fil d’arrivée. Un simple croisement n’établit pas de connexion électrique.
 
 Sélectionner un conducteur puis glisser un segment ou une **poignée carrée** pour ajuster son tracé. Glisser une **poignée ronde** vers une borne pour changer son raccordement. L’inspecteur permet aussi de saisir les points `X ; Y`, un par ligne, et de rétablir le tracé automatique. Échap annule le geste ; Ctrl+Z annule sa validation. Pour créer un nouveau fil depuis une borne occupée par le fil sélectionné, activer Conducteur (W).
 
 Sélectionner un composant puis **Propriétés → Position des textes…**. Choisir le repère, les caractéristiques ou la description ; régler haut/bas/gauche/droite, alignement horizontal et vertical, distance et décalages X/Y. Le mode **Coordonnées libres depuis le centre** utilise le centre du composant comme origine. Les décimales acceptent une virgule ou un point, sans arrondi à la grille. Appliquer avant de changer de texte ; les positions suivent le composant et sont enregistrées avec le projet.
 
 Dans les en-têtes des panneaux, **● / ○** épingle ou désépingle ; **×** ferme. Un panneau désépinglé reste accessible par son onglet latéral et se replie après une action sur le folio. Le menu **Affichage** rouvre les panneaux ou rétablit la disposition initiale. Les séparateurs règlent leur largeur. La disposition est enregistrée dans `build/GeMMeElec.layout.json`.
+
+**Affichage → Grille du plan** règle la visibilité de 0 à 100 % ou masque la grille, avec aperçu immédiat. L’accrochage reste de 10 unités. Les exports PDF/SVG et les folios BOM ne contiennent jamais cette grille. **Affichage → Palette des conducteurs** définit la couleur des prochains fils ; **Propriétés du fil → Palette de couleurs** choisit sa couleur, puis **Appliquer** la valide. Composer une teinte avec les curseurs rouge/vert/bleu ou le code hexadécimal, lui donner un nom et cliquer **Enregistrer cette couleur**. Un nom existant remplace sa teinte. La palette et les réglages de grille sont conservés dans `build/GeMMeElec.preferences.json` ; les couleurs appliquées aux fils sont également dans le projet.
 
 | Action | Raccourci |
 | --- | --- |
@@ -69,9 +74,11 @@ Insérer des champs comme `{project.title}`, `{sheet.title}`, `{sheet.number}`, 
 
 **Projet → Nomenclature configurable** permet de cocher, renommer et réordonner les colonnes, choisir un folio ou fabricant, regrouper les articles identiques et inclure les symboles auxiliaires. Cliquer **Actualiser l’aperçu** après modification et **Mémoriser ces options** pour les sauvegarder dans le projet. Les articles ne sont regroupés que si symbole, fabricant, gamme, référence, description, caractéristiques, image, ID catalogue et source concordent. Les appareils sans référence exacte restent donc des articles à compléter.
 
-**Propriétés du composant → Ajouter une image BOM** intègre une photo PNG/JPEG/BMP ; sinon la BOM affiche le symbole fonctionnel. Les images sont ramenées à 512 pixels et conservées dans le projet, une seule fois par contenu. Le HTML contient les images, fonctionne hors ligne et peut être imprimé depuis le navigateur. Le CSV contient les données et une indication textuelle de l’image ; il n’embarque pas de photo. L’export XLSX natif et la création de folios BOM ne sont pas encore proposés.
+**Ajouter / actualiser les folios BOM** crée les pages nécessaires en fin de projet, sans cartouche. Les colonnes choisies, photos ou symboles, en-têtes répétés et numéros de page sont inclus dans le PDF. Les longues lignes continuent sur les pages suivantes. Cette commande remplace les précédents folios BOM en une seule opération annulable ; ils constituent un instantané enregistré. Après modification du schéma, relancer la commande pour actualiser les quantités et références de folio. Ces pages ne reçoivent pas de composants de schéma. La limite totale reste de 100 folios ; un dépassement annule entièrement la génération.
 
-Pour garder l’éditeur réactif : scène vectorielle réutilisée pendant le survol/zoom, index des composants pour les fils, caches bornés pour les textes et images, tableaux virtualisés et aperçu du cartouche temporisé. Les projets 0.2 restent lisibles.
+**Propriétés du composant → Ajouter une image BOM** intègre une photo PNG/JPEG/BMP ; sinon la BOM affiche le symbole fonctionnel. Les images sont ramenées à 512 pixels et conservées dans le projet, une seule fois par contenu. Le HTML contient les images, fonctionne hors ligne et peut être imprimé depuis le navigateur. Le CSV contient les données et une indication textuelle de l’image ; il n’embarque pas de photo. L’export XLSX natif n’est pas encore proposé.
+
+Pour garder l’éditeur réactif : scène vectorielle et grille réutilisées pendant le survol, index des composants et cache des tracés pour les fils, caches bornés pour les textes et images, tableaux virtualisés et aperçu du cartouche temporisé. La BOM est paginée à la demande. Les projets 0.2 et 0.3 restent lisibles.
 
 ## Compiler et vérifier
 
