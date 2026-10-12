@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 32) '32 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 35) '35 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -156,6 +156,38 @@ try {
     $null = Call 'project_open' @{ path=$path }
     $state = Call 'project_get'
     Assert ($state.project.sheets[0].wires.Count -eq 4 -and $state.project.sheets[2].bomPage.rows.Count -gt 0) 'Dérivation et nomenclature conservées après relecture'
+    $null = Call 'export_pdf' @{ path=(Join-Path $root "build/$stem.pdf"); overwrite=$true }
+    $symbolLibrary = Call 'library_search'
+    Assert ($symbolLibrary.symbols.Count -eq 92 -and @($symbolLibrary.symbols | Where-Object category -like '10*').Count -eq 2) 'Bibliothèque industrielle : 92 symboles et famille des renvois'
+    $null = Call 'page_select' @{ id=$firstPage }
+    $departure = Call 'component_add' @{ symbol='folio_next'; x=800; y=700 }
+    $null = Call 'wire_add' @{ fromComponent=$coil.id; fromPort='A2'; toComponent=$departure.id; toPort='1' }
+    $null = Call 'reference_update' @{ id=$departure.id; name='+24V'; mode='pair' }
+    $secondPage = $state.project.sheets[1].id
+    $null = Call 'page_select' @{ id=$secondPage }
+    $arrival = Call 'component_add' @{ symbol='folio_previous'; x=200; y=300 }
+    $lamp = Call 'component_add' @{ symbol='lamp'; x=600; y=300 }
+    $null = Call 'wire_add' @{ fromComponent=$arrival.id; fromPort='1'; toComponent=$lamp.id; toPort='X1' }
+    $null = Call 'reference_update' @{ id=$arrival.id; name='+24V'; mode='pair' }
+    $refs = Call 'reference_list'
+    Assert ($refs.Count -eq 2 -and ($refs | Where-Object id -eq $departure.id).targets[0].address -eq '2 / D3') 'Renvois réciproques avec emplacement du folio'
+    $trace = Call 'connection_trace' @{ componentId=$coil.id; portId='A2' }
+    Assert (@($trace | Where-Object { $_.componentId -eq $lamp.id -and $_.portId -eq 'X1' }).Count -eq 1 -and @($trace | Where-Object { $_.componentId -eq $lamp.id -and $_.portId -eq 'X2' }).Count -eq 0) 'Continuité interfolio sans traverser les appareils'
+    $null = Call 'page_update' @{ number='CMD-2'; zoneColumns=16; zoneRows=8 }
+    $null = Call 'page_update' @{ zoneColumns=0 } -ExpectError
+    Assert (((Call 'reference_list') | Where-Object id -eq $departure.id).targets[0].address -eq 'CMD-2 / C3') 'Repérage configurable et rejet des valeurs invalides'
+    $null = Call 'component_delete' @{ id=$arrival.id }
+    Assert (((Call 'reference_list') | Where-Object id -eq $departure.id).targets.Count -eq 0) 'Détection de renvoi cassé'
+    $null = Call 'history_undo'
+    $null = Call 'bom_configure' @{ options=@{ columns=@(@{key='tags';label='Repères';enabled=$true},@{key='pages';label='Folios / zones';enabled=$true}); groupArticles=$true; includeAuxiliary=$false; sheetId=''; brand='' } }
+    $null = Call 'bom_generate'
+    $null = Call 'project_save' @{ path=$path; overwrite=$true }
+    $null = Call 'project_open' @{ path=$path }
+    $trace = Call 'connection_trace' @{ componentId=$coil.id; portId='A2' }
+    Assert (@($trace | Where-Object componentId -eq $lamp.id).Count -eq 1) 'Renvois persistants après relecture'
+    $state = Call 'project_get'
+    $bomText = $state.project.sheets[-1].bomPage.rows | ConvertTo-Json -Depth 20
+    Assert ($bomText.Contains('CMD-2') -and $bomText.Contains('C7')) 'Nomenclature avec position des composants'
     $null = Call 'export_pdf' @{ path=(Join-Path $root "build/$stem.pdf"); overwrite=$true }
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."

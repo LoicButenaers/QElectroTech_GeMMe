@@ -1,6 +1,10 @@
 # Bibliothèque industrielle GeMMeElec
 
-Sources officielles consultées le 9 octobre 2026. **25 familles, 75 associations de gammes, trois fabricants par famille**, complétées par 34 symboles génériques. Il s’agit d’un choix de fabricants courants en Europe adapté à chaque famille, sans prétendre établir un classement commercial.
+Sources officielles fabricants consultées le 9 octobre 2026. **25 familles, 75 associations de gammes, trois fabricants par famille**. La version 0.5 propose séparément **92 symboles de base dans 10 catégories industrielles**. Il s’agit d’un choix de fabricants courants en Europe adapté à chaque famille, sans prétendre établir un classement commercial.
+
+La bibliothèque s’ouvre sur **Symboles industriels**, avec recherche insensible aux accents et filtre par catégorie : protection et coupure ; contacts et commandes ; relais et actionneurs ; sources et conversion ; moteurs et récepteurs ; signalisation et mesure ; capteurs ; automatismes ; bornes et connexions ; renvois interfolios. Elle couvre notamment les variantes de pôles, contacts NO/NC et inverseurs, temporisations, commandes, capteurs de température/pression/niveau, moteurs à six bornes, bornes PE/N/sectionnables/à fusible et entrées/sorties numériques ou analogiques. Les appareils complexes sont représentés par des blocs fonctionnels explicitement nommés.
+
+**Gammes fabricants** conserve les associations ci-dessous. Les identifiants et bornes des 34 anciens symboles sont conservés pour ouvrir les projets existants. Les flèches interfolios sont exclues de la BOM.
 
 Les données enregistrées sont le nom de la famille, du fabricant, de la gamme, le symbole fonctionnel et le lien documentaire. Aucune valeur de calibre, pouvoir de coupure, tension, PL/SIL ou référence commandable n’est déduite du seul nom d’une gamme. Le champ référence est volontairement vide tant qu’une variante précise n’a pas été sélectionnée et vérifiée.
 
@@ -38,8 +42,8 @@ Les dessins vectoriels sont originaux et représentent la fonction électrique. 
 
 Les blocs automate, E/S, variateur, alimentation, relais de sécurité et capteur comportent des ports fonctionnels simplifiés. Les gammes contiennent parfois plusieurs variantes de câblage : un symbole trois fils ne représente pas automatiquement les variantes deux fils. Les numéros et fonctions des bornes doivent être adaptés à la fiche de l’article retenu. Les symboles disjoncteurs 1P à 4P et différentiels 2P/4P sont disponibles dans les génériques ; le catalogue propose une variante initiale, pas toutes les combinaisons de pôles.
 
-Les contacts auxiliaires NO/NC, bobines, jonctions, terres, arrivées et transformateurs sont également accessibles dans « Symboles génériques ». Le catalogue est embarqué dans l’exécutable et fonctionne hors connexion ; seuls les liens de documentation nécessitent Internet.
+Les contacts auxiliaires NO/NC, bobines, jonctions, terres, arrivées et transformateurs sont également accessibles dans « Symboles industriels ». Le catalogue est embarqué dans l’exécutable et fonctionne hors connexion ; seuls les liens de documentation nécessitent Internet.
 
 ## Étendre la bibliothèque
 
-Ajouter la géométrie dans `src/Symbols.cs` si nécessaire, puis une entrée avec ID stable dans `library/catalog.json`. Une nouvelle référence exacte exige une source fabricant qui identifie son bornage et ses caractéristiques. Mettre à jour les tests de couverture si le nombre de familles évolue. Les composants placés stockent leurs propriétés dans le projet afin que les informations saisies soient conservées à la relecture.
+Ajouter la géométrie, les bornes et la catégorie dans `src/IndustrialSymbols.cs` (définitions historiques dans `src/Symbols.cs`), puis éventuellement une association avec ID stable dans `library/catalog.json`. Une nouvelle référence exacte exige une source fabricant qui identifie son bornage et ses caractéristiques. Mettre à jour les tests de couverture si le nombre de familles évolue. Les composants placés stockent leurs propriétés dans le projet afin que les informations saisies soient conservées à la relecture.

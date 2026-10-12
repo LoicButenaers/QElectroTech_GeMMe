@@ -49,10 +49,21 @@ Pour un autre client MCP acceptant les serveurs locaux stdio :
 | Historique et vue | `history_undo`, `history_redo`, `view_fit` |
 | Documents (0.3) | `page_move`, `titleblock_list`, `titleblock_put`, `component_image`, `bom_configure`, `export_bom_html` |
 | Dérivations et folios BOM (0.4) | `wire_branch`, `bom_generate` |
+| Renvois (0.5) | `reference_list`, `reference_update`, `connection_trace` |
 
 `tools/list` fournit les paramètres, types et champs requis. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.4 expose 32 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
+La version 0.5 expose 35 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
+
+## Zones et renvois (0.5)
+
+- `page_update` accepte `zoneColumns` (1–40) et `zoneRows` (1–26) pour le folio actif. Les valeurs par défaut sont 20 et 10. La colonne BOM `pages` contient maintenant le repère, le folio et la zone de chaque appareil.
+- `library_search` retourne également la catégorie de chaque symbole. Poser les flèches avec `component_add` et `symbol: "folio_next"` ou `"folio_previous"` ; leur borne porte l’ID `1`.
+- `reference_update` reçoit `id`, `name`, `mode` (`pair` ou `star`), et éventuellement `order` (0–99999, défaut 0) et `source` (défaut false). Il modifie le renvoi du folio actif, harmonise le mode des points de même nom et garantit une seule source explicite. L’opération est annulable ; un nom vide délie le point.
+- `reference_list` retourne tous les renvois avec leur adresse et leurs destinations résolues. Les noms sont comparés sans tenir compte de la casse ni des espaces en début/fin.
+- `connection_trace` reçoit `componentId` et `portId`. Cette lecture retourne les bornes accessibles en suivant les fils et les renvois résolus, sans traverser l’intérieur des appareils. Il ne s’agit pas d’une simulation électrique.
+
+Les coordonnées affichées se recalculent après déplacement, changement de numéro ou réorganisation des folios. Les folios BOM restent des instantanés à régénérer avec `bom_generate`. Voir [les règles de liaison](RENVOIS.md).
 
 `wire_branch` reçoit `fromComponent`, `fromPort`, `targetWire`, `x`, `y` sur le folio actif. Le point est projeté sur le segment le plus proche et aligné le long de ce segment. Une position à plus de 100 unités est refusée. Le fil cible est divisé sans perte de son tracé, numéro ou couleur ; la nouvelle branche arrive perpendiculairement à une jonction commune. Si le point est déjà une extrémité, celle-ci est réutilisée. L’ensemble est annulable en une action.
 

@@ -37,6 +37,8 @@ public sealed class SheetCanvas : FrameworkElement
     public event Action? SelectionChanged;
     public event Action<string>? Status;
     public event Action<Point>? TextRequested;
+    public event Action<string>? ReferenceRequested;
+    public void CenterOn(double x, double y) { offset = new(ActualWidth / 2 - x * Zoom, ActualHeight / 2 - y * Zoom); InvalidateVisual(); }
     public SheetCanvas(Editor editor)
     {
         Editor = editor; previousSheet = editor.Sheet.Id; Focusable = true; ClipToBounds = true;
@@ -179,6 +181,11 @@ public sealed class SheetCanvas : FrameworkElement
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
+            if (e.ClickCount == 2 && connection is null && Mode == "select")
+            {
+                var reference = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && c.Bounds().Contains(pointer));
+                if (reference is not null) { ReferenceRequested?.Invoke(reference.Id); return; }
+            }
             var port = HitPort(pointer);
             if (connection is not null) { if (port is not null) CompleteConnection(port); else if (HitWire(pointer) is { } target) CompleteBranch(target); else { waypoints.Add(new(Editor.Snap(pointer.X), Editor.Snap(pointer.Y))); InvalidateVisual(); } return; }
             if (Mode == "select") foreach (var w in Editor.Sheet.Wires.Where(w => Selected.Contains(w.Id)))

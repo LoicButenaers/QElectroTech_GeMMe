@@ -1,5 +1,16 @@
 # Vérifications de livraison
 
+## Version 0.5 — 12 octobre 2026
+
+Publication Windows x64 autonome au même chemin `build/GeMMeElec.exe`, version fichier 0.5.0.0. Travail sur `GeMMeElec`, sans prise de contrôle du PC. Le logiciel utilisateur était fermé avant remplacement de l’exécutable.
+
+- **36 scénarios intégrés réussis** : les 29 précédents et sept scénarios couvrant les limites des zones, les numéros de page explicites, les articles regroupés dans la BOM, les renvois réciproques, la continuité entre folios, le déplacement/renommage/suppression avec annulation, la sauvegarde, les chaînes ordonnées et étoiles, la lecture des projets 0.4 et les dialogues hors écran.
+- **34 vérifications MCP réussies**, exécutées sur l’exécutable publié dans une instance invisible séparée : 35 outils, 92 symboles, adresses des destinations, parcours des connexions, refus de zones invalides, suppression/annulation, sauvegarde/relecture et coordonnées dans les cellules BOM.
+- Contrôle visuel des dix planches de symboles, des dialogues de zones/renvois et de l’éditeur hors écran. PDF de trois pages rendu avec Poppler et inspecté : deux folios liés avec numéros en haut et lettres à gauche, références réciproques et nomenclature avec emplacement des appareils, sans cartouche. Les points de la grille de placement sont absents du PDF.
+- Jeu synthétique de **1 000 renvois** : résolution et libellés autour de **8 ms**, résultat dans `build/references-performance.json`. Les groupes sont indexés une fois par reconstruction de scène ; aucune résolution supplémentaire au simple survol. Cette mesure locale ne constitue pas une garantie pour toutes les tailles de projet.
+
+Les identifiants et bornes des anciens symboles restent stables. Les symboles complexes sont des blocs fonctionnels ; les références croisées bobine/contacts et la simulation ne sont pas incluses. Les folios BOM doivent être actualisés après déplacement d’un appareil, modification du repérage ou de l’ordre des pages. Les renvois relient leurs bornes dans le modèle de connexions, sans traverser l’intérieur des appareils.
+
 ## Version 0.4 — 12 octobre 2026
 
 Publication autonome au même chemin `build/GeMMeElec.exe`. Travail sur `GeMMeElec`, sans contrôle souris/clavier ni modification d’un projet utilisateur.

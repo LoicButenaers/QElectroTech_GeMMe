@@ -2,11 +2,14 @@ namespace GeMMeElec;
 
 public sealed record Port(string Id, double X, double Y);
 public sealed record Shape(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "");
-public sealed record SymbolDefinition(string Id, string Name, string Prefix, double Width, double Height, List<Port> Ports, List<Shape> Shapes);
+public sealed record SymbolDefinition(string Id, string Name, string Prefix, double Width, double Height, List<Port> Ports, List<Shape> Shapes)
+{
+    public string Category { get; init; } = "Divers";
+}
 
 // Original vector drawings. Equipment blocks describe functions; terminal numbering
 // must be checked against the exact manufacturer's article before wiring.
-public static class Symbols
+public static partial class Symbols
 {
     public static readonly Dictionary<string, SymbolDefinition> All = Build();
     private static Shape L(double x, double y, double a, double b) => new("line", x, y, a, b);
@@ -44,7 +47,7 @@ public static class Symbols
         Add("overload", "Relais thermique 3P", "F", 130, 100, thermalPorts, thermal);
         void Contact(string id, string name, bool nc, string actuator = "")
         {
-            List<Shape> shapes = [L(0, -50, 0, -15), L(0, 15, 0, 50), L(0, 15, nc ? 0 : 15, -15)];
+            List<Shape> shapes = [L(0, -50, 0, -15), L(0, 15, 0, 50), L(0, 15, nc ? -10 : 15, -15)];
             if (nc) shapes.Add(L(-10, -15, 10, -15));
             if (actuator.Length > 0) { shapes.AddRange([L(-6, 0, -24, 0), L(-24, -14, -24, 14)]); if (actuator == "stop") shapes.Add(R(-34, -17, 10, 34)); if (actuator == "selector") shapes.Add(L(-24, 0, -35, -13)); }
             Add(id, name, actuator.Length > 0 ? "S" : "K", 80, 100, [new(nc ? "21" : "13", 0, -50), new(nc ? "22" : "14", 0, 50)], shapes);
@@ -76,6 +79,7 @@ public static class Symbols
         Block("sensor_ind", "Détecteur inductif · bloc 3 fils", "B", ")))", ["L+", "M"], ["OUT"]);
         Block("sensor_photo", "Détecteur photoélectrique · bloc 3 fils", "B", "↗ ↗", ["L+", "M"], ["OUT"]);
         Block("transformer", "Transformateur · bloc fonctionnel", "T", "~ / ~", ["P1", "P2"], ["S1", "S2"]);
+        Extend(all);
         return all;
     }
 }

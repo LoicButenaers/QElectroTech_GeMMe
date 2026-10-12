@@ -44,6 +44,8 @@ public sealed class Project
 }
 public sealed class Sheet
 {
+    public int ZoneColumns { get; set; } = 20;
+    public int ZoneRows { get; set; } = 10;
     public BomPage? BomPage { get; set; }
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Title { get; set; } = "Schéma de puissance";
@@ -66,6 +68,10 @@ public sealed class Sheet
 }
 public sealed class Component
 {
+    public string LinkName { get; set; } = "";
+    public string LinkMode { get; set; } = "pair";
+    public int LinkOrder { get; set; }
+    public bool LinkSource { get; set; }
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Symbol { get; set; } = "breaker1";
     public string CatalogId { get; set; } = "";
@@ -230,6 +236,7 @@ public static class ProjectStore
         {
             if (s is null) throw new InvalidDataException("Folio vide.");
             Text(s.Title);
+            if (s.ZoneColumns is < 1 or > 40 || s.ZoneRows is < 1 or > 26) throw new InvalidDataException("Repérage : 1 à 40 colonnes et 1 à 26 lignes.");
             Id(s.Id);
             if (!double.IsFinite(s.Width) || !double.IsFinite(s.Height) || s.Width is < 200 or > 10000 || s.Height is < 200 or > 10000) throw new InvalidDataException("Dimensions de folio invalides.");
             if (s.Components is null || s.Wires is null || s.Notes is null || s.Components.Count > 10000 || s.Wires.Count > 20000 || s.Notes.Count > 5000) throw new InvalidDataException("Contenu du folio invalide ou trop volumineux.");
@@ -238,6 +245,8 @@ public static class ProjectStore
             {
                 if (c is null) throw new InvalidDataException("Composant vide.");
                 Text(c.Tag); Text(c.Description); Text(c.Brand); Text(c.Range); Text(c.Reference); Text(c.Rating); Text(c.Source); Text(c.CatalogId);
+                Text(c.LinkName);
+                if (c.LinkMode is not ("pair" or "star") || c.LinkOrder is < 0 or > 99999 || c.LinkName.Length > 80) throw new InvalidDataException("Paramètres de renvoi invalides.");
                 Id(c.Id);
                 if (c.Symbol is null || !Symbols.All.ContainsKey(c.Symbol)) throw new InvalidDataException("Symbole non pris en charge.");
                 if (!double.IsFinite(c.X) || !double.IsFinite(c.Y) || c.X < 0 || c.X > s.Width || c.Y < 0 || c.Y > s.Height || c.Rotation % 90 != 0) throw new InvalidDataException("Position ou rotation de symbole invalide.");
@@ -371,6 +380,7 @@ public sealed partial class Editor
         if (entry is not null && entry.Symbol != symbol) throw new ArgumentException("Le symbole ne correspond pas à la gamme.");
         var c = new Component { Symbol = symbol, X = Snap(x), Y = Snap(y), Tag = NextTag(d.Prefix), Description = d.Name,
             CatalogId = entry?.Id ?? "", Brand = entry?.Brand ?? "", Range = entry?.Range ?? "", Reference = entry?.Reference ?? "", Source = entry?.Source ?? "" };
+        if (CrossReferences.IsPoint(c)) { c.TagPlacement = new() { Side = "top", Horizontal = "center", Vertical = "bottom", Gap = 8 }; c.DetailPlacement = new() { Side = "bottom", Horizontal = "center", Vertical = "top", Gap = 8 }; }
         Change(() => Sheet.Components.Add(c)); return c;
     }
     public Wire Connect(Endpoint from, Endpoint to, IEnumerable<Position>? points = null, string number = "", string? color = null)
@@ -400,6 +410,7 @@ public sealed partial class Editor
             if (free > 0) list.Add(new("Connexion", s.Id, c.Id, $"{c.Tag} : {free} borne(s) non raccordée(s)"));
             var bounds = c.Bounds(); if (bounds.Left < 30 || bounds.Top < 40 || bounds.Right > s.Width - 30 || bounds.Bottom > DocumentModel.DrawingBottom(Project,s)) list.Add(new("Mise en page", s.Id, c.Id, $"{c.Tag} : symbole hors de la zone de dessin"));
         }
+        list.AddRange(CrossReferences.Findings(Project));
         return list;
     }
 }

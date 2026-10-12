@@ -25,7 +25,8 @@ public static class Drawing
         if (sheet.BomPage is not null) return BomFolios.Scene(project, sheet);
         List<Ink> result = [new("rect", 30, 30, sheet.Width - 60, sheet.Height - 60, Color: "#53677B")];
         result.AddRange(DocumentModel.Scene(project,sheet));
-        for (int col = 1; col < 10; col++) result.Add(new("text", sheet.Width * col / 10, 10, Text: col.ToString(), Color: "#8293A5", Size: 10));
+        result.AddRange(SheetZones.Frame(project, sheet));
+        var references = new CrossReferences(project);
         var components = sheet.Components.ToDictionary(c => c.Id);
         foreach (var wire in sheet.Wires)
         {
@@ -50,8 +51,14 @@ public static class Drawing
                 result.Add(new("text", p.X + 4, p.Y - 13, Text: c.PortLabels.GetValueOrDefault(port.Id, port.Id), Color: "#64748B", Size: 9));
             }
             var detail = c.Rating.Length > 0 ? c.Rating : c.Reference.Length > 0 ? c.Reference : c.Range;
-            AddLabel(result, c, c.TagPlacement, c.Tag, 16, "#203348");
-            AddLabel(result, c, c.DetailPlacement, detail, 10, "#64748B");
+            AddLabel(result, c, c.TagPlacement, CrossReferences.IsPoint(c) && c.LinkName.Length > 0 ? c.LinkName : c.Tag, 16, "#203348");
+            if (CrossReferences.IsPoint(c) && c.DetailPlacement.Visible)
+            {
+                var lines = BomFolios.Wrap(references.Label(project, c), 320); double width = lines.Max(t => Measure(t, 11).Width);
+                var origin = c.DetailPlacement.Origin(c, width, lines.Count * 16);
+                for (int i = 0; i < lines.Count; i++) result.Add(new("text", origin.X, origin.Y + i * 16, Text: lines[i], Size: 11, Color: "#007F86"));
+            }
+            else AddLabel(result, c, c.DetailPlacement, detail, 10, "#64748B");
             AddLabel(result, c, c.DescriptionPlacement, c.Description, 12, "#64748B");
         }
         foreach (var n in sheet.Notes) result.Add(new("text", n.X, n.Y, Text: n.Text, Size: 16));

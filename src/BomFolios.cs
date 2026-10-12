@@ -23,7 +23,7 @@ public static class BomFolios
     private const double Font = 11, Line = 16, Bottom = 930, TableWidth = 1320;
     private static double[] Widths(List<BomColumn> cols)
     {
-        var weights = cols.Select(c => c.Key switch { "quantity" => .6, "image" => .9, "pages" => .7, "description" => 2, "source" => 1.8, _ => 1.2 }).ToArray();
+        var weights = cols.Select(c => c.Key switch { "quantity" => .6, "image" => .9, "pages" => 1.4, "description" => 2, "source" => 1.8, _ => 1.2 }).ToArray();
         double sum = weights.Sum(); return weights.Select(w => TableWidth * w / sum).ToArray();
     }
     internal static List<string> Wrap(string text, double width)

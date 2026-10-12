@@ -15,7 +15,7 @@ namespace GeMMeElec;
 public sealed partial class MainWindow
 {
     internal Action<Window>? DocumentTestProbe;
-    internal void TestDocumentDialog(string kind) {if(kind=="titleblock")TitleBlockEditor();else if(kind=="bom")BomDialog();else if(kind=="grid")GridDialog();else if(kind=="palette")PaletteDialog();else MetadataDialog(kind=="sheet");}
+    internal void TestDocumentDialog(string kind) {if(kind=="titleblock")TitleBlockEditor();else if(kind=="bom")BomDialog();else if(kind=="zones")ZonesDialog();else if(kind=="references")ReferenceNavigator();else if(kind=="grid")GridDialog();else if(kind=="palette")PaletteDialog();else MetadataDialog(kind=="sheet");}
     private void ShowDocumentDialog(Window dialog) {if(DocumentTestProbe is null)dialog.ShowDialog();else {try{DocumentTestProbe(dialog);}finally{dialog.Close();}}}
     private Window DocumentWindow(string title,double width=1050,double height=720) => new() { Owner=DocumentTestProbe is null?this:null,Title=title,Width=Math.Min(width,SystemParameters.WorkArea.Width*.92),Height=Math.Min(height,SystemParameters.WorkArea.Height*.9),WindowStartupLocation=WindowStartupLocation.CenterOwner,Background=Brushes.White,FontFamily=FontFamily,FontSize=13 };
     private static TextBlock Hint(string text) => new() { Text=text,TextWrapping=TextWrapping.Wrap,Foreground=Drawing.Brush("#61758A"),Margin=new(4,8,4,8) };
