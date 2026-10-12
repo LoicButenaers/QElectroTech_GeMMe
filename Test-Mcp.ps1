@@ -68,10 +68,16 @@ try {
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
     $lib = Call 'library_search' @{ query = 'TeSys' }
-    Assert ($lib.equipment.Count -ge 3) 'Recherche catalogue'
+    Assert ($lib.equipment.Count -ge 1) 'Recherche catalogue'
+    $eplanLibrary = Call 'library_search' @{ library = 'eplan' }
+    Assert ($eplanLibrary.equipment.Count -eq 4 -and @($eplanLibrary.equipment | Where-Object canPlace).Count -eq 0) 'EPLAN : aperçus officiels séparés sans bornes inventées'
+    $null = Call 'component_add' @{ catalogId = 'eplan-2026-QLTR2_1-1590'; x = 200; y = 200 } -ExpectError
+    $official = Call 'component_add' @{ catalogId = 'mfr-schneider-LC1D09BD'; x = 700; y = 300 }
+    Assert ($official.reference -eq 'LC1D09BD' -and $official.symbol -eq 'official-schneider-LC1D09BD') 'Fabricant : référence exacte et dessin source'
+    $null = Call 'component_delete' @{ id = $official.id }
     $s1 = Call 'component_add' @{ symbol = 'push_nc'; x = 400; y = 200 }
     $s2 = Call 'component_add' @{ symbol = 'push_no'; x = 400; y = 380 }
-    $coil = Call 'component_add' @{ catalogId = 'f09-1'; x = 400; y = 600 }
+    $coil = Call 'component_add' @{ symbol = 'coil'; x = 400; y = 600 }
     $w1 = Call 'wire_add' @{ fromComponent = $s1.id; fromPort = '22'; toComponent = $s2.id; toPort = '13'; number = '101' }
     $null = Call 'wire_add' @{ fromComponent = $s2.id; fromPort = '14'; toComponent = $coil.id; toPort = 'A1'; number = '102' }
     $null = Call 'component_update' @{ id = $coil.id; tag = 'K1'; rating = '24 V DC à confirmer'; x = 440; y = 600; portLabels = @{ A1 = 'A1+'; A2 = 'A2−' } }
@@ -158,7 +164,7 @@ try {
     Assert ($state.project.sheets[0].wires.Count -eq 4 -and $state.project.sheets[2].bomPage.rows.Count -gt 0) 'Dérivation et nomenclature conservées après relecture'
     $null = Call 'export_pdf' @{ path=(Join-Path $root "build/$stem.pdf"); overwrite=$true }
     $symbolLibrary = Call 'library_search'
-    Assert ($symbolLibrary.symbols.Count -eq 92 -and @($symbolLibrary.symbols | Where-Object category -like '10*').Count -eq 2) 'Bibliothèque industrielle : 92 symboles et famille des renvois'
+    Assert (@($symbolLibrary.symbols | Where-Object id -NotLike 'official-*').Count -eq 92 -and @($symbolLibrary.symbols | Where-Object category -like '10*').Count -eq 2) 'Bibliothèque industrielle : 92 symboles et famille des renvois'
     $null = Call 'page_select' @{ id=$firstPage }
     $departure = Call 'component_add' @{ symbol='folio_next'; x=800; y=700 }
     $null = Call 'wire_add' @{ fromComponent=$coil.id; fromPort='A2'; toComponent=$departure.id; toPort='1' }

@@ -6,25 +6,6 @@ using System.Windows;
 
 namespace GeMMeElec;
 
-public sealed record CatalogEntry(string Id, string Family, string Brand, string Range, string Symbol, string Source, string Reference = "", string Note = "Gamme : choisir et vérifier la référence exacte avant fabrication.")
-{
-    [JsonIgnore] public string Display => $"{Family} · {Brand} · {Range}";
-}
-public static class Catalog
-{
-    public static readonly List<CatalogEntry> Entries = Load();
-    private static List<CatalogEntry> Load()
-    {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("catalog.json")!;
-        var items = JsonSerializer.Deserialize<List<CatalogEntry>>(stream, ProjectStore.Json)!;
-        if (items.Select(x => x.Id).Distinct().Count() != items.Count) throw new InvalidDataException("Identifiants de catalogue dupliqués.");
-        foreach (var e in items) if (!Symbols.All.ContainsKey(e.Symbol)) throw new InvalidDataException($"Symbole inconnu : {e.Symbol}");
-        return items;
-    }
-    public static IEnumerable<CatalogEntry> Search(string query = "", string family = "", string brand = "") => Entries.Where(e =>
-        (family == "" || e.Family == family) && (brand == "" || e.Brand == brand) &&
-        $"{e.Family} {e.Brand} {e.Range} {e.Reference} {e.Id}".Contains(query, StringComparison.OrdinalIgnoreCase));
-}
 public sealed class Project
 {
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -384,11 +365,12 @@ public sealed partial class Editor
     }
     public Component AddComponent(string symbol, double x, double y, string? catalogId = null)
     {
+        CatalogEntry? entry = catalogId is null ? Catalog.Entries.SingleOrDefault(c => c.CanPlace && c.Symbol == symbol) : Catalog.Entries.SingleOrDefault(c => c.Id == catalogId) ?? throw new ArgumentException("Article de bibliothèque introuvable.");
+        if (entry is { CanPlace: false }) throw new ArgumentException("Aperçu officiel uniquement : définition électrique et bornes non disponibles.");
         var d = CustomSymbols.Resolve(Project, symbol);
-        CatalogEntry? entry = catalogId is null ? null : Catalog.Entries.SingleOrDefault(c => c.Id == catalogId) ?? throw new ArgumentException("Article de bibliothèque introuvable.");
         if (entry is not null && entry.Symbol != symbol) throw new ArgumentException("Le symbole ne correspond pas à la gamme.");
         var c = new Component { Symbol = symbol, ResolvedDefinition = d, X = Snap(x), Y = Snap(y), Tag = NextTag(d.Prefix), Description = d.Name,
-            CatalogId = entry?.Id ?? "", Brand = entry?.Brand ?? "", Range = entry?.Range ?? "", Reference = entry?.Reference ?? "", Source = entry?.Source ?? "" };
+            CatalogId = entry?.Id ?? "", Brand = entry?.Brand ?? "", Range = entry?.Range ?? "", Reference = entry?.Reference ?? "", Source = entry?.Source ?? "", ShowPortLabels = !d.PrintedTerminals };
         if (CrossReferences.IsPoint(c)) { c.TagPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; c.DetailPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; }
         Change(() => Sheet.Components.Add(c)); return c;
     }

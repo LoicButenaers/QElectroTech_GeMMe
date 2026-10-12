@@ -11,6 +11,7 @@
 - Livrable : build/GeMMeElec.exe, remplacé à chaque publication.
 - Catalogue : distinguer symboles fonctionnels, gammes et références commandables.
   Ne pas inventer de caractéristiques fabricant ni annoncer une exhaustivité non vérifiée.
+- Bibliothèques 0.8 : catalogue fabricant reconstruit sur sources officielles documentées ; EPLAN reste une bibliothèque d’aperçus non raccordables tant que les définitions électriques natives manquent. Conserver les PNG originaux/rendus, PDF sources et empreintes du manifeste. Ne jamais promouvoir une image en symbole raccordable sans contrôle explicite du bornage ; ne pas présenter les symboles génériques comme identiques aux originaux.
 - Tester sauvegarde, connexions, annulation et MCP après modification du modèle.
 - Éviter le contrôle souris/clavier du PC sauf nécessité réelle. Préférer les tests hors écran et `Test-Mcp.ps1 -Headless` ; préserver toute fenêtre et tout projet utilisateur ouverts.
 - À chaque évolution, vérifier la fluidité : éviter de reconstruire le schéma au survol, borner les caches et mesurer les traitements coûteux sur un jeu de données représentatif.

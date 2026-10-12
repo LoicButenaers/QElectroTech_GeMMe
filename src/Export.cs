@@ -16,7 +16,7 @@ public static class Export
         root.Add(new XElement(ns + "rect", new XAttribute("width", "100%"), new XAttribute("height", "100%"), new XAttribute("fill", "white")));
         foreach (var s in Drawing.Scene(p, sheet))
         {
-            if(s.Kind=="image") { root.Add(new XElement(ns+"image",new XAttribute("x",N(s.X)),new XAttribute("y",N(s.Y)),new XAttribute("width",N(s.A)),new XAttribute("height",N(s.B)),new XAttribute("href","data:image/jpeg;base64,"+s.Text)));continue; }
+            if(s.Kind=="image") { var img = new XElement(ns+"image",new XAttribute("x",N(s.X)),new XAttribute("y",N(s.Y)),new XAttribute("width",N(s.A)),new XAttribute("height",N(s.B)),new XAttribute("href",(s.Text.StartsWith("iVBOR") ? "data:image/png;base64," : "data:image/jpeg;base64,")+s.Text)); if(s.Rotation!=0) img.Add(new XAttribute("transform", $"rotate({N(s.Rotation)} {N(s.X)} {N(s.Y)})")); root.Add(img);continue; }
             XElement el;
             if (s.Kind == "line") el = new(ns + "line", new XAttribute("x1", N(s.X)), new XAttribute("y1", N(s.Y)), new XAttribute("x2", N(s.A)), new XAttribute("y2", N(s.B)));
             else if (s.Kind == "rect") el = new(ns + "rect", new XAttribute("x", N(s.X)), new XAttribute("y", N(s.Y)), new XAttribute("width", N(s.A)), new XAttribute("height", N(s.B)));
@@ -67,7 +67,23 @@ public static class Export
                 switch (s.Kind)
                 {
                     case "image":
-                        if(!imageObjects.TryGetValue(s.Text,out var entry)) {var bitmap=ImageAssets.Decode(s.Text);entry=("Im"+imageObjects.Count,objects.Count+1);objects.Add(Stream(Convert.FromBase64String(s.Text),$"/Type /XObject /Subtype /Image /Width {bitmap.PixelWidth} /Height {bitmap.PixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode"));imageObjects[s.Text]=entry;}
+                        if(!imageObjects.TryGetValue(s.Text,out var entry))
+                        {
+                            var bitmap=ImageAssets.Decode(s.Text); entry=("Im"+imageObjects.Count,objects.Count+1);
+                            byte[] bytes; string filter;
+                            if(s.Text.StartsWith("iVBOR"))
+                            {
+                                // Decode PNG to lossless RGB, compositing transparency onto paper.
+                                var rgba = new System.Windows.Media.Imaging.FormatConvertedBitmap(bitmap,System.Windows.Media.PixelFormats.Bgra32,null,0);
+                                var pixels = new byte[bitmap.PixelWidth*bitmap.PixelHeight*4]; rgba.CopyPixels(pixels,bitmap.PixelWidth*4,0);
+                                var rgbBytes = new byte[bitmap.PixelWidth*bitmap.PixelHeight*3];
+                                for(int i=0,j=0;i<pixels.Length;i+=4,j+=3) for(int channel=0;channel<3;channel++) rgbBytes[j+channel]=(byte)((pixels[i+2-channel]*pixels[i+3]+255*(255-pixels[i+3])+127)/255);
+                                using var compressed=new MemoryStream(); using(var zip=new System.IO.Compression.ZLibStream(compressed,System.IO.Compression.CompressionLevel.Optimal,true)) zip.Write(rgbBytes);
+                                bytes=compressed.ToArray();filter="/FlateDecode";
+                            }
+                            else {bytes=Convert.FromBase64String(s.Text);filter="/DCTDecode";}
+                            objects.Add(Stream(bytes,$"/Type /XObject /Subtype /Image /Width {bitmap.PixelWidth} /Height {bitmap.PixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter {filter}"));imageObjects[s.Text]=entry;
+                        }
                         b.AppendLine($"{N(s.A)} 0 0 {N(-s.B)} {N(s.X)} {N(s.Y+s.B)} cm /{entry.Name} Do");break;
                     case "line": b.AppendLine($"{N(s.X)} {N(s.Y)} m {N(s.A)} {N(s.B)} l S"); break;
                     case "triangle": b.AppendLine($"{N(s.X)} {N(s.Y)} m {N(s.X)} {N(s.Y+s.B)} l {N(s.X+s.A)} {N(s.Y+s.B/2)} l h f"); break;

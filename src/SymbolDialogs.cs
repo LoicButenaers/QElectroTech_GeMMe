@@ -88,10 +88,10 @@ public sealed partial class MainWindow
             if (p is not null) portId = DocField(prop, "Identifiant de borne", p.Id);
             else if (s is not null)
             {
-                a = DocField(prop, s.Kind switch { "line" => "X de l’extrémité", "rect" => "Largeur", "circle" or "dot" => "Rayon", _ => "Taille du texte" }, Num(s.A));
-                if (s.Kind is "line" or "rect") b = DocField(prop, s.Kind == "line" ? "Y de l’extrémité" : "Hauteur", Num(s.B));
+                a = DocField(prop, s.Kind switch { "line" => "X de l’extrémité", "rect" or "image" => "Largeur", "circle" or "dot" => "Rayon", _ => "Taille du texte" }, Num(s.A));
+                if (s.Kind is "line" or "rect" or "image") b = DocField(prop, s.Kind == "line" ? "Y de l’extrémité" : "Hauteur", Num(s.B));
                 if (s.Kind == "text") text = DocField(prop, "Texte", s.Text);
-                if (s.Kind is "text" or "rect") rotation = DocField(prop, "Rotation (degrés)", Num(s.Rotation));
+                if (s.Kind is "text" or "rect" or "image") rotation = DocField(prop, "Rotation (degrés)", Num(s.Rotation));
             }
             prop.Children.Add(DocButton("Appliquer à la partie", dialog, () =>
             {
@@ -107,7 +107,7 @@ public sealed partial class MainWindow
             syncing = true; var d = draft.Definition;
             if (displayed.Name != d.Name) name.Text = d.Name; if (displayed.Prefix != d.Prefix) prefix.Text = d.Prefix;
             if (displayed.Width != d.Width) width.Text = Num(d.Width); if (displayed.Height != d.Height) height.Text = Num(d.Height); displayed = d;
-            parts.ItemsSource = d.Shapes.Select((s, i) => new SymbolPart(i, -1, $"{i + 1} · " + (s.Kind switch { "line" => "Ligne", "rect" => "Rectangle", "circle" => "Cercle", "text" => s.Text, _ => "Point" }))).Concat(d.Ports.Select((p, i) => new SymbolPart(-1, i, "Borne " + p.Id))).ToList();
+            parts.ItemsSource = d.Shapes.Select((s, i) => new SymbolPart(i, -1, $"{i + 1} · " + (s.Kind switch { "line" => "Ligne", "rect" => "Rectangle", "circle" => "Cercle", "text" => s.Text, "image" => "Dessin importé (image)", _ => "Point" }))).Concat(d.Ports.Select((p, i) => new SymbolPart(-1, i, "Borne " + p.Id))).ToList();
             parts.SelectedItem = parts.Items.Cast<SymbolPart>().FirstOrDefault(p => p.Shape == canvas.ShapeIndex && p.Port == canvas.PortIndex); syncing = false; Properties();
         }
         parts.SelectionChanged += (_, _) => { if (!syncing && parts.SelectedItem is SymbolPart p) canvas.SelectPart(p.Shape, p.Port); };

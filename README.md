@@ -8,11 +8,11 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.7)
+## Fonctionnalités (version 0.8)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
-- 92 symboles vectoriels originaux répartis en 10 catégories industrielles ; accès séparé aux 75 associations famille/fabricant/gamme dans 25 familles, trois fabricants par famille.
+- 92 symboles génériques GeMMeElec ; deux bibliothèques documentées distinctes : 3 dessins fabricants raccordables (Schneider LC1D09BD, ABB AF09-30-01-13, Eaton 276705) et 4 aperçus officiels EPLAN en consultation. Les 75 anciennes associations de gammes ont été retirées du catalogue.
 - Cadre de repérage avec colonnes numérotées et lignes lettrées, configurable par folio ; localisation des composants dans la BOM, par exemple `K1 : 3 / C7`.
 - Renvois interfolios départ/arrivée liés par nom, modes chaîne et étoile, références réciproques, navigation et continuité des connexions.
 - Reports noirs avec triangle évidé : départ raccordé à gauche, arrivée à droite. Liaison guidée par choix de la contrepartie ; double-clic sur le symbole ou son nom pour naviguer, dans tous les modes.
@@ -69,7 +69,7 @@ Les valeurs de l’inspecteur sont enregistrées dans le projet après **Appliqu
 
 ## Bibliothèque et périmètre
 
-Les fabricants sont une sélection industrielle pertinente en Europe, **pas un classement de parts de marché**. Le catalogue contient des **gammes**, pas toutes leurs références commandables. Les symboles fonctionnels sont indépendants du fabricant ; les blocs PLC, E/S, variateur et sécurité ne reproduisent pas tout le bornage d’un appareil réel. Choisir la référence, vérifier sa documentation et compléter les propriétés avant fabrication. Voir [le catalogue documenté](docs/CATALOGUE.md).
+Les trois dessins fabricants proviennent de documents officiels conservés dans le dépôt. Les images sont intégrées sans redessin ; leurs bornes ont été relevées sur ces documents. La fiche de provenance précise la référence, l’édition historique, la méthode et les empreintes SHA-256. Les aperçus EPLAN ne fournissent pas de définition électrique native : ils restent non raccordables. Cette sélection ne couvre pas toutes les familles ni tous les fabricants. Les 92 symboles génériques restent distincts et ne revendiquent aucune identité avec EPLAN ou un fabricant. Voir [le catalogue documenté](docs/CATALOGUE.md).
 
 Cette base ne comprend pas encore le dimensionnement électrique, la simulation, les références croisées entre bobines et contacts d’un appareil, les borniers automatiques, l’import des formats EPLAN natifs `.elk`, `.zw1` et `.epj`, la gestion de câbles multicœurs, les implantations d’armoires, ni les catalogues complets des fabricants. Elle ne revendique pas une certification IEC/RGIE ou une équivalence à EPLAN. Le DXF EPLAN récupère le dessin, sans reconstruire les appareils ni les réseaux électriques.
 

@@ -58,14 +58,14 @@ public sealed partial class MainWindow : Window
         var left = new DockPanel { Background = Brushes.White };
         var leftTop = new StackPanel { Margin = new(14, 4, 14, 8) };
         search.ToolTip = "Rechercher un équipement, une marque ou une gamme"; search.Margin = new(0, 10, 0, 8); search.TextChanged += (_, _) => Filter(); leftTop.Children.Add(search);
-        libraryMode.ItemsSource = new[] { "Symboles industriels", "Gammes fabricants", "Mes symboles" }; libraryMode.SelectedIndex = 0; libraryMode.Margin = new(0, 0, 0, 8); leftTop.Children.Add(libraryMode);
+        libraryMode.ItemsSource = new[] { "Symboles industriels", "GeMMe fabricant · dessins officiels", "Mes symboles", "EPLAN · aperçus officiels" }; libraryMode.SelectedIndex = 0; libraryMode.Margin = new(0, 0, 0, 8); leftTop.Children.Add(libraryMode);
         family.Margin = new(0, 0, 0, 8); family.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(family);
-        brand.Items.Add("Tous les fabricants"); foreach (var b in Catalog.Entries.Select(e => e.Brand).Distinct().Order()) brand.Items.Add(b); brand.SelectedIndex = 0; brand.Margin = new(0, 0, 0, 8); brand.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(brand);
+        brand.Items.Add("Tous les fabricants"); foreach (var b in Catalog.Entries.Where(e=>e.Library=="manufacturer").Select(e => e.Brand).Distinct().Order()) brand.Items.Add(b); brand.SelectedIndex = 0; brand.Margin = new(0, 0, 0, 8); brand.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(brand);
         libraryMode.SelectionChanged += (_, _) => LibraryCategories(); LibraryCategories();
         libraryCount.Foreground = Drawing.Brush("#64748B"); libraryCount.FontSize = 11; leftTop.Children.Add(libraryCount); DockPanel.SetDock(leftTop, Dock.Top); left.Children.Add(leftTop);
         var pagePanel = new DockPanel { Margin = new(10, 4, 10, 8) }; var addPage = Button("+ Ajouter un folio", AddPage); DockPanel.SetDock(addPage, Dock.Bottom); pagePanel.Children.Add(addPage);
         pages.DisplayMemberPath = "Display"; pages.SelectionChanged += (_, _) => { if (!refreshing && pages.SelectedItem is Sheet s) { Canvas.CancelDrag(); Editor.SelectSheet(s.Id); Inspect(); } }; pagePanel.Children.Add(pages);
-        library.BorderThickness = new(0); library.Margin = new(8, 0, 8, 0); ScrollViewer.SetHorizontalScrollBarVisibility(library, ScrollBarVisibility.Disabled); library.SelectionChanged += (_, _) => { if (library.SelectedItem is ListBoxItem item && item.Tag is string id) { var e = Catalog.Entries.FirstOrDefault(c => c.Id == id); Canvas.Symbol = e?.Symbol ?? id; Canvas.CatalogId = e?.Id; Canvas.SetMode("place"); } }; left.Children.Add(library);
+        library.BorderThickness = new(0); library.Margin = new(8, 0, 8, 0); ScrollViewer.SetHorizontalScrollBarVisibility(library, ScrollBarVisibility.Disabled); library.SelectionChanged += (_, _) => { if (library.SelectedItem is ListBoxItem item && item.Tag is string id) SelectLibrary(id); }; left.Children.Add(library);
         var right = new ScrollViewer { Content = properties, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Background = Brushes.White }; properties.Margin = new(14);
         workspace = new WorkspacePanels(Canvas, left, pagePanel, right); root.Children.Add(workspace);
         Canvas.ContextRequested += ShowSchematicMenu;
@@ -85,17 +85,18 @@ public sealed partial class MainWindow : Window
     {
         family.Visibility = libraryMode.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible;
         family.Items.Clear(); family.Items.Add("Toutes les familles");
-        foreach (var category in libraryMode.SelectedIndex == 1 ? Catalog.Entries.Select(e => e.Family).Distinct().Order() : Symbols.All.Values.Select(s => s.Category).Distinct().Order()) family.Items.Add(category);
+        Canvas.SetMode("select"); Canvas.CatalogId = null;
+        foreach (var category in libraryMode.SelectedIndex is 1 or 3 ? Catalog.Entries.Where(e=>e.Library==(libraryMode.SelectedIndex==1?"manufacturer":"eplan")).Select(e => e.Family).Distinct().Order() : Symbols.All.Values.Where(s=>!s.Id.StartsWith("official-")).Select(s => s.Category).Distinct().Order()) family.Items.Add(category);
         brand.Visibility = libraryMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed; family.SelectedIndex = 0; Filter();
     }
     private void Filter()
     {
         if (family.SelectedItem is null || brand.SelectedItem is null) return;
         library.Items.Clear(); var f = family.SelectedIndex > 0 ? (string)family.SelectedItem : "";
-        if (libraryMode.SelectedIndex == 1) foreach (var e in Catalog.Search(search.Text, f, brand.SelectedIndex > 0 ? (string)brand.SelectedItem : "")) LibraryItem(e.Id, e.Range, e.Brand + " · " + e.Family, e.Note);
+        if (libraryMode.SelectedIndex is 1 or 3) foreach (var e in Catalog.Search(search.Text, f, libraryMode.SelectedIndex==1 && brand.SelectedIndex > 0 ? (string)brand.SelectedItem : "", libraryMode.SelectedIndex==1?"manufacturer":"eplan")) OfficialLibraryItem(e);
         else if (libraryMode.SelectedIndex == 2) foreach (var s in Editor.Project.CustomSymbols.Values.Where(s => Symbols.SearchKey(s.Name).Contains(Symbols.SearchKey(search.Text)))) LibraryItem(s.Id, s.Name, s.Category, "Copie enregistrée dans ce projet · modifier ou exporter depuis Insérer");
-        else foreach (var s in Symbols.Search(search.Text, f)) LibraryItem(s.Id, s.Name, s.Category, "Symbole fonctionnel · cliquer puis placer · R pour tourner");
-        libraryCount.Text = $"{library.Items.Count} résultats · cliquer puis placer";
+        else foreach (var s in Symbols.Search(search.Text, f).Where(s=>!s.Id.StartsWith("official-"))) LibraryItem(s.Id, s.Name, s.Category, "Symbole fonctionnel générique GeMMeElec · cliquer puis placer · R pour tourner");
+        libraryCount.Text = $"{library.Items.Count} résultats · " + (libraryMode.SelectedIndex == 3 ? "double-clic : aperçu et source" : "cliquer puis placer");
         if (libraryMode.SelectedIndex == 2) { displayedCustomSymbols = Editor.Project.CustomSymbols; displayedCustomCount = displayedCustomSymbols.Count; }
     }
     private void LibraryItem(string id, string name, string detail, string tip)
@@ -135,6 +136,8 @@ public sealed partial class MainWindow : Window
             properties.Children.Add(new TextBlock { Text = c.Definition.Name, FontSize = 18, TextWrapping = TextWrapping.Wrap, Margin = new(0, 14, 0, 4) });
             if (CrossReferences.IsPoint(c)) { ReferenceInspector(c); return; }
             if (c.Symbol != "junction") properties.Children.Add(Button("Modifier le symbole en copie…", SymbolEditor));
+            var official = Catalog.Entries.FirstOrDefault(e=>e.CanPlace && e.Symbol==c.Symbol);
+            if(official is not null) properties.Children.Add(Button("Dessin original et provenance…",()=>OfficialLibraryDetails(official)));
             properties.Children.Add(Hint("Emplacement : " + SheetZones.Address(Editor.Project, Editor.Sheet, c)));
             Field("tag", "Repère", c.Tag); Field("description", "Description", c.Description); Field("brand", "Fabricant", c.Brand); Field("range", "Gamme", c.Range); Field("reference", "Référence exacte", c.Reference); Field("rating", "Calibre / tension / puissance", c.Rating);
             properties.Children.Add(Button("Appliquer les propriétés", () => { var values = fields.ToDictionary(x => x.Key, x => x.Value.Text); Editor.Change(() => { c.Tag = values["tag"]; c.Description = values["description"]; c.Brand = values["brand"]; c.Range = values["range"]; c.Reference = values["reference"]; c.Rating = values["rating"]; foreach (var p in c.Definition.Ports) c.PortLabels[p.Id] = values["port:" + p.Id]; }); }));
@@ -300,7 +303,7 @@ public static class Examples
     public static void Motor(Editor e)
     {
         e.Change(() => { e.Project.Author = "GeMMeElec"; e.Sheet.Title = "Puissance · exemple à compléter"; });
-        var q = e.AddComponent("motorbreaker", 400, 230, "f06-1"); var k = e.AddComponent("contactor", 400, 430, "f07-1"); var m = e.AddComponent("motor", 400, 690, "f22-2");
+        var q = e.AddComponent("motorbreaker", 400, 230); var k = e.AddComponent("contactor", 400, 430); var m = e.AddComponent("motor", 400, 690);
         var source = new List<Component>(); for (int i = 0; i < 3; i++) { var c = e.AddComponent("source", 360 + i * 40, 90); c.Tag = "L" + (i + 1); source.Add(c); e.Connect(new(c.Id, "1"), new(q.Id, (2 * i + 1).ToString())); e.Connect(new(q.Id, (2 * i + 2).ToString()), new(k.Id, (2 * i + 1).ToString())); e.Connect(new(k.Id, (2 * i + 2).ToString()), new(m.Id, new[] { "U1", "V1", "W1" }[i])); }
         var pe = e.AddComponent("earth", 600, 780); e.Connect(new(m.Id, "PE"), new(pe.Id, "PE"));
         var coil = e.AddComponent("coil", 940, 620); e.Change(() => { coil.Tag = "KM1-A"; e.Sheet.Notes.Add(new() { X = 790, Y = 130, Text = "COMMANDE À COMPLÉTER" }); e.Sheet.Notes.Add(new() { X = 790, Y = 170, Text = "Ajouter arrêt, marche et auto-maintien." }); });

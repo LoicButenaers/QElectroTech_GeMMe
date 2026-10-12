@@ -37,6 +37,8 @@ Pour un autre client MCP acceptant les serveurs locaux stdio :
 
 ## Outils
 
+Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `library: "eplan"`. Les entrées retournent leur référence, leur provenance, leurs empreintes et `canPlace`. Les aperçus EPLAN ont `canPlace: false` et ne peuvent pas être placés via `component_add`. Les symboles génériques GeMMeElec restent dans le tableau `symbols` ; les 75 anciens IDs de gammes ne sont plus proposés.
+
 | Domaine | Outils |
 | --- | --- |
 | Lecture | `project_get`, `library_search`, `project_validate` |
@@ -108,7 +110,7 @@ Les limites sont contrôlées par le modèle commun : 100 cartouches, 300 cellul
 Exemple de paramètres pour une pose :
 
 ```json
-{"catalogId":"f06-1","x":400,"y":250}
+{"catalogId":"mfr-schneider-LC1D09BD","x":400,"y":250}
 ```
 
 Exemple de connexion, en remplaçant les IDs par ceux retournés :

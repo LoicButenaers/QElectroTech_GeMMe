@@ -30,6 +30,13 @@ public static class Drawing
         var references = new CrossReferences(project);
         var components = sheet.Components.ToDictionary(c => c.Id);
         var routes = sheet.Wires.ToDictionary(w => w.Id, w => w.Route(sheet, components));
+        // Source images may have an opaque paper background. Paint them below
+        // conductors so a terminal inside the crop remains visibly connected.
+        foreach(var c in sheet.Components) foreach(var shape in c.Definition.Shapes.Where(s=>s.Kind=="image"))
+        {
+            var p=c.Transform(shape.X,shape.Y);
+            result.Add(new("image",p.X,p.Y,shape.A,shape.B,shape.Text,Rotation:c.Rotation+shape.Rotation));
+        }
         foreach (var wire in sheet.Wires)
         {
             var path = routes[wire.Id];
@@ -44,6 +51,7 @@ public static class Drawing
             if (CrossReferences.IsPoint(c)) { result.AddRange(ReferenceDisplay.Scene(project, c, references)); continue; }
             foreach (var shape in c.Definition.Shapes)
             {
+                if(shape.Kind=="image")continue;
                 var p = c.Transform(shape.X, shape.Y);
                 if (shape.Kind == "line") { double angle = shape.Rotation * Math.PI / 180, dx = shape.A - shape.X, dy = shape.B - shape.Y; var b = c.Transform(shape.X + dx * Math.Cos(angle) - dy * Math.Sin(angle), shape.Y + dx * Math.Sin(angle) + dy * Math.Cos(angle)); result.Add(new("line", p.X, p.Y, b.X, b.Y)); }
                 else result.Add(new(shape.Kind, p.X, p.Y, shape.A, shape.B, shape.Text, Size: shape.A, Rotation: c.Rotation + shape.Rotation));
@@ -51,7 +59,7 @@ public static class Drawing
             foreach (var port in c.Definition.Ports)
             {
                 var p = c.PortPoint(port.Id);
-                result.Add(new("circle", p.X, p.Y, 2));
+                if (!c.Definition.PrintedTerminals) result.Add(new("circle", p.X, p.Y, 2));
                 if (c.ShowPortLabels) result.Add(new("text", p.X + 4, p.Y - 13, Text: c.PortLabels.GetValueOrDefault(port.Id, port.Id), Color: "#64748B", Size: 9));
             }
             var detail = c.Rating.Length > 0 ? c.Rating : c.Reference.Length > 0 ? c.Reference : c.Range;

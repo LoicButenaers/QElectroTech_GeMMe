@@ -5,6 +5,7 @@ public sealed record Shape(string Kind, double X, double Y, double A = 0, double
 public sealed record SymbolDefinition(string Id, string Name, string Prefix, double Width, double Height, List<Port> Ports, List<Shape> Shapes)
 {
     public string Category { get; init; } = "Divers";
+    public bool PrintedTerminals { get; init; }
 }
 
 // Original vector drawings. Equipment blocks describe functions; terminal numbering
@@ -80,6 +81,7 @@ public static partial class Symbols
         Block("sensor_photo", "Détecteur photoélectrique · bloc 3 fils", "B", "↗ ↗", ["L+", "M"], ["OUT"]);
         Block("transformer", "Transformateur · bloc fonctionnel", "T", "~ / ~", ["P1", "P2"], ["S1", "S2"]);
         Extend(all);
+        foreach (var definition in Catalog.Definitions()) all.Add(definition.Id, definition);
         return all;
     }
 }

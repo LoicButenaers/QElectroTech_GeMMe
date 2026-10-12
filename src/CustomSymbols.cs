@@ -18,7 +18,11 @@ public static class CustomSymbols
     {
         if (d is null || string.IsNullOrWhiteSpace(d.Id) || d.Id.Length > 100 || string.IsNullOrWhiteSpace(d.Name) || d.Name.Length > 200 || d.Prefix is null || d.Prefix.Length > 20 || d.Category is null || d.Category.Length > 100 || !double.IsFinite(d.Width) || !double.IsFinite(d.Height) || d.Width is < 1 or > 10000 || d.Height is < 1 or > 10000 || d.Ports is null || d.Shapes is null || d.Ports.Count > 256 || d.Shapes.Count > 20000) throw new InvalidDataException("Dimensions ou contenu du symbole invalides.");
         if (d.Ports.Any(t => t is null || string.IsNullOrWhiteSpace(t.Id) || t.Id.Length > 100 || !Finite(t.X, t.Y)) || d.Ports.Select(t => t.Id).Distinct().Count() != d.Ports.Count) throw new InvalidDataException("Bornes : identifiants uniques et coordonnées finies requis.");
-        foreach (var s in d.Shapes) if (s is null || s.Kind is not ("line" or "rect" or "circle" or "dot" or "text") || !Finite(s.X, s.Y, s.A, s.B, s.Rotation) || s.Text is null || s.Text.Length > 2000 || (s.Kind is "rect" && (s.A < 0 || s.B < 0)) || (s.Kind is "circle" or "dot" or "text") && (s.A < 0 || s.A > 10000)) throw new InvalidDataException("Primitive de symbole invalide.");
+        foreach (var s in d.Shapes)
+        {
+            if (s is null || s.Kind is not ("line" or "rect" or "circle" or "dot" or "text" or "image") || !Finite(s.X, s.Y, s.A, s.B, s.Rotation) || s.Text is null || s.Text.Length > (s.Kind == "image" ? 1_000_000 : 2000) || (s.Kind is "rect" or "image" && (s.A < 0 || s.B < 0)) || (s.Kind is "circle" or "dot" or "text") && (s.A < 0 || s.A > 10000)) throw new InvalidDataException("Primitive de symbole invalide.");
+            if(s.Kind=="image") ImageAssets.Validate(s.Text);
+        }
     }
     private static bool Finite(params double[] values) => values.All(v => double.IsFinite(v) && Math.Abs(v) <= 20000);
     public static SymbolDefinition Copy(SymbolDefinition d, string name) => d with { Id = "custom-" + Guid.NewGuid().ToString("N"), Name = name, Category = "Mes symboles", Ports = d.Ports.ToList(), Shapes = d.Shapes.ToList() };

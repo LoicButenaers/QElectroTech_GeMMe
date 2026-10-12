@@ -127,7 +127,7 @@ public static class ImageAssets
         if(Cache.TryGetValue(data,out var cached)) return cached;
         if(data is null || data.Length>1_000_000) throw new InvalidDataException("Image trop volumineuse.");
         byte[] bytes=Convert.FromBase64String(data);
-        if(bytes.Length<3||bytes[0]!=255||bytes[1]!=216) throw new InvalidDataException("Image interne JPEG attendue.");
+        if(bytes.Length<8 || !(bytes[0]==255 && bytes[1]==216 || bytes.AsSpan(0,8).SequenceEqual(new byte[]{137,80,78,71,13,10,26,10}))) throw new InvalidDataException("Image interne JPEG ou PNG attendue.");
         using var stream=new MemoryStream(bytes); var decoder=BitmapDecoder.Create(stream,BitmapCreateOptions.PreservePixelFormat,BitmapCacheOption.OnLoad); var image=decoder.Frames[0];
         if(image.PixelWidth>1024||image.PixelHeight>1024) throw new InvalidDataException("Image interne : 1024 pixels maximum."); image.Freeze();
         if(Cache.Count>=64) Cache.Clear(); Cache[data]=image; return image;

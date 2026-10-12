@@ -1,5 +1,16 @@
 # Vérifications de livraison
 
+## Version 0.8 — 12 octobre 2026
+
+Exécutable autonome remplacé au même chemin `build/GeMMeElec.exe`, version **0.8.0.0**. **54 scénarios intégrés et 46 vérifications MCP réussis sur cet exécutable**. Compilation sans erreur ni avertissement ; tests hors écran, sans prise de contrôle du PC.
+
+- Catalogue reconstruit : 3 références de contacteurs (Schneider Electric, ABB, Eaton), 4 aperçus EPLAN distincts, 92 symboles génériques conservés. Les 75 anciennes associations de gammes ont été retirées du catalogue, sans réassigner les composants des projets existants.
+- Sources : SHA-256 contrôlé pour chaque dessin et document embarqué ; corruption d’empreinte rejetée. Les dessins intégrés n’ont pas été redessinés. Vérification visuelle des documents et de la correspondance avec les références ; bornes relevées manuellement, pas de certification fabricant. Les documents historiques ne prouvent pas une disponibilité commerciale actuelle.
+- EPLAN : aperçus seulement, sans bornes déduites ; placement refusé dans le modèle et via MCP. Ce n’est pas une validation d’une bibliothèque EPLAN native.
+- Fabricants : 12 / 10 / 10 bornes, distinction auxiliaires NO/NC, raccordement après rotation, sauvegarde/relecture, copie personnelle, annulation/rétablissement. Les copies perdent le lien au catalogue officiel.
+- PDF/SVG/BOM : PNG conservés sans recompression JPEG, rotation SVG prise en compte, dessins dans la BOM HTML. Rendu PDF inspecté ; fond des images sous les fils pour garder les raccordements visibles. Fiches de provenance testées et rendues hors écran.
+- Fluidité mesurée : scène de 1 000 composants génériques / 999 fils **14,3 ms**, BOM **1,5 ms** ; création de la scène et du dessin WPF de 1 000 images fabricants **251,5 ms**. Les images identiques sont décodées une seule fois via le cache borné existant ; ces mesures ne sont pas une garantie de fréquence d’affichage sur toutes les machines.
+
 ## Version 0.7 — 12 octobre 2026
 
 Publication Release Windows x64 autonome au même chemin `build/GeMMeElec.exe`, version fichier **0.7.0.0**, après fermeture du logiciel par l’utilisateur. Compilation sans erreur ni avertissement. **51 scénarios intégrés et 44 vérifications MCP** réussis sur l’exécutable publié, sans prise de contrôle du PC. `Build.ps1` vérifie désormais le verrouillage de l’exécutable avant publication.

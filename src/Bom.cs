@@ -60,6 +60,7 @@ public static class BomReport
             else if(s.Kind=="rect")b.Append($"<rect x='{N(s.X)}' y='{N(s.Y)}' width='{N(s.A)}' height='{N(s.B)}'/>");
             else if(s.Kind is "circle" or "dot")b.Append($"<circle cx='{N(s.X)}' cy='{N(s.Y)}' r='{N(s.A)}' fill='{(s.Kind=="dot"?"#203348":"white")}'/>");
             else if(s.Kind=="text")b.Append($"<text x='{N(s.X)}' y='{N(s.Y+s.A)}' stroke='none' fill='#203348' font-size='{N(s.A)}'>{WebUtility.HtmlEncode(s.Text)}</text>");
+            else if(s.Kind=="image")b.Append($"<image x='{N(s.X)}' y='{N(s.Y)}' width='{N(s.A)}' height='{N(s.B)}' href='data:{(s.Text.StartsWith("iVBOR")?"image/png":"image/jpeg")};base64,{s.Text}'/>");
             if(s.Rotation!=0)b.Append("</g>");
         }
         return b.Append("</g></svg>").ToString();
@@ -68,7 +69,7 @@ public static class BomReport
     {
         string H(string x)=>WebUtility.HtmlEncode(x);var cols=o.Columns.Where(c=>c.Enabled).ToArray();
         var b=new StringBuilder("<!doctype html><html lang='fr'><meta charset='utf-8'><meta name='viewport' content='width=device-width'><title>Nomenclature</title><style>body{font:14px Segoe UI,Arial;margin:32px;color:#203348}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere}th{background:#edf3f8}img,svg{max-width:80px;max-height:80px}tr{break-inside:avoid}thead{display:table-header-group}@media print{body{margin:0;font-size:10px} @page{size:A3 landscape;margin:12mm}}</style>");
-        b.Append($"<h1>Nomenclature — {H(p.Title)}</h1><p>{H(p.Customer)} · Document {H(p.DocumentNumber)} · Révision {H(p.Revision)}</p><p>Images : photo ajoutée au composant ou symbole fonctionnel générique.</p><table><thead><tr>");foreach(var col in cols)b.Append($"<th>{H(col.Label)}</th>");b.Append("</tr></thead><tbody>");
+        b.Append($"<h1>Nomenclature — {H(p.Title)}</h1><p>{H(p.Customer)} · Document {H(p.DocumentNumber)} · Révision {H(p.Revision)}</p><p>Images : photo ajoutée au composant ou dessin du symbole utilisé.</p><table><thead><tr>");foreach(var col in cols)b.Append($"<th>{H(col.Label)}</th>");b.Append("</tr></thead><tbody>");
         var images=new Dictionary<string,string>();
         foreach(var row in Rows(p,o)) { b.Append("<tr>");foreach(var col in cols) { b.Append("<td>");if(col.Key=="image") { string key=row.ImageId.Length>0?row.ImageId:row.Symbol;if(!images.TryGetValue(key,out var html)) { html=row.ImageId.Length>0?$"<img alt='Image du composant' src='data:image/jpeg;base64,{p.Images[row.ImageId]}'>":SymbolSvg(p, row.Symbol);images[key]=html; }b.Append(html); }else b.Append(H(row.Values[col.Key]));b.Append("</td>"); }b.Append("</tr>"); }
         return b.Append("</tbody></table></html>").ToString();

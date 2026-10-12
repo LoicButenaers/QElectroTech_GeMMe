@@ -58,7 +58,7 @@ public static class ReferenceTests
         });
         test("Bibliothèque industrielle : familles, connexions et atlas des symboles", () =>
         {
-            assert(Symbols.All.Count >= 80 && Symbols.All.Values.Select(s => s.Category).Distinct().Count() == 10, "Bibliothèque organisée complète pour les familles de base");
+            assert(Symbols.All.Count >= 80 && Symbols.All.Values.Where(s=>!s.Id.StartsWith("official-")).Select(s => s.Category).Distinct().Count() == 10, "Bibliothèque organisée complète pour les familles de base");
             assert(Symbols.Search("sectionneur").Count() == 4 && Symbols.Search("relais").Any(), "Recherche sans accents");
             foreach (var s in Symbols.All.Values)
             {

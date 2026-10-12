@@ -75,7 +75,7 @@ public sealed class SymbolCanvas : FrameworkElement
     private Point Snap(Point p) => SnapToGrid ? new(Math.Round(p.X / 5) * 5, Math.Round(p.Y / 5) * 5) : p;
     internal static Rect Bounds(Shape s)
     {
-        var r = s.Kind switch { "line" => new Rect(new Point(s.X, s.Y), new Point(s.A, s.B)), "rect" => new Rect(s.X, s.Y, s.A, s.B), "circle" or "dot" => new Rect(s.X - s.A, s.Y - s.A, s.A * 2, s.A * 2), "text" => new Rect(new Point(s.X, s.Y), Drawing.Measure(s.Text, s.A)), _ => Rect.Empty };
+        var r = s.Kind switch { "line" => new Rect(new Point(s.X, s.Y), new Point(s.A, s.B)), "rect" or "image" => new Rect(s.X, s.Y, s.A, s.B), "circle" or "dot" => new Rect(s.X - s.A, s.Y - s.A, s.A * 2, s.A * 2), "text" => new Rect(new Point(s.X, s.Y), Drawing.Measure(s.Text, s.A)), _ => Rect.Empty };
         return s.Rotation == 0 ? r : new RotateTransform(s.Rotation, s.X, s.Y).TransformBounds(r);
     }
     private static Shape Move(Shape s, Vector v) => s with { X = s.X + v.X, Y = s.Y + v.Y, A = s.Kind == "line" ? s.A + v.X : s.A, B = s.Kind == "line" ? s.B + v.Y : s.B };
