@@ -8,7 +8,7 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités de cette première version
+## Fonctionnalités (version 0.2)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
@@ -16,16 +16,25 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Recherche, filtres et aperçu des symboles ; placement répété sur grille.
 - Déplacement, sélection multiple, duplication des composants, rotation, suppression.
 - Connexions entre bornes, tracé orthogonal, coudes manuels, repères de conducteurs, suivi des déplacements.
+- Câblage par glisser entre bornes, déplacement des segments et changement de borne par poignées, coordonnées des points de passage.
+- Position indépendante du repère, des caractéristiques et de la description : côtés, alignements, décalages précis et visibilité ; rendu commun à l’écran, au SVG et au PDF.
+- Panneaux Bibliothèque, Folios et Propriétés épinglables, masquables automatiquement et fermables ; largeur réglable et disposition mémorisée.
 - Repères et propriétés des appareils, référence commerciale libre, caractéristiques, libellés de bornes, documentation fabricant.
 - Annotations, zoom à la molette, déplacement de la vue, ajustement du folio.
 - Historique commun à l’interface et au MCP : 100 annulations/rétablissements.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
-- Serveur MCP local avec 22 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Serveur MCP local avec 24 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Dessiner
 
-Cliquer un équipement dans la bibliothèque puis cliquer le folio. Échap termine la pose. Le mode Conducteur permet de cliquer une première borne, des points de passage facultatifs, puis la borne d’arrivée. Les croisements n’établissent pas de liaison électrique : utiliser un symbole **Jonction électrique** pour créer une dérivation.
+Cliquer un équipement dans la bibliothèque puis cliquer le folio. Échap termine la pose. Pour câbler, maintenir le bouton gauche sur une borne, tirer vers une autre borne et relâcher : cela fonctionne en mode Sélection et immédiatement après la pose. Une borne survolée se colore. Un relâchement dans le vide annule la liaison. Le mode Conducteur permet aussi de cliquer une première borne, des points de passage facultatifs, puis la borne d’arrivée. Les croisements n’établissent pas de liaison électrique : utiliser un symbole **Jonction électrique** pour créer une dérivation.
+
+Sélectionner un conducteur puis glisser un segment ou une **poignée carrée** pour ajuster son tracé. Glisser une **poignée ronde** vers une borne pour changer son raccordement. L’inspecteur permet aussi de saisir les points `X ; Y`, un par ligne, et de rétablir le tracé automatique. Échap annule le geste ; Ctrl+Z annule sa validation. Pour créer un nouveau fil depuis une borne occupée par le fil sélectionné, activer Conducteur (W).
+
+Sélectionner un composant puis **Propriétés → Position des textes…**. Choisir le repère, les caractéristiques ou la description ; régler haut/bas/gauche/droite, alignement horizontal et vertical, distance et décalages X/Y. Le mode **Coordonnées libres depuis le centre** utilise le centre du composant comme origine. Les décimales acceptent une virgule ou un point, sans arrondi à la grille. Appliquer avant de changer de texte ; les positions suivent le composant et sont enregistrées avec le projet.
+
+Dans les en-têtes des panneaux, **● / ○** épingle ou désépingle ; **×** ferme. Un panneau désépinglé reste accessible par son onglet latéral et se replie après une action sur le folio. Le menu **Affichage** rouvre les panneaux ou rétablit la disposition initiale. Les séparateurs règlent leur largeur. La disposition est enregistrée dans `build/GeMMeElec.layout.json`.
 
 | Action | Raccourci |
 | --- | --- |
@@ -76,6 +85,7 @@ Le test crée un circuit de commande dans la fenêtre, vérifie les refus d’en
 | `src/Drawing.cs` | Scène vectorielle partagée |
 | `src/SheetCanvas.cs` | Interaction du dessinateur |
 | `src/MainWindow.cs` | Interface, inspecteur, commandes et exemple |
+| `src/WorkspacePanels.cs` | Panneaux, masquage automatique et disposition persistante |
 | `src/Export.cs` | SVG, PDF, nomenclature |
 | `src/Mcp.cs` | MCP stdio et canal local vers l’interface |
 | `library/catalog.json` | Gammes et sources officielles |

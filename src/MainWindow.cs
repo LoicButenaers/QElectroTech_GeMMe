@@ -21,6 +21,8 @@ public sealed class MainWindow : Window
     private readonly Dictionary<string, TextBox> fields = [];
     private bool refreshing;
     private readonly LocalBridge bridge;
+    private WorkspacePanels? workspace;
+    private int labelTarget;
     public MainWindow(string? file = null)
     {
         Title = "GeMMeElec · Atelier électrique"; Width = Math.Min(1500, SystemParameters.WorkArea.Width * .96); Height = Math.Min(950, SystemParameters.WorkArea.Height * .94); MinWidth = 1000; MinHeight = 600; WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -43,26 +45,24 @@ public sealed class MainWindow : Window
         AddMenu(menu, "_Insérer", ("Conducteur    W", () => Canvas.SetMode("wire")), ("Texte    T", () => Canvas.SetMode("text")), ("Sélection    V", () => Canvas.SetMode("select")));
         AddMenu(menu, "_Projet", ("Vérifier les connexions et les repères", Validate), ("Nomenclature", Bom));
         AddMenu(menu, "E_xporter", ("Tous les folios en PDF…", () => ExportFile("pdf")), ("Folio courant en SVG…", () => ExportFile("svg")), ("Nomenclature CSV…", () => ExportFile("csv")));
-        AddMenu(menu, "_Affichage", ("Ajuster le folio    F", Canvas.Fit));
+        AddMenu(menu, "_Affichage", ("Ajuster le folio    F", Canvas.Fit), ("Bibliothèque", () => workspace?.Show("library")), ("Propriétés", () => workspace?.Show("properties")), ("Folios", () => workspace?.Show("pages")), ("Rétablir les panneaux", () => workspace?.Reset()));
         AddMenu(menu, "_Aide", ("Raccourcis et utilisation", Help), ("Connexion MCP", McpHelp));
         DockPanel.SetDock(menu, Dock.Top); root.Children.Add(menu);
         var toolbar = new WrapPanel { Background = Brushes.White, Margin = new(0, 1, 0, 1) };
         foreach (var (label, action) in new (string, Action)[] { ("Nouveau", NewProject), ("Ouvrir", Open), ("Enregistrer", () => Save(false)), ("↶", Editor.Undo), ("↷", Editor.Redo), ("Sélection  V", () => Canvas.SetMode("select")), ("Conducteur  W", () => Canvas.SetMode("wire")), ("Texte  T", () => Canvas.SetMode("text")), ("Rotation  R", Rotate), ("Ajuster  F", Canvas.Fit), ("Vérifier", Validate), ("PDF", () => ExportFile("pdf")) }) toolbar.Children.Add(Button(label, action));
         DockPanel.SetDock(toolbar, Dock.Top); root.Children.Add(toolbar);
         var footer = new DockPanel { Height = 34, Background = Drawing.Brush("#F8FAFC") }; status.Margin = new(14, 7, 6, 0); counts.Margin = new(10, 7, 16, 0); counts.Foreground = Drawing.Brush("#64748B"); DockPanel.SetDock(counts, Dock.Right); footer.Children.Add(counts); footer.Children.Add(status); DockPanel.SetDock(footer, Dock.Bottom); root.Children.Add(footer);
-        var grid = new Grid(); grid.ColumnDefinitions.Add(new() { Width = new(280) }); grid.ColumnDefinitions.Add(new() { Width = new(5) }); grid.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) }); grid.ColumnDefinitions.Add(new() { Width = new(5) }); grid.ColumnDefinitions.Add(new() { Width = new(260) }); root.Children.Add(grid);
-        var left = new DockPanel { Background = Brushes.White, Margin = new(0, 0, 0, 0) }; grid.Children.Add(left);
-        var leftTop = new StackPanel { Margin = new(14, 14, 14, 8) }; leftTop.Children.Add(Heading("BIBLIOTHÈQUE"));
+        var left = new DockPanel { Background = Brushes.White };
+        var leftTop = new StackPanel { Margin = new(14, 4, 14, 8) };
         search.ToolTip = "Rechercher un équipement, une marque ou une gamme"; search.Margin = new(0, 10, 0, 8); search.TextChanged += (_, _) => Filter(); leftTop.Children.Add(search);
         family.Items.Add("Toutes les familles"); family.Items.Add("Symboles génériques"); foreach (var f in Catalog.Entries.Select(e => e.Family).Distinct().Order()) family.Items.Add(f); family.SelectedIndex = 0; family.Margin = new(0, 0, 0, 8); family.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(family);
         brand.Items.Add("Tous les fabricants"); foreach (var b in Catalog.Entries.Select(e => e.Brand).Distinct().Order()) brand.Items.Add(b); brand.SelectedIndex = 0; brand.Margin = new(0, 0, 0, 8); brand.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(brand);
         libraryCount.Foreground = Drawing.Brush("#64748B"); libraryCount.FontSize = 11; leftTop.Children.Add(libraryCount); DockPanel.SetDock(leftTop, Dock.Top); left.Children.Add(leftTop);
-        var pagePanel = new DockPanel { Height = 185, Margin = new(14, 10, 14, 12) }; var pageHeader = new DockPanel(); var addPage = Button("+", AddPage); DockPanel.SetDock(addPage, Dock.Right); pageHeader.Children.Add(addPage); pageHeader.Children.Add(Heading("FOLIOS DU PROJET")); DockPanel.SetDock(pageHeader, Dock.Top); pagePanel.Children.Add(pageHeader);
-        pages.DisplayMemberPath = "Display"; pages.SelectionChanged += (_, _) => { if (!refreshing && pages.SelectedItem is Sheet s) { Canvas.CancelDrag(); Editor.SelectSheet(s.Id); Inspect(); } }; pagePanel.Children.Add(pages); DockPanel.SetDock(pagePanel, Dock.Bottom); left.Children.Add(pagePanel);
+        var pagePanel = new DockPanel { Margin = new(10, 4, 10, 8) }; var addPage = Button("+ Ajouter un folio", AddPage); DockPanel.SetDock(addPage, Dock.Bottom); pagePanel.Children.Add(addPage);
+        pages.DisplayMemberPath = "Display"; pages.SelectionChanged += (_, _) => { if (!refreshing && pages.SelectedItem is Sheet s) { Canvas.CancelDrag(); Editor.SelectSheet(s.Id); Inspect(); } }; pagePanel.Children.Add(pages);
         library.BorderThickness = new(0); library.Margin = new(8, 0, 8, 0); ScrollViewer.SetHorizontalScrollBarVisibility(library, ScrollBarVisibility.Disabled); library.SelectionChanged += (_, _) => { if (library.SelectedItem is ListBoxItem item && item.Tag is string id) { var e = Catalog.Entries.FirstOrDefault(c => c.Id == id); Canvas.Symbol = e?.Symbol ?? id; Canvas.CatalogId = e?.Id; Canvas.SetMode("place"); } }; left.Children.Add(library);
-        Grid.SetColumn(Canvas, 2); grid.Children.Add(Canvas);
-        var right = new ScrollViewer { Content = properties, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Background = Brushes.White }; properties.Margin = new(16); Grid.SetColumn(right, 4); grid.Children.Add(right);
-        foreach (int col in new[] { 1, 3 }) { var splitter = new GridSplitter { Width = 5, HorizontalAlignment = HorizontalAlignment.Stretch, Background = Drawing.Brush("#DCE4EC") }; Grid.SetColumn(splitter, col); grid.Children.Add(splitter); }
+        var right = new ScrollViewer { Content = properties, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Background = Brushes.White }; properties.Margin = new(14);
+        workspace = new WorkspacePanels(Canvas, left, pagePanel, right); root.Children.Add(workspace);
         Canvas.Status += text => status.Text = text; Canvas.SelectionChanged += Inspect; Canvas.TextRequested += p => { var text = Prompt("Texte du schéma", "Texte", "Texte"); if (text is not null) Editor.Change(() => Editor.Sheet.Notes.Add(new() { X = Editor.Snap(p.X), Y = Editor.Snap(p.Y), Text = text })); };
         Editor.Changed += Refresh; PreviewKeyDown += Keys;
         Closing += (_, e) => { Canvas.CancelDrag(); if (!CanReplace()) e.Cancel = true; }; Closed += (_, _) => bridge?.Dispose();
@@ -87,7 +87,11 @@ public sealed class MainWindow : Window
     private void LibraryItem(string id, string name, string detail, string tip)
     {
         var row = new DockPanel { Margin = new(3, 6, 3, 6) }; var symbol = Catalog.Entries.FirstOrDefault(e => e.Id == id)?.Symbol ?? id; row.Children.Add(new SymbolPreview(symbol));
-        var stack = new StackPanel { Margin = new(7, 0, 0, 0) }; stack.Children.Add(new TextBlock { Text = name, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap }); stack.Children.Add(new TextBlock { Text = detail, Foreground = Drawing.Brush("#687D90"), FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 0) }); row.Children.Add(stack); library.Items.Add(new ListBoxItem { Tag = id, Content = row, ToolTip = tip, HorizontalContentAlignment = HorizontalAlignment.Stretch });
+        var stack = new StackPanel { Margin = new(7, 0, 0, 0) }; stack.Children.Add(new TextBlock { Text = name, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap }); stack.Children.Add(new TextBlock { Text = detail, Foreground = Drawing.Brush("#687D90"), FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 0) }); row.Children.Add(stack);
+        var item = new ListBoxItem { Tag = id, Content = row, ToolTip = tip, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        // A second click resumes placement after wiring or Escape, even if selection did not change.
+        item.PreviewMouseLeftButtonDown += (_, _) => { if (item.IsSelected) { var entry = Catalog.Entries.FirstOrDefault(c => c.Id == id); Canvas.Symbol = entry?.Symbol ?? id; Canvas.CatalogId = entry?.Id; Canvas.SetMode("place"); } };
+        library.Items.Add(item);
     }
     private void Refresh()
     {
@@ -102,7 +106,7 @@ public sealed class MainWindow : Window
     }
     private void Inspect()
     {
-        properties.Children.Clear(); fields.Clear(); properties.Children.Add(Heading("PROPRIÉTÉS"));
+        properties.Children.Clear(); fields.Clear();
         var c = Editor.Sheet.Components.FirstOrDefault(c => Canvas.Selected.Contains(c.Id));
         var wire = Editor.Sheet.Wires.FirstOrDefault(w => Canvas.Selected.Contains(w.Id));
         var note = Editor.Sheet.Notes.FirstOrDefault(n => Canvas.Selected.Contains(n.Id));
@@ -112,6 +116,7 @@ public sealed class MainWindow : Window
             Field("tag", "Repère", c.Tag); Field("description", "Description", c.Description); Field("brand", "Fabricant", c.Brand); Field("range", "Gamme", c.Range); Field("reference", "Référence exacte", c.Reference); Field("rating", "Calibre / tension / puissance", c.Rating);
             properties.Children.Add(Button("Appliquer les propriétés", () => { var values = fields.ToDictionary(x => x.Key, x => x.Value.Text); Editor.Change(() => { c.Tag = values["tag"]; c.Description = values["description"]; c.Brand = values["brand"]; c.Range = values["range"]; c.Reference = values["reference"]; c.Rating = values["rating"]; foreach (var p in c.Definition.Ports) c.PortLabels[p.Id] = values["port:" + p.Id]; }); }));
             if (Uri.TryCreate(c.Source, UriKind.Absolute, out var uri) && uri.Scheme == "https") properties.Children.Add(Button("Documentation fabricant ↗", () => Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true })));
+            TextPositionEditor(c);
             properties.Children.Add(new TextBlock { Text = "Bornes fonctionnelles : adapter les libellés à la référence choisie.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Drawing.Brush("#7C6B4B"), Margin = new(0, 14, 0, 0) });
             foreach (var p in c.Definition.Ports) Field("port:" + p.Id, "Borne " + p.Id, c.PortLabels.GetValueOrDefault(p.Id, p.Id));
         }
@@ -120,6 +125,10 @@ public sealed class MainWindow : Window
             Field("number", "Numéro du conducteur", wire.Number); Field("color", "Couleur (#RRGGBB)", wire.Color);
             properties.Children.Add(Button("Appliquer", () => { string n = fields["number"].Text, color = fields["color"].Text; Editor.Change(() => { wire.Number = n; wire.Color = color; }); }));
             properties.Children.Add(Button("Rétablir le parcours automatique", () => Editor.Change(() => wire.Waypoints.Clear())));
+            properties.Children.Add(new TextBlock { Text = "Tirez une poignée carrée pour déplacer un segment. Tirez une poignée ronde vers une borne pour changer le raccordement.", TextWrapping = TextWrapping.Wrap, Margin = new(0, 12, 0, 10), Foreground = Drawing.Brush("#61758A") });
+            var points = Field("waypoints", "Points de passage · X ; Y par ligne", string.Join(Environment.NewLine, wire.Waypoints.Select(p => $"{Number(p.X)} ; {Number(p.Y)}"))); points.AcceptsReturn = true; points.Height = 110; points.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+            properties.Children.Add(Button("Appliquer le tracé", () => { var values = ParsePoints(points.Text); Editor.Change(() => wire.Waypoints = values); }));
+            properties.Children.Add(new TextBlock { Text = "Coordonnées du folio, en unités de dessin. Un champ vide rétablit le tracé automatique.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new(0, 6, 0, 0) });
         }
         else if (note is not null) { Field("text", "Annotation", note.Text); properties.Children.Add(Button("Appliquer", () => { var t = fields["text"].Text; Editor.Change(() => note.Text = t); })); }
         else
@@ -129,6 +138,55 @@ public sealed class MainWindow : Window
             properties.Children.Add(new TextBlock { Text = "1   Choisissez un équipement dans la bibliothèque.\n\n2   Cliquez sur le folio pour le placer.\n\n3   Activez Conducteur et reliez les bornes.\n\n4   Sélectionnez un appareil pour renseigner sa référence.", TextWrapping = TextWrapping.Wrap, Foreground = Drawing.Brush("#61758A"), Margin = new(0, 14, 0, 20) });
             properties.Children.Add(Button("Informations du projet", ProjectInfo)); properties.Children.Add(Button("Charger un exemple", Demo));
         }
+    }
+    private static string Number(double value) => value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+    private static double ReadNumber(string value)
+    {
+        if (!double.TryParse(value.Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number) || !double.IsFinite(number)) throw new ArgumentException("Saisir une coordonnée numérique valide (exemple : 12,5).");
+        return number;
+    }
+    private static List<Position> ParsePoints(string value) => value.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).Select(line => { var xy = line.Split(';'); if (xy.Length != 2) throw new ArgumentException("Chaque point doit avoir la forme X ; Y."); return new Position(ReadNumber(xy[0]), ReadNumber(xy[1])); }).ToList();
+    private void TextPositionEditor(Component component)
+    {
+        properties.Children.Insert(1, Button("Position des textes…", () => TextPositionDialog(component.Id)));
+    }
+    private void TextPositionDialog(string id)
+    {
+        var dialog = new Window { Owner = this, Title = "Position des textes", Width = 460, Height = Math.Min(720, SystemParameters.WorkArea.Height * .9), WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = Brushes.White };
+        var panel = new StackPanel { Margin = new(20) }; dialog.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        ComboBox Choice(string label, (string Id, string Name)[] values)
+        {
+            panel.Children.Add(new TextBlock { Text = label, Margin = new(0, 10, 0, 4) }); var combo = new ComboBox { ItemsSource = values.Select(v => new KeyValuePair<string, string>(v.Id, v.Name)), DisplayMemberPath = "Value", SelectedValuePath = "Key", Padding = new(5) }; panel.Children.Add(combo); return combo;
+        }
+        TextBox Numeric(string label) { panel.Children.Add(new TextBlock { Text = label, Margin = new(0, 10, 0, 4) }); var box = new TextBox { Padding = new(7) }; panel.Children.Add(box); return box; }
+        var target = Choice("Texte à positionner", [("tag", "Repère du composant"), ("detail", "Caractéristiques / référence / gamme"), ("description", "Description")]);
+        var visible = new CheckBox { Content = "Afficher ce texte", Margin = new(0, 12, 0, 0) }; panel.Children.Add(visible);
+        var side = Choice("Position par rapport au composant", [("top", "Haut"), ("bottom", "Bas"), ("left", "Gauche"), ("right", "Droite"), ("custom", "Coordonnées libres depuis le centre")]);
+        var horizontal = Choice("Alignement horizontal du texte", [("left", "Gauche"), ("center", "Centré"), ("right", "Droite")]);
+        var vertical = Choice("Alignement vertical du texte", [("top", "Haut"), ("center", "Milieu"), ("bottom", "Bas")]);
+        var gap = Numeric("Distance au bord du symbole"); var x = Numeric("Décalage X précis · positif vers la droite"); var y = Numeric("Décalage Y précis · positif vers le bas");
+        panel.Children.Add(new TextBlock { Text = "Les décalages sont en unités de dessin, sans arrondi à la grille. En position libre, X et Y partent du centre du composant. Le texte suit ses déplacements et reste lisible après rotation.", TextWrapping = TextWrapping.Wrap, Foreground = Drawing.Brush("#61758A"), FontSize = 11, Margin = new(0, 12, 0, 8) });
+        bool loading = false;
+        void LoadPlacement()
+        {
+            loading = true; var c = Editor.Sheet.Components.Single(c => c.Id == id); labelTarget = target.SelectedIndex;
+            var p = labelTarget == 0 ? c.TagPlacement : labelTarget == 1 ? c.DetailPlacement : c.DescriptionPlacement;
+            visible.IsChecked = p.Visible; side.SelectedValue = p.Side; horizontal.SelectedValue = p.Horizontal; vertical.SelectedValue = p.Vertical; gap.Text = Number(p.Gap); x.Text = Number(p.OffsetX); y.Text = Number(p.OffsetY); loading = false;
+        }
+        side.SelectionChanged += (_, _) => { if (loading) return; string s = (string)side.SelectedValue; horizontal.SelectedValue = s == "left" ? "right" : s == "right" ? "left" : "center"; vertical.SelectedValue = s == "top" ? "bottom" : s == "bottom" ? "top" : "center"; x.Text = "0"; y.Text = "0"; };
+        target.SelectionChanged += (_, _) => LoadPlacement(); target.SelectedIndex = labelTarget;
+        var feedback = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 8), Foreground = Drawing.Brush("#007F86") }; panel.Children.Add(feedback);
+        var apply = new Button { Content = "Appliquer au schéma", Padding = new(10), IsDefault = true, Margin = new(0, 8, 0, 0) };
+        apply.Click += (_, _) =>
+        {
+            try
+            {
+                var placement = new LabelPlacement { Side = (string)side.SelectedValue, Horizontal = (string)horizontal.SelectedValue, Vertical = (string)vertical.SelectedValue, Gap = ReadNumber(gap.Text), OffsetX = ReadNumber(x.Text), OffsetY = ReadNumber(y.Text), Visible = visible.IsChecked == true }; placement.Validate();
+                var c = Editor.Sheet.Components.Single(c => c.Id == id); Editor.Change(() => { if (labelTarget == 0) c.TagPlacement = placement; else if (labelTarget == 1) c.DetailPlacement = placement; else c.DescriptionPlacement = placement; }); feedback.Text = "Position appliquée. Ctrl+Z permet de l’annuler dans l’éditeur.";
+            }
+            catch (Exception ex) { feedback.Text = ex.Message; }
+        };
+        panel.Children.Add(apply); var close = new Button { Content = "Fermer", IsCancel = true, Padding = new(10), Margin = new(0, 6, 0, 0) }; panel.Children.Add(close); dialog.ShowDialog();
     }
     private string? Prompt(string title, string label, string value)
     {
@@ -179,7 +237,7 @@ public sealed class MainWindow : Window
         var dialog = new SaveFileDialog { Filter = $"{format.ToUpperInvariant()}|*.{format}", FileName = "Schema." + format }; if (dialog.ShowDialog(this) != true) return;
         if (format == "pdf") Export.Pdf(Editor.Project, dialog.FileName); else if (format == "svg") Export.Svg(Editor.Project, Editor.Sheet, dialog.FileName); else Export.Csv(Editor.Project, dialog.FileName); status.Text = "Export créé · " + dialog.FileName;
     }
-    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nCtrl+clic : sélection multiple · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Les croisements ne sont pas des jonctions : utilisez le symbole Jonction pour créer une dérivation.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
+    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nCtrl+clic : sélection multiple · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour choisir côté, alignement ou coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Les croisements ne sont pas des jonctions : utilisez le symbole Jonction pour créer une dérivation.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
     private void McpHelp() => MessageBox.Show(this, "Le serveur MCP fait partie du même exécutable.\n\nCommande :\n" + Environment.ProcessPath + " --mcp\n\nTransport stdio. Gardez l’application ouverte. Le serveur rejoint cette fenêtre par un canal Windows limité à votre compte. Les modifications sont annulables avec Ctrl+Z.\n\nVoir docs/MCP.md dans le dépôt pour la configuration du client.", "MCP GeMMeElec");
     public void McpActivity(string tool) { mcpStatus.Text = "● MCP · " + tool; status.Text = "Commande MCP exécutée : " + tool; }
     private void Demo()

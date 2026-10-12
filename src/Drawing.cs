@@ -52,14 +52,22 @@ public static class Drawing
                 result.Add(new("circle", p.X, p.Y, 2));
                 result.Add(new("text", p.X + 4, p.Y - 13, Text: c.PortLabels.GetValueOrDefault(port.Id, port.Id), Color: "#64748B", Size: 9));
             }
-            var bounds = c.Bounds();
-            result.Add(new("text", bounds.Right + 12, c.Y - 18, Text: c.Tag, Size: 16));
             var detail = c.Rating.Length > 0 ? c.Rating : c.Reference.Length > 0 ? c.Reference : c.Range;
-            if (detail.Length > 0) result.Add(new("text", bounds.Right + 12, c.Y + 5, Text: detail, Size: 10, Color: "#64748B"));
+            AddLabel(result, c, c.TagPlacement, c.Tag, 16, "#203348");
+            AddLabel(result, c, c.DetailPlacement, detail, 10, "#64748B");
+            AddLabel(result, c, c.DescriptionPlacement, c.Description, 12, "#64748B");
         }
         foreach (var n in sheet.Notes) result.Add(new("text", n.X, n.Y, Text: n.Text, Size: 16));
         return result;
     }
+    public static Ink? Label(Component component, LabelPlacement placement, string text, double size, string color)
+    {
+        if (!placement.Visible || text.Length == 0) return null;
+        var metrics = new FormattedText(text, CultureInfo.GetCultureInfo("fr-BE"), FlowDirection.LeftToRight, new Typeface("Segoe UI"), size, Brushes.Black, 1);
+        var origin = placement.Origin(component, metrics.WidthIncludingTrailingWhitespace, metrics.Height);
+        return new("text", origin.X, origin.Y, Text: text, Size: size, Color: color);
+    }
+    private static void AddLabel(List<Ink> scene, Component c, LabelPlacement p, string text, double size, string color) { var label = Label(c, p, text, size, color); if (label is not null) scene.Add(label); }
     public static Brush Brush(string color)
     {
         try { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)); } catch { return Brushes.DarkSlateGray; }

@@ -39,7 +39,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 22) '22 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 24) '24 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root 'build/MCP-demo.gemelec'))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -70,6 +70,11 @@ try {
     Assert ($state.project.sheets[0].wires.Count -eq 0) 'Suppression des connexions incidentes'
     $null = Call 'history_undo'
     $null = Call 'note_add' @{ x = 180; y = 80; text = 'Circuit de commande · essai MCP' }
+    $null = Call 'wire_update' @{ id = $w1.id; waypoints = @(@{ x = 320; y = 250 }, @{ x = 320; y = 330 }) }
+    $state = Call 'project_get'
+    Assert (($state.project.sheets[0].wires | Where-Object id -eq $w1.id).waypoints.Count -eq 2) 'Édition du tracé des conducteurs'
+    $null = Call 'component_text_update' @{ id = $coil.id; target = 'tag'; side = 'top'; horizontal = 'center'; vertical = 'bottom'; offsetX = 12.5; offsetY = -8.25 }
+    $null = Call 'component_text_update' @{ id = $coil.id; target = 'tag'; side = 'incorrect' } -ExpectError
     $null = Call 'project_validate'
     $firstPage = (Call 'project_get').currentSheetId
     $null = Call 'page_add' @{ title = 'Deuxième folio · réserves' }
@@ -80,6 +85,8 @@ try {
     $state = Call 'project_get'
     Assert (!$state.dirty -and $state.project.sheets.Count -eq 2 -and $state.project.sheets[0].wires.Count -eq 2) 'Enregistrement et relecture multipage'
     Assert ($state.project.title -eq 'Essai MCP · circuit de commande' -and $state.project.sheets[1].title -eq 'Deuxième folio · réserves') 'Transport UTF-8 et accents'
+    $placement = ($state.project.sheets[0].components | Where-Object id -eq $coil.id).tagPlacement
+    Assert ($placement.side -eq 'top' -and $placement.offsetX -eq 12.5 -and $placement.offsetY -eq -8.25) 'Positions de texte précises conservées après relecture'
     foreach ($format in @('svg','pdf','bom')) {
         $ext = if ($format -eq 'bom') { 'csv' } else { $format }
         $out = Join-Path $root "build/MCP-demo.$ext"

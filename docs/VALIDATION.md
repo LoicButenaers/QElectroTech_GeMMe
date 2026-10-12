@@ -1,4 +1,20 @@
-# Vérifications de la première livraison
+# Vérifications de livraison
+
+## Version 0.2 — 12 octobre 2026
+
+Windows x64, SDK .NET 10.0.401. Publication Release autonome au même chemin `build/GeMMeElec.exe`.
+
+`Build.ps1 -Test` : 15 scénarios réussis. Aux neuf scénarios initiaux s’ajoutent : déplacement orthogonal des segments avec conservation des bornes et historique ; reconnexion et refus des doublons ; position des textes selon les côtés et alignements, après déplacement/rotation ; compatibilité des anciens projets et sauvegarde des décimales ; annulation d’un déplacement provisoire ; positions et visibilité communes à la scène vectorielle et au SVG.
+
+`Test-Mcp.ps1` : 16 vérifications réussies, 24 outils annoncés. Les nouveaux outils de mise à jour des conducteurs et textes sont exercés via le transport stdio et la fenêtre réelle, avec sauvegarde/relecture et refus d’une position invalide.
+
+Essais dans l’application native : désépingler, ouvrir l’onglet latéral, réépingler, fermer les propriétés et les rouvrir par Affichage ; créer une liaison par glisser en mode Sélection ; déplacer un segment et changer sa borne d’arrivée avec les poignées ; positionner le repère par coordonnées libres centrées, saisir `-82,75` et `-30,5`, appliquer et vérifier les décimales dans le projet enregistré. La description dispose d’un placement séparé, masqué par défaut.
+
+Le panneau Propriétés désépinglé est bien retrouvé sous forme d’onglet après fermeture et redémarrage de l’exécutable. Le menu Affichage rétablit ensuite les trois panneaux.
+
+Les positions sont relatives au composant, en unités de dessin. Les fils suivent les bornes sans contourner automatiquement les obstacles. Les panneaux restent ancrés aux côtés de l’éditeur ; ils ne deviennent pas des fenêtres flottantes.
+
+## Première livraison — 9 octobre 2026
 
 Windows x64, 9 octobre 2026. SDK .NET 10.0.401, publication Release autonome en un fichier.
 

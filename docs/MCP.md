@@ -42,13 +42,17 @@ Pour un autre client MCP acceptant les serveurs locaux stdio :
 | Lecture | `project_get`, `library_search`, `project_validate` |
 | Projet | `project_new`, `project_open`, `project_save`, `project_update` |
 | Folios | `page_add`, `page_select`, `page_update` |
-| Composants | `component_add`, `component_update`, `component_delete` |
-| Conducteurs | `wire_add`, `wire_delete` |
+| Composants | `component_add`, `component_update`, `component_text_update`, `component_delete` |
+| Conducteurs | `wire_add`, `wire_update`, `wire_delete` |
 | Annotation | `note_add` |
 | Exports | `export_svg`, `export_pdf`, `export_bom` |
 | Historique et vue | `history_undo`, `history_redo`, `view_fit` |
 
 `tools/list` fournit les paramètres, types et champs requis. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
+
+La version 0.2 expose 24 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre.
+
+`wire_update` prend `id` et les champs facultatifs `number`, `color`, `fromComponent`, `fromPort`, `toComponent`, `toPort`, `waypoints` (tableau de `{ "x": 320, "y": 250 }`). Un tableau vide rétablit le tracé automatique. Les mises à jour de texte et de conducteur sont atomiques, validées et annulables ; un raccordement dupliqué est refusé.
 
 ## Procédure conseillée
 

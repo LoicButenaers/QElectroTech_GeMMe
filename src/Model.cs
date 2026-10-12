@@ -62,6 +62,9 @@ public sealed class Component
     public double Y { get; set; }
     public int Rotation { get; set; }
     public Dictionary<string, string> PortLabels { get; set; } = [];
+    public LabelPlacement TagPlacement { get; set; } = new() { OffsetY = -12 };
+    public LabelPlacement DetailPlacement { get; set; } = new() { OffsetY = 12 };
+    public LabelPlacement DescriptionPlacement { get; set; } = new() { Side = "bottom", Horizontal = "center", Vertical = "top", Visible = false };
     [JsonIgnore] public SymbolDefinition Definition => Symbols.All[Symbol];
     public Point Transform(double x, double y)
     {
@@ -78,6 +81,31 @@ public sealed class Component
         var d = Definition;
         var points = new[] { Transform(-d.Width / 2, -d.Height / 2), Transform(d.Width / 2, -d.Height / 2), Transform(d.Width / 2, d.Height / 2), Transform(-d.Width / 2, d.Height / 2) };
         return new Rect(new Point(points.Min(p => p.X), points.Min(p => p.Y)), new Point(points.Max(p => p.X), points.Max(p => p.Y)));
+    }
+}
+public sealed class LabelPlacement
+{
+    public string Side { get; set; } = "right";
+    public string Horizontal { get; set; } = "left";
+    public string Vertical { get; set; } = "center";
+    public double Gap { get; set; } = 12;
+    public double OffsetX { get; set; }
+    public double OffsetY { get; set; }
+    public bool Visible { get; set; } = true;
+    public Point Origin(Component c, double width, double height)
+    {
+        var r = c.Bounds();
+        var anchor = Side switch
+        {
+            "top" => new Point(c.X, r.Top - Gap), "bottom" => new Point(c.X, r.Bottom + Gap),
+            "left" => new Point(r.Left - Gap, c.Y), "right" => new Point(r.Right + Gap, c.Y), _ => new Point(c.X, c.Y)
+        };
+        return new(anchor.X + OffsetX - (Horizontal == "center" ? width / 2 : Horizontal == "right" ? width : 0),
+            anchor.Y + OffsetY - (Vertical == "center" ? height / 2 : Vertical == "bottom" ? height : 0));
+    }
+    public void Validate()
+    {
+        if (Side is not ("top" or "bottom" or "left" or "right" or "custom") || Horizontal is not ("left" or "center" or "right") || Vertical is not ("top" or "center" or "bottom") || !double.IsFinite(Gap) || Gap is < 0 or > 1000 || !double.IsFinite(OffsetX) || !double.IsFinite(OffsetY) || Math.Abs(OffsetX) > 10000 || Math.Abs(OffsetY) > 10000) throw new InvalidDataException("Position de texte invalide.");
     }
 }
 public sealed record Endpoint(string ComponentId, string PortId);
@@ -112,7 +140,41 @@ public sealed class Wire
             }
             route.Add(target);
         }
-        return route;
+        return WireRouting.Simplify(route);
+    }
+}
+public static class WireRouting
+{
+    public static List<Point> Simplify(IEnumerable<Point> points)
+    {
+        List<Point> result = [];
+        foreach (var p in points)
+        {
+            if (result.Count > 0 && (result[^1] - p).Length < .001) continue;
+            while (result.Count >= 2)
+            {
+                var a = result[^2]; var b = result[^1];
+                bool sameAxis = (Math.Abs(a.X - b.X) < .001 && Math.Abs(b.X - p.X) < .001) || (Math.Abs(a.Y - b.Y) < .001 && Math.Abs(b.Y - p.Y) < .001);
+                if (!sameAxis || Vector.Multiply(b - a, p - b) < 0) break;
+                result.RemoveAt(result.Count - 1);
+            }
+            result.Add(p);
+        }
+        // Coincident terminals still represent a valid connection.
+        if (result.Count == 1) result.Add(result[0]);
+        return result;
+    }
+    public static List<Position> ShiftSegment(IReadOnlyList<Point> route, int index, Point target)
+    {
+        if (index < 1 || index >= route.Count) throw new ArgumentException("Segment introuvable.");
+        var moved = route.ToList(); var a = route[index - 1]; var b = route[index];
+        if (Math.Abs(a.Y - b.Y) < .001) { var y = Editor.Snap(target.Y); moved[index - 1] = new(a.X, y); moved[index] = new(b.X, y); }
+        else { var x = Editor.Snap(target.X); moved[index - 1] = new(x, a.Y); moved[index] = new(x, b.Y); }
+        // Endpoint anchors are never moved; shifting an end segment creates a dogleg.
+        if (index == 1) moved.Insert(0, route[0]);
+        if (index == route.Count - 1) moved.Add(route[^1]);
+        var clean = Simplify(moved);
+        return clean.Skip(1).Take(Math.Max(0, clean.Count - 2)).Select(p => new Position(p.X, p.Y)).ToList();
     }
 }
 public sealed class Annotation
@@ -159,6 +221,8 @@ public static class ProjectStore
                 if (c.Symbol is null || !Symbols.All.ContainsKey(c.Symbol)) throw new InvalidDataException("Symbole non pris en charge.");
                 if (!double.IsFinite(c.X) || !double.IsFinite(c.Y) || c.X < 0 || c.X > s.Width || c.Y < 0 || c.Y > s.Height || c.Rotation % 90 != 0) throw new InvalidDataException("Position ou rotation de symbole invalide.");
                 c.PortLabels ??= [];
+                if (c.TagPlacement is null || c.DetailPlacement is null || c.DescriptionPlacement is null) throw new InvalidDataException("Position de texte absente.");
+                c.TagPlacement.Validate(); c.DetailPlacement.Validate(); c.DescriptionPlacement.Validate();
                 foreach (var label in c.PortLabels) { Text(label.Value); if (!c.Definition.Ports.Any(port => port.Id == label.Key)) throw new InvalidDataException("Libellé de borne inconnue."); }
             }
             foreach (var w in s.Wires)
@@ -175,6 +239,8 @@ public static class ProjectStore
                 }
                 if (w.Waypoints is null || w.Waypoints.Count > 100 || w.Waypoints.Any(x => x is null || !double.IsFinite(x.X) || !double.IsFinite(x.Y) || x.X < 0 || x.X > s.Width || x.Y < 0 || x.Y > s.Height)) throw new InvalidDataException("Parcours de conducteur invalide.");
             }
+            var pairs = new HashSet<string>();
+            foreach (var w in s.Wires) { var ends = new[] { w.From.ComponentId + ":" + w.From.PortId, w.To.ComponentId + ":" + w.To.PortId }.Order(StringComparer.Ordinal); if (!pairs.Add(string.Join("|", ends))) throw new InvalidDataException("Ces bornes sont déjà reliées."); }
             foreach (var n in s.Notes) { if (n is null) throw new InvalidDataException("Annotation vide."); Id(n.Id); if (!double.IsFinite(n.X) || !double.IsFinite(n.Y) || n.X < 0 || n.X > s.Width || n.Y < 0 || n.Y > s.Height || n.Text is null || n.Text.Length > 2000) throw new InvalidDataException("Annotation invalide."); }
         }
     }
@@ -241,6 +307,12 @@ public sealed class Editor
         ProjectStore.ValidateStructure(Project);
         if (before != ProjectStore.Serialize(Project)) { undo.Add(before); if (undo.Count > 100) undo.RemoveAt(0); redo.Clear(); }
         Notify();
+    }
+    public void CancelPreview(string before) { Project = ProjectStore.Deserialize(before); InteractionInProgress = false; RepairSelection(); Notify(); }
+    public void Reconnect(string wireId, bool from, Endpoint endpoint)
+    {
+        var wire = Sheet.Wires.Single(w => w.Id == wireId);
+        Change(() => { if (from) wire.From = endpoint; else wire.To = endpoint; });
     }
     public void Undo()
     {
