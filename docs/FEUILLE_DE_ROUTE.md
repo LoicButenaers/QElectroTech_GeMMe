@@ -1,5 +1,10 @@
 # GeMMeElec — feuille de route
 
+## Sélection en cours du 13 octobre 2026
+
+L’utilisateur a engagé les propositions 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17 et 18 et demande un récapitulatif Word/PDF. Premier lot 0.16 : 2, 3, 10, 11 et 16 vérifiés (111 scénarios / 101 MCP, 51 outils). Suivi détaillé dans `LOT_SELECTION_20261013.md`. Ce choix prend priorité sur l’ordre métier ci-dessous ; les fonctions non choisies restent hors de ce lot.
+
+
 Demandes métier du 13 octobre 2026. Dépôt `C:\dev\QElectroTech_GeMMe`, branche `GeMMeElec`, livraison `build/GeMMeElec.exe`. Toute étape inclut persistance, annulation, validation et parcours complet. Le résumé doit décrire uniquement les livraisons vérifiées.
 
 ## Livré : reprise et interface 0.12

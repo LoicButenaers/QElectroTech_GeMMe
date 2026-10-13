@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 47) '47 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 51) '51 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -383,7 +383,7 @@ try {
     $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
     $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
     $state = Call 'project_get'
-    Assert ($state.project.version -eq 4 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
+    Assert ($state.project.version -eq 5 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
     $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$true;number='CABLE-01';color='#D32F2F';thickness=3.2;lineStyle='dashed'}
     $null = Call 'wire_update' @{id=$wire.id;number='27'}
     $state = Call 'project_get'
@@ -406,6 +406,17 @@ try {
     $wireAppearanceSvgPath = Join-Path $root 'build/MCP-wire-appearance.svg'
     $null = Call 'export_svg' @{path=$wireAppearanceSvgPath;overwrite=$true}
     Assert ((Get-Content -LiteralPath $wireAppearanceSvgPath -Raw).Contains('stroke-dasharray="12.8 9.6"')) 'Export SVG du trait personnalisé MCP'
+    $locations = Call 'project_search' @{query='CABLE-02'}
+    Assert (@($locations | Where-Object objectId -eq $continuation.id).Count -eq 1) 'Recherche globale retrouvant un fil indépendant MCP'
+    $circuitRows = Call 'circuit_read' @{id=$wire.id;highlight=$true}
+    Assert (@($circuitRows | Where-Object objectId -eq $continuation.id).Count -eq 1) 'Circuit incluant la borne de passage et le fil indépendant MCP'
+    $null = Call 'wire_label_update' @{id=$continuation.id;placement=@{offsetX=44.5;offsetY=-22;fontSize=14;rotation=90;visible=$true;color='#112233'}}
+    $placedWire = (Call 'project_get').project.sheets[0].wires | Where-Object id -eq $continuation.id
+    Assert ($placedWire.numberPlacement.offsetX -eq 44.5 -and $placedWire.numberPlacement.rotation -eq 90) 'Placement précis du numéro de fil MCP'
+    $null = Call 'selection_align' @{ids=@($source.id,$terminal.id,$load.id);operation='bottom'}
+    $null = Call 'history_undo' @{}
+    $errorText = Call 'wire_label_update' @{id=$continuation.id;placement=@{fontSize=999}} -ExpectError
+    Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project.sheets[0].wires | Where-Object id -eq $continuation.id).numberPlacement.fontSize -eq 14) 'Placement invalide refusé sans perdre le dernier réglage MCP'
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

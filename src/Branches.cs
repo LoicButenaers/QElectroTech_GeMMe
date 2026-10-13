@@ -49,7 +49,7 @@ public sealed partial class Editor
                 var junction = new Component { Symbol = "junction", AutoJunction = true, Tag = tag, X = hit.Point.X, Y = hit.Point.Y,
                     TagPlacement = new() { Visible = false }, DetailPlacement = new() { Visible = false }, DescriptionPlacement = new() { Visible = false } };
                 destination = new(junction.Id, "1"); Sheet.Components.Add(junction);
-                var right = new Wire { From = destination, To = target.To, Number = target.Number, Color = target.Color, NumberIndependent = target.NumberIndependent, Thickness = target.Thickness, LineStyle = target.LineStyle,
+                var right = new Wire { From = destination, To = target.To, Number = target.Number, Color = target.Color, NumberIndependent = target.NumberIndependent, Thickness = target.Thickness, LineStyle = target.LineStyle, NumberPlacement = DocumentModel.Copy(target.NumberPlacement),
                     Waypoints = Interior(new[] { hit.Point }.Concat(route.Skip(hit.Segment))) };
                 target.To = destination; target.Waypoints = Interior(route.Take(hit.Segment).Append(hit.Point));
                 Sheet.Wires.Add(right);

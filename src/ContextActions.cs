@@ -34,6 +34,8 @@ public sealed partial class MainWindow
             }
             if (wires.Count > 0)
             {
+                menu.Items.Add(QuickAction("Surligner / parcourir le circuit…", CircuitDialog));
+                menu.Items.Add(QuickAction("Effacer le surlignage", Canvas.ClearCircuitHighlight));
                 menu.Items.Add(QuickAction("Parcours automatique", () => Editor.Change(() => wires.ForEach(w => w.Waypoints.Clear()))));
                 menu.Items.Add(QuickAction("Couleur des conducteurs…", () => PaletteDialog(wires[0].Color, color => Editor.Change(() => wires.ForEach(w => w.Color = color)))));
             }

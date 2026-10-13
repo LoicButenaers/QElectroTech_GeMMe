@@ -164,14 +164,10 @@ public sealed partial class MainWindow : Window
         bool ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
         bool propertyInput = e.OriginalSource is DependencyObject source && IsPropertyInput(source);
         if (e.OriginalSource is TextBox && !(ctrl && (e.Key is Key.S or Key.O || propertyInput && e.Key is Key.Z or Key.Y))) return;
-        string? id = ctrl ? e.Key switch { Key.N => "new", Key.O => "open", Key.S => Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? "saveAs" : "save", Key.Z => "undo", Key.Y => "redo", Key.D => "duplicate", _ => null } : e.Key switch { Key.Delete => "delete", Key.R => "rotate", Key.F => "fit", Key.V => "select", Key.W => "wire", Key.T => "text", _ => null };
+        string? id = ctrl ? e.Key switch { Key.N => "new", Key.O => "open", Key.F => "projectSearch", Key.S => Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? "saveAs" : "save", Key.Z => "undo", Key.Y => "redo", Key.D => "duplicate", _ => null } : e.Key switch { Key.Delete => "delete", Key.R => "rotate", Key.F => "fit", Key.V => "select", Key.W => "wire", Key.T => "text", _ => null };
         if (id is not null) { e.Handled = true; var command = commands[id].Command; if (command.CanExecute(null, this)) command.Execute(null, this); }
     }
-    private void Validate()
-    {
-        var findings = Editor.Validate(); var list = new ListBox { Margin = new(16) }; foreach (var f in findings) list.Items.Add(new ListBoxItem { Content = $"{f.Level}  ·  {f.Message}", Tag = f }); if (findings.Count == 0) list.Items.Add("Aucune anomalie de structure ou de repérage détectée.");
-        var dialog = new Window { Owner = this, Title = "Vérification du schéma · double-clic pour localiser", Width = 760, Height = 460, Content = list, WindowStartupLocation = WindowStartupLocation.CenterOwner }; list.MouseDoubleClick += (_, _) => { if (list.SelectedItem is ListBoxItem i && i.Tag is Finding f) { Editor.SelectSheet(f.SheetId); Canvas.Select(f.ComponentId); dialog.Close(); } }; dialog.ShowDialog();
-    }
+    private void Validate() => FindingsDialog();
     private void Bom() => BomDialog();
     private async void ExportFile(string format)
     {

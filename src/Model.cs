@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -147,6 +147,7 @@ public sealed record Position(double X, double Y)
 }
 public sealed class Wire
 {
+    public WireNumberPlacement NumberPlacement { get; set; } = new();
     public bool NumberIndependent { get; set; }
     public double Thickness { get; set; } = 1.6;
     public string LineStyle { get; set; } = "solid";
@@ -238,7 +239,7 @@ public static class ProjectStore
             foreach (var sheet in project.Sheets ?? []) if (sheet is not null) sheet.UseProjectZones = sheet.ZoneColumns == project.ZoneColumns && sheet.ZoneRows == project.ZoneRows;
             project.Version = Project.CurrentVersion;
         }
-        else if (project.Version == 3) project.Version = Project.CurrentVersion;
+        else if (project.Version is 3 or 4) project.Version = Project.CurrentVersion;
         ValidateStructure(project);
         return project;
     }
@@ -283,6 +284,7 @@ public static class ProjectStore
             {
                 if (w is null) throw new InvalidDataException("Conducteur vide.");
                 Text(w.Number);
+                if (w.NumberPlacement is null) throw new InvalidDataException("Position du numéro de fil absente."); w.NumberPlacement.Validate();
                 if (!double.IsFinite(w.Thickness) || w.Thickness is < .25 or > 10 || w.LineStyle is not ("solid" or "dashed" or "dotted" or "dashdot")) throw new InvalidDataException("Trait du conducteur : épaisseur 0,25 à 10 ; continu, tirets, pointillés ou mixte.");
                 if (w.Color is null || !System.Text.RegularExpressions.Regex.IsMatch(w.Color, "^#[0-9A-Fa-f]{6}$")) throw new InvalidDataException("Couleur de conducteur : utiliser #RRGGBB.");
                 Id(w.Id);
@@ -455,6 +457,9 @@ public sealed partial class Editor
         }
         list.AddRange(CrossReferences.Findings(Project));
         list.AddRange(CoilContacts.Findings(Project));
+        foreach (var s in Project.Sheets) foreach (var w in s.Wires) if (string.IsNullOrWhiteSpace(w.Number)) list.Add(new("Conducteur", s.Id, w.Id, "Numéro de conducteur manquant"));
+        var networks = new ConductorNetworks(Project); var checkedWires = new HashSet<string>();
+        foreach (var s in Project.Sheets) foreach (var wire in s.Wires) if (checkedWires.Add(wire.Id)) { var connected = networks.Connected(wire.From).ToList(); foreach (var w in connected) checkedWires.Add(w.Id); var numbers = connected.Where(w => !w.NumberIndependent && w.Number.Length > 0).Select(w => w.Number).Distinct(StringComparer.OrdinalIgnoreCase).ToList(); if (numbers.Count > 1) list.Add(new("Conducteur", s.Id, wire.Id, "Numéros communs différents sur une même continuité : " + string.Join(", ", numbers))); }
         return list;
     }
 }

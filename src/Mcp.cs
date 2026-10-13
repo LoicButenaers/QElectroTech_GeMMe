@@ -15,6 +15,10 @@ public static class McpTools
     private static JsonObject B(string description) => new() { ["type"] = "boolean", ["description"] = description };
     public static readonly ToolSpec[] Specs =
     [
+        new("project_search", "Rechercher repères, conducteurs, références, textes et folios dans tout le projet.", new() { ["query"] = S("Texte recherché") }, ["query"], true),
+        new("circuit_read", "Lire tous les conducteurs de la continuité électrique d’un fil, à travers les bornes et reports.", new() { ["id"] = S("ID du conducteur"), ["highlight"] = B("Surligner dans l’interface") }, ["id"], true),
+        new("selection_align", "Aligner les centres des objets du folio actif ou les répartir régulièrement. Opération annulable.", new() { ["ids"] = new JsonObject { ["type"] = "array", ["maxItems"] = 10000, ["items"] = new JsonObject { ["type"] = "string" } }, ["operation"] = S("left, right, top, bottom, centerX, centerY, distributeX, distributeY") }, ["ids", "operation"]),
+        new("wire_label_update", "Régler le placement et le style du numéro de fil ; offsets en unités du dessin, rotation null = trajet.", new() { ["id"] = S("ID conducteur"), ["placement"] = new JsonObject { ["type"] = "object" } }, ["id", "placement"]),
         new("symbol_get", "Lire le dessin et les bornes d’un symbole intégré ou du projet.", new() { ["id"] = S("ID du symbole") }, ["id"], true),
         new("symbol_copy", "Enregistrer une définition éditée comme nouvelle copie du projet ; remplacer éventuellement un composant en conservant ses bornes connectées.", new() { ["definition"] = new JsonObject { ["type"] = "object" }, ["componentId"] = S("ID du composant à remplacer, facultatif") }, ["definition"]),
         new("symbol_import", "Importer un DXF 2000+ ou un .gemsymbol dans la bibliothèque du projet. Un DXF ne fournit aucune borne électrique ; ajouter les bornes avec symbol_copy.", new() { ["path"] = S("Chemin absolu .dxf ou .gemsymbol"), ["scale"] = N("Échelle du dessin, défaut 1") }, ["path"]),
@@ -96,6 +100,10 @@ public static class McpTools
         object result;
         switch (name)
         {
+            case "project_search": result = ProjectNavigation.Search(e.Project, Str("query")); break;
+            case "circuit_read": result = ProjectNavigation.Circuit(e.Project, Str("id")); if (Flag("highlight")) window.Canvas.HighlightCircuit(Str("id")); break;
+            case "selection_align": e.AlignSelection(a.GetProperty("ids").Deserialize<string[]>() ?? [], Str("operation")); result = Snapshot(); break;
+            case "wire_label_update": var labelPlacement = a.GetProperty("placement").Deserialize<WireNumberPlacement>(ProjectStore.Json) ?? throw new ArgumentException("Placement absent."); e.Change(() => e.Sheet.Wires.Single(w => w.Id == Str("id")).NumberPlacement = labelPlacement); result = labelPlacement; break;
             case "symbol_get": result = CustomSymbols.Resolve(e.Project, Str("id")); break;
             case "symbol_copy": var definition = a.GetProperty("definition").Deserialize<SymbolDefinition>(ProjectStore.Json) ?? throw new ArgumentException("Définition absente."); result = e.SaveSymbolCopy(definition, Str("componentId").Length > 0 ? Str("componentId") : null); break;
             case "symbol_import":

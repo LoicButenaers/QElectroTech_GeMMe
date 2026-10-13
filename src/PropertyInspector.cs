@@ -109,6 +109,7 @@ public sealed partial class MainWindow
             LiveText(fields["number"], value => Editor.SetWireNumber(wire.Id, value, wire.Id + ":number"));
             LiveText(fields["thickness"], value => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Thickness = ReadNumber(value), wire.Id + ":thickness"));
             LiveText(fields["color"], value => { if (!EditorPreferences.IsColor(value)) throw new ArgumentException("Saisir # suivi de six chiffres hexadécimaux (exemple : #2474D2)."); Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Color = value, wire.Id + ":color"); });
+            WireLabelInspector(wire);
         }
         else if (note is not null)
         {

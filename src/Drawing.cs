@@ -50,16 +50,17 @@ public static class Drawing
     }
     public static Ink? WireLabel(Wire wire, IReadOnlyList<Point> path)
     {
-        if (string.IsNullOrWhiteSpace(wire.Number)) return null;
+        if (string.IsNullOrWhiteSpace(wire.Number) || !wire.NumberPlacement.Visible) return null;
         int segment = 0; double length = 0;
         for (int i = 1; i < path.Count; i++) { double candidate = (path[i] - path[i - 1]).Length; if (candidate > length) { segment = i; length = candidate; } }
         if (length < .001) return null;
         var tangent = (path[segment] - path[segment - 1]) / length;
         if (tangent.X < -.00001 || (Math.Abs(tangent.X) < .00001 && tangent.Y > 0)) tangent = -tangent;
         var midpoint = path[segment - 1] + (path[segment] - path[segment - 1]) / 2;
-        var size = Measure(wire.Number, 10); var normal = new Vector(tangent.Y, -tangent.X);
+        double font = wire.NumberPlacement.FontSize == 0 ? 10 : wire.NumberPlacement.FontSize;
+        var size = Measure(wire.Number, font); var normal = new Vector(tangent.Y, -tangent.X);
         var origin = midpoint - tangent * (size.Width / 2) + normal * (size.Height + 4);
-        return new("text", origin.X, origin.Y, Text: wire.Number, Color: wire.Color, Size: 10, Rotation: Math.Atan2(tangent.Y, tangent.X) * 180 / Math.PI);
+        return new("text", origin.X + wire.NumberPlacement.OffsetX, origin.Y + wire.NumberPlacement.OffsetY, Text: wire.Number, Color: wire.NumberPlacement.Color.Length > 0 ? wire.NumberPlacement.Color : wire.Color, Size: font, Rotation: wire.NumberPlacement.Rotation ?? Math.Atan2(tangent.Y, tangent.X) * 180 / Math.PI);
     }
     public static List<Ink> ComponentScene(Project project, Component c, CrossReferences references, bool images = true)
     {

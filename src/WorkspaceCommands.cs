@@ -54,6 +54,10 @@ public sealed partial class MainWindow
         Add("importQet", "Projet QElectroTech (.qet)…", "open", () => ImportDrawingProject(false));
         Add("importDxf", "Folios EPLAN / CAO exportés en DXF…", "open", () => ImportDrawingProject(true));
         Add("validate", "Vérifier les connexions et les repères", "check", Validate);
+        Add("projectSearch", "Rechercher dans le projet…", "select", ProjectSearchDialog, "Ctrl+F");
+        Add("circuit", "Surligner / parcourir le circuit…", "wire", CircuitDialog);
+        Add("clearCircuit", "Effacer le surlignage du circuit", "wire", Canvas.ClearCircuitHighlight);
+        Add("alignment", "Aligner / répartir la sélection…", "fit", AlignmentDialog, enabled: Selection);
         Add("bom", "Nomenclature configurable…", "library", Bom);
         Add("references", "Navigateur des renvois…", "wire", ReferenceNavigator);
         Add("coilContacts", "Bobines et contacts…", "wire", CoilNavigator);
@@ -91,11 +95,11 @@ public sealed partial class MainWindow
             menu.Items.Add(group);
         }
         Menu("_Fichier", "new", "open", "save", "saveAs", "projectInfo", "demo", "close");
-        Menu("_Édition", "undo", "redo", "duplicate", "rotate", "delete");
+        Menu("_Édition", "undo", "redo", "duplicate", "rotate", "delete", "alignment", "projectSearch");
         Menu("_Folio", "pageAdd", "sheetInfo", "titleblocks", "zones", "pageUp", "pageDown", "pageRename", "pageDelete");
         Menu("_Insérer", "wire", "text", "select", "newSymbol", "editSymbol", "importSymbol");
         Menu("I_mporter", "importQet", "importDxf");
-        Menu("_Projet", "validate", "titleblocks", "bom", "references", "coilContacts");
+        Menu("_Projet", "validate", "projectSearch", "circuit", "clearCircuit", "titleblocks", "bom", "references", "coilContacts");
         Menu("E_xporter", "pdf", "svg", "csv");
         Menu("_Affichage", "fit", "grid", "palette", "library", "properties", "pages", "resetPanels", "settings");
         Menu("_Aide", "help", "mcpHelp", "license");
