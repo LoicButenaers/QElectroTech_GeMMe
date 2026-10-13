@@ -54,7 +54,7 @@ public static class WorkflowTests
             e.Undo(); assert(ProjectStore.Serialize(e.Project) == saved, "Undo génération"); e.Redo();
             int count = e.Project.Sheets.Count; e.GenerateBom(e.Project.BomOptions); assert(e.Project.Sheets.Count == count, "Actualisation sans doublons");
             e.Save(Path.Combine(dir, "bom-folios.gemelec")); assert(ProjectStore.Load(e.FilePath!).Sheets.Count == count, "Relecture des folios");
-            Export.Pdf(e.Project, Path.Combine(dir, "bom-folios.pdf")); assert(System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(Path.Combine(dir, "bom-folios.pdf"))).Contains("/Count " + count), "Toutes les pages exportées");
+            Export.Pdf(e.Project, Path.Combine(dir, "bom-folios.pdf")); assert(System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(Path.Combine(dir, "bom-folios.pdf"))).Contains("/Type /Pages /Count " + PdfNavigation.Pages(e.Project).Count), "Toutes les pages exportées");
             Render(e.Project, e.Sheet, Path.Combine(dir, "bom-folios.png"));
         });
         test("BOM : continuation des longues lignes et limites atomiques", () =>

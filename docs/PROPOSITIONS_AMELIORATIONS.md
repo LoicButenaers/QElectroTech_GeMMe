@@ -1,6 +1,6 @@
 # Propositions à choisir — 13 octobre 2026
 
-Ces propositions sont des ajouts possibles, pas des fonctions livrées. Leurs numéros restent stables pour les prochains choix de l’utilisateur. Le numéro indépendant et les styles individuels des conducteurs font partie du lot 0.15 et ne figurent donc pas comme propositions.
+Liste initiale de propositions. Les numéros 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17 et 18 ont été choisis et livrés en 0.16–0.18 ; voir LIVRAISON_0.18.md. Les autres restent des ajouts possibles. Leurs numéros restent stables pour les prochains choix de l’utilisateur. Le numéro indépendant et les styles individuels des conducteurs font partie du lot 0.15 et ne figurent donc pas comme propositions.
 
 1. **Styles de conducteurs enregistrés** : presets personnels « puissance », « commande », « sécurité », avec couleur, épaisseur et type de trait appliqués en un clic.
 2. **Déplacer les numéros des fils avec Maj + glisser** : choisir leur position sur le trajet, orientation et visibilité, comme pour les textes des symboles.

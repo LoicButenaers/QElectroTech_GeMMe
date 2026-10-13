@@ -1,4 +1,4 @@
-param([switch]$Headless, [string]$AssemblyPath = '')
+param([switch]$Headless, [string]$AssemblyPath = '', [string]$RoundTripProjectPath = '')
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $stem = if ($Headless) { 'MCP-headless-demo' } else { 'MCP-demo' }
@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 61) '61 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 68) '68 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -383,7 +383,7 @@ try {
     $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
     $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
     $state = Call 'project_get'
-    Assert ($state.project.version -eq 6 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
+    Assert ($state.project.version -eq 7 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
     $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$true;number='CABLE-01';color='#D32F2F';thickness=3.2;lineStyle='dashed'}
     $null = Call 'wire_update' @{id=$wire.id;number='27'}
     $state = Call 'project_get'
@@ -444,6 +444,36 @@ try {
     $null = Call 'project_save' @{path=$engineeringPath;overwrite=$true}
     $null = Call 'project_open' @{path=$engineeringPath;discardUnsaved=$true}
     Assert ((Call 'project_get').project.cabinets[0].items[0].width -eq 45 -and (Call 'project_get').project.terminalStrips[0].bridges.Count -eq 1) 'Armoire et pontages relus via MCP'
+    $null = Call 'presentation_apply' @{style=@{name='Noir';symbolColor='#000000';secondaryColor='#000000';wireColor='#000000';preserveIndividual=$true}}
+    Assert ((Call 'project_get').project.presentation.name -eq 'Noir' -and ((Call 'project_get').project.sheets[0].wires | Where-Object id -eq $continuation.id).number -eq 'CABLE-02') 'Présentation commune préservant le conducteur indépendant MCP'
+    $null = Call 'pdf_options_update' @{contents=$true;bookmarks=$true;links=$true}
+    $pdfNavigationPath = Join-Path $root 'build/MCP-navigable.pdf'
+    $null = Call 'export_pdf' @{path=$pdfNavigationPath;overwrite=$true}
+    Assert ((Get-Content -LiteralPath $pdfNavigationPath -Raw).Contains('/Type /Outlines')) 'Signets PDF exportés MCP'
+    $recovery = Call 'recovery_write'
+    Assert (@((Call 'recovery_list') | Where-Object file -eq $recovery.file).Count -eq 1) 'Copie de récupération listée MCP'
+    $templatePath = Join-Path $root 'build/MCP-template.gemtemplate'
+    $null = Call 'template_save' @{path=$templatePath;includeObjects=$true;overwrite=$true}
+    $originalId = (Call 'project_get').project.id
+    $null = Call 'template_open' @{path=$templatePath;title='Depuis gabarit';discardUnsaved=$true}
+    $templateState = Call 'project_get'
+    Assert ($templateState.project.id -ne $originalId -and $templateState.project.cabinets.Count -eq 1 -and $templateState.dirty) 'Gabarit indépendant avec implantation MCP'
+    $null = Call 'recovery_open' @{path=$recovery.file;discardUnsaved=$true}
+    $recoveredState = Call 'project_get'
+    Assert ($recoveredState.project.id -eq $originalId -and $recoveredState.filePath -eq $null -and $recoveredState.dirty -and $recoveredState.project.presentation.name -eq 'Noir') 'Récupération sans écraser le fichier de travail MCP'
+    $errorText = Rpc 'tools/call' @{name='presentation_apply';arguments=@{style=@{tagSize=1}}} -AllowError
+    Assert ($errorText.Length -gt 0 -and (Call 'project_get').project.presentation.name -eq 'Noir') 'Présentation invalide refusée atomiquement MCP'
+    if ($RoundTripProjectPath) {
+        if (!$Headless) { throw 'La relecture du document utilisateur exige un hôte de test isolé.' }
+        $originalHash = (Get-FileHash -LiteralPath $RoundTripProjectPath -Algorithm SHA256).Hash
+        $null = Call 'project_open' @{path=[IO.Path]::GetFullPath($RoundTripProjectPath);discardUnsaved=$true}
+        $openedProject = (Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress
+        $roundTripPath = Join-Path $root 'build/MCP-user-roundtrip.gemelec'
+        $null = Call 'project_save' @{path=$roundTripPath;overwrite=$true}
+        $null = Call 'project_open' @{path=$roundTripPath}
+        Assert (((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $openedProject) 'Migration du projet utilisateur enregistrée et relue sur copie MCP'
+        Assert ((Get-FileHash -LiteralPath $RoundTripProjectPath -Algorithm SHA256).Hash -eq $originalHash) 'Original utilisateur conservé octet pour octet MCP'
+    }
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

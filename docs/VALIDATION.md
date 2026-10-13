@@ -1,5 +1,33 @@
 # Vérifications de livraison
 
+## Version 0.18 et sélection complète du 13 octobre 2026
+
+Exécutable Release Windows x64 publié au chemin habituel, version 0.18.0.0. Compilation sans erreur ni avertissement. **129 scénarios applicatifs réussis**, **68 outils MCP**, **116 contrôles MCP ordinaires et 118 avec l’option RoundTripProjectPath**. La dernière exécution utilise l’original uniquement en lecture et enregistre la copie sous build/MCP-user-roundtrip.gemelec. SHA-256 original inchangé : E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C. Aucune fenêtre ou saisie du projet utilisateur n’a été manipulée.
+
+- Lots 0.16/0.17 conservés : numéros déplaçables, surlignage et navigation de circuit, recherche, anomalies, guides/alignement, numérotation avec aperçu/verrous/conflits, borniers/niveaux/pontages et plans, implantation de face/cotes et fiches sourcées.
+- Récupération : écritures compressées atomiques, nombre de copies borné par projet, intégrité SHA-256 et identité vérifiées à la lecture, refus des archives altérées, restauration comme nouveau projet non enregistré. Le fichier de travail n’est jamais la destination de la copie. Timer désactivé dans les sessions de test ; écriture asynchrone exercée par MCP.
+- Gabarits : schémas vides ou contenu complet, remappage des IDs, associations interfolios, affectations de bornier/armoire et plans générés ; palette facultative persistante. Données et bibliothèque intégrée indépendantes de la source.
+- Présentation : aperçu sur copie, protection des réglages individuels, maintien des connexions et positions, sauvegarde et annulation ; images officielles non recolorées.
+- Transactions ciblées : liste fermée des champs scalaires, contrôles avant mutation, cache borné à un projet et folios concernés, JSON composé strictement identique au sérialiseur complet, coalescence, état modifié, annulation/rétablissement et historique structurel mélangés. Bornes, topologie, définitions et actions générales conservent la validation complète.
+- Format 7 ; six migrations antérieures vérifiées. Les anciens projets conservent leur nombre de pages PDF en laissant le sommaire désactivé. Les nouveaux projets proposent sommaire, signets et renvois cliquables.
+- PDF relus avec pypdf strict : trois pages, trois signets, six liens sur le scénario de reports et références réciproques, destinations valides et rectangles dans les MediaBox. Options désactivées : deux pages, zéro signet et zéro lien. PDF de bornier, armoire et MCP relus ; pages représentatives rendues avec Poppler et inspectées.
+- Fenêtres de présentation, récupération, gabarit et PDF disposées/rendues hors écran. Guide Word et PDF de six pages chacun, toutes les pages rendues et inspectées, liens vers sources officielles et tableaux lisibles. Source reproductible tools/build_release_summary.py.
+
+Mesures locales dans un processus dédié par taille, mêmes jeux synthétiques et même poste, versions 0.17 et 0.18 ; 100 folios / 5 000 composants / 4 900 fils et 200 / 10 000 / 9 800. Les données brutes sont conservées dans MESURES_0.18.json.
+
+| Charge | Opération | Version 0.17 | Version 0.18 |
+| --- | --- | --- | --- |
+| 5 000 composants | Première propriété | 184 ms | 52 ms |
+| 5 000 composants | Saisie répétée médiane | 98 ms | 15 ms |
+| 5 000 composants | Annuler / rétablir | 481 / 453 ms | 38 / 25 ms |
+| 10 000 composants | Première propriété | 362 ms | 83 ms |
+| 10 000 composants | Saisie répétée médiane | 194 ms | 26 ms |
+| 10 000 composants | Annuler / rétablir | 570 / 519 ms | 50 / 38 ms |
+
+Les quatre modifications suivant la première servent au calcul de médiane. La mesure passe par le panneau Propriétés et les notifications de l’éditeur ; aucun rendu n’est effectué à chaque mouvement du benchmark de texte. Les opérations structurelles/globales et les exports restent coûteux et variables. Pas de garantie de cadence GPU, de souris ou de toute combinaison de fichiers/images. Budget d’historique 64 Mo, maximum 100 entrées ; snapshots locaux et globaux sont comptés ensemble. Jeu de données avec fils indépendants/styles et 2 000 / 4 000 contacts associés.
+
+La sélection livrée est 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17 et 18. Les autres propositions, les câbles multicœurs et les automates/I/O structurés restent hors de cette livraison. Les contrôles portent sur la cohérence du modèle, pas sur une certification électrique ou une équivalence complète avec EPLAN.
+
 ## Version 0.15 — 13 octobre 2026
 
 Lot compilé sans erreur ni avertissement, préparé dans `build/update-0.15` pendant que GeMMeElec était ouvert, puis publié au chemin habituel après fermeture par l’utilisateur. Les empreintes SHA-256 du binaire préparé et du binaire publié sont identiques. **105 scénarios applicatifs et 97 vérifications MCP réussis** ; 47 outils conservés. Les contrôles MCP utilisent `Test-Mcp.ps1 -Headless -AssemblyPath build/bin/Release/net10.0-windows/win-x64/GeMMeElec.dll`, sans agir sur l’application ouverte.

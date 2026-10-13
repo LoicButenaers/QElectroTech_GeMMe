@@ -15,6 +15,13 @@ public static class McpTools
     private static JsonObject B(string description) => new() { ["type"] = "boolean", ["description"] = description };
     public static readonly ToolSpec[] Specs =
     [
+        new("presentation_apply", "Appliquer une présentation commune en conservant les réglages individuels selon preserveIndividual.", new(){["style"]=new JsonObject{["type"]="object"}},["style"]),
+        new("pdf_options_update", "Configurer le sommaire, les signets et les liens du PDF sans modifier les folios.",new(){["contents"]=B("Sommaire"),["bookmarks"]=B("Signets"),["links"]=B("Reports et bobines/contacts cliquables")},[]),
+        new("template_save", "Enregistrer un gabarit réutilisable, vide ou avec schémas.",new(){["path"]=S("Chemin absolu .gemtemplate"),["includeObjects"]=B("Inclure le contenu des schémas"),["overwrite"]=B("Autoriser remplacement")},["path"]),
+        new("template_open", "Créer un projet indépendant depuis un gabarit.",new(){["path"]=S("Chemin absolu .gemtemplate"),["title"]=S("Nom du nouveau projet"),["discardUnsaved"]=B("Autoriser abandon des modifications")},["path"]),
+        new("recovery_list", "Lister les copies automatiques séparées des fichiers de travail.",new(),[],true),
+        new("recovery_write", "Créer une copie de récupération sans écraser le fichier de travail.",new(),[]),
+        new("recovery_open", "Restaurer une copie comme projet non enregistré.",new(){["path"]=S("Chemin absolu .gemrecovery"),["discardUnsaved"]=B("Autoriser abandon des modifications")},["path"]),
         new("article_fiches_list", "Rechercher les fiches exactes hors ligne avec provenance, caractéristiques, dimensions vérifiées et documents disponibles.", new() { ["query"]=S("Fabricant, référence ou famille") }, [], true),
         new("article_fiche_assign", "Affecter une fiche à un composant fonctionnel, sans modifier son bornage ou sa géométrie.", new() { ["componentId"]=S("ID composant"),["ficheId"]=S("ID de fiche") }, ["componentId","ficheId"]),
         new("numbering_preview", "Préparer la numérotation des appareils et continuités ; règles, changements et empreinte du projet.", new() { ["rules"] = new JsonObject { ["type"]="object" } }, ["rules"], true),
@@ -110,6 +117,13 @@ public static class McpTools
         object result;
         switch (name)
         {
+            case "presentation_apply":var presentation=a.GetProperty("style").Deserialize<ProjectPresentation>(ProjectStore.Json)??throw new ArgumentException("Présentation absente.");e.Change(()=>Presentation.Apply(e.Project,presentation));result=Snapshot();break;
+            case "pdf_options_update":e.Change(()=>{if(a.TryGetProperty("contents",out var contents))e.Project.PdfOptions.Contents=contents.GetBoolean();if(a.TryGetProperty("bookmarks",out var bookmarks))e.Project.PdfOptions.Bookmarks=bookmarks.GetBoolean();if(a.TryGetProperty("links",out var links))e.Project.PdfOptions.Links=links.GetBoolean();});result=e.Project.PdfOptions;break;
+            case "template_save":var templatePath=PathFor(".gemtemplate",true);ProjectTemplates.Save(e.Project,templatePath,Flag("includeObjects"),window.TemplatePreferences);result=new{path=templatePath};break;
+            case "template_open":var projectTemplate=ProjectTemplates.Load(PathFor(".gemtemplate",false));var createdTemplate=ProjectTemplates.Instantiate(projectTemplate.Project,Str("title",projectTemplate.Project.Title),projectTemplate.IncludeObjects);ReplaceCheck();window.ApplyTemplatePalette(projectTemplate.Palette);e.ImportProject(createdTemplate);result=Snapshot();break;
+            case "recovery_list":result=RecoveryStore.List();break;
+            case "recovery_write":result=window.SaveRecoveryAsync();break;
+            case "recovery_open":var recovered=RecoveryStore.Read(PathFor(".gemrecovery",false));ReplaceCheck();e.ImportProject(recovered.Project);if(e.Project.Sheets.Any(s=>s.Id==recovered.Info.SheetId))e.SelectSheet(recovered.Info.SheetId);result=Snapshot();break;
             case "article_fiches_list":result=ArticleFiches.Search(Str("query")).ToArray();break;
             case "article_fiche_assign":e.AssignArticleFiche(Str("componentId"),Str("ficheId"));result=Snapshot();break;
             case "numbering_preview": result=AutoNumbering.Preview(e.Project,a.GetProperty("rules").Deserialize<NumberingRules>(ProjectStore.Json)??throw new ArgumentException("Règles absentes."));break;

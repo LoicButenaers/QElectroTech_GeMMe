@@ -48,10 +48,15 @@ public static class AutoNumbering
         if(rules.Scope is "all" or "wires")
         {
             var networks=new ConductorNetworks(p); var seen=new HashSet<string>(); var used=new HashSet<string>(p.Sheets.SelectMany(s=>s.Wires).Where(w=>w.NumberIndependent).Select(w=>w.Number),StringComparer.OrdinalIgnoreCase);
+            var groups=new List<(Sheet Sheet,List<Wire> Net,List<Wire> Regular,bool Target)>();
             foreach(var s in p.Sheets) foreach(var wire in s.Wires) if(seen.Add(wire.Id))
             {
                 var net=networks.Connected(wire.From).ToList(); foreach(var w in net)seen.Add(w.Id); var regular=net.Where(w=>!w.NumberIndependent).ToList(); bool target=sheets.Any(sheet=>sheet.Wires.Any(w=>regular.Any(r=>r.Id==w.Id)));
-                if(!target) { foreach(var w in regular)used.Add(w.Number); continue; }
+                groups.Add((s,net,regular,target));if(!target)foreach(var w in regular)used.Add(w.Number);
+            }
+            foreach(var(s,net,regular,target)in groups)
+            {
+                if(!target)continue;
                 string after=regular.Count>0?Next(rules.WirePattern,rules.WirePrefix,s):""; string status=regular.Count>0&&(after.Length==0||!used.Add(after))?"Conflit":"Prévu";
                 foreach(var sheet in p.Sheets) foreach(var w in sheet.Wires.Where(w=>net.Any(n=>n.Id==w.Id))) changes.Add(new(sheet.Id,w.Id,"Conducteur",DocumentModel.PageNumber(p,sheet),w.Number,w.NumberIndependent?w.Number:after,w.NumberIndependent?"Indépendant":status));
             }
@@ -73,10 +78,10 @@ public sealed partial class MainWindow
     {
         Canvas.CancelDrag(); var dialog=DocumentWindow("Numérotation automatique · aperçu et verrous",1150,800);var root=new DockPanel{Margin=new(18)};dialog.Content=root;var controls=new StackPanel{Width=285,Margin=new(0,0,15,0)};DockPanel.SetDock(controls,Dock.Left);root.Children.Add(controls);var rules=DocumentModel.Copy(Editor.Project.NumberingRules);
         controls.Children.Add(Hint("Formats : {prefix}, {folio}, {n}, {n:000}. Les appareils bobine/contact partagent un repère. Les fils indépendants et repères verrouillés sont conservés."));
-        var scope=new ComboBox{ItemsSource=new[]{"all","components","wires"},SelectedItem=rules.Scope,Margin=new(0,6,0,8)};controls.Children.Add(scope);
+        var scope=new ComboBox{ItemsSource=new[]{new{Value="all",Text="Appareils et fils"},new{Value="components",Text="Appareils"},new{Value="wires",Text="Conducteurs"}},DisplayMemberPath="Text",SelectedValuePath="Value",SelectedValue=rules.Scope,Margin=new(0,6,0,8)};controls.Children.Add(scope);
         var componentPattern=DocField(controls,"Format des appareils",rules.ComponentPattern);var wirePattern=DocField(controls,"Format des fils",rules.WirePattern);var prefix=DocField(controls,"Préfixe des fils",rules.WirePrefix);var start=DocField(controls,"Premier compteur",rules.Start.ToString());var local=new CheckBox{Content="Folio courant uniquement",IsChecked=rules.SheetId.Length>0,Margin=new(0,10,0,5)};controls.Children.Add(local);var perSheet=new CheckBox{Content="Compteur par folio",IsChecked=rules.CounterPerFolio,Margin=new(0,5,0,10)};controls.Children.Add(perSheet);
-        var area=new DockPanel();root.Children.Add(area);var info=Hint("");DockPanel.SetDock(info,Dock.Top);area.Children.Add(info);var grid=new DataGrid{IsReadOnly=true,AutoGenerateColumns=true,CanUserAddRows=false,Name="NumberingPreview"};area.Children.Add(grid);grid.AutoGeneratingColumn+=(_,e)=>{if(e.PropertyName is "ObjectId" or "SheetId")e.Cancel=true;};NumberingPlan? plan=null;
-        void Preview(){if(!int.TryParse(start.Text,out int n))throw new ArgumentException("Compteur entier requis.");rules=new(){Scope=(string)scope.SelectedItem,SheetId=local.IsChecked==true?Editor.Sheet.Id:"",ComponentPattern=componentPattern.Text,WirePattern=wirePattern.Text,WirePrefix=prefix.Text,Start=n,CounterPerFolio=perSheet.IsChecked==true};plan=AutoNumbering.Preview(Editor.Project,rules);grid.ItemsSource=plan.Changes;info.Text=plan.CanApply?plan.Changes.Count+" ligne(s) · vérifier l’aperçu puis appliquer":"Conflits : modifier le format ou le compteur avant application";}
+        var area=new DockPanel();root.Children.Add(area);var info=Hint("");DockPanel.SetDock(info,Dock.Top);area.Children.Add(info);var grid=new DataGrid{IsReadOnly=true,AutoGenerateColumns=true,CanUserAddRows=false,Name="NumberingPreview"};area.Children.Add(grid);grid.AutoGeneratingColumn+=(_,e)=>{if(e.PropertyName is "ObjectId" or "SheetId")e.Cancel=true;else e.Column.Header=e.PropertyName switch{"Before"=>"Avant","After"=>"Après","Status"=>"État",_=>e.PropertyName};};NumberingPlan? plan=null;
+        void Preview(){if(!int.TryParse(start.Text,out int n))throw new ArgumentException("Compteur entier requis.");rules=new(){Scope=(string)scope.SelectedValue,SheetId=local.IsChecked==true?Editor.Sheet.Id:"",ComponentPattern=componentPattern.Text,WirePattern=wirePattern.Text,WirePrefix=prefix.Text,Start=n,CounterPerFolio=perSheet.IsChecked==true};plan=AutoNumbering.Preview(Editor.Project,rules);grid.ItemsSource=plan.Changes;info.Text=plan.CanApply?plan.Changes.Count+" ligne(s) · vérifier l’aperçu puis appliquer":"Conflits : modifier le format ou le compteur avant application";}
         controls.Children.Add(DocButton("Actualiser l’aperçu",dialog,Preview));controls.Children.Add(DocButton("Appliquer en une action",dialog,()=>{string previousRules=System.Text.Json.JsonSerializer.Serialize(plan?.Rules);Preview();if(previousRules!=System.Text.Json.JsonSerializer.Serialize(plan!.Rules)){info.Text="Aperçu actualisé. Vérifier les changements puis cliquer de nouveau sur Appliquer.";return;}Editor.ApplyNumbering(plan);dialog.Close();}));controls.Children.Add(DocButton("Fermer",dialog,dialog.Close));Preview();ShowDocumentDialog(dialog);
     }
 }

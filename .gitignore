@@ -5,3 +5,5 @@
 *.suo
 *.gemelec
 *.gemelec.tmp
+
+/tools/__pycache__/

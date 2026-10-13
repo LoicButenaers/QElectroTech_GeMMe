@@ -73,13 +73,13 @@ public static class Drawing
         {
             if (shape.Kind == "text" || (!images && shape.Kind == "image")) continue;
             var p = c.Transform(shape.X, shape.Y);
-            if (shape.Kind == "line") { double angle = shape.Rotation * Math.PI / 180, dx = shape.A - shape.X, dy = shape.B - shape.Y; var b = c.Transform(shape.X + dx * Math.Cos(angle) - dy * Math.Sin(angle), shape.Y + dx * Math.Sin(angle) + dy * Math.Cos(angle)); result.Add(new("line", p.X, p.Y, b.X, b.Y)); }
-            else result.Add(new(shape.Kind, p.X, p.Y, shape.A, shape.B, shape.Text, Size: shape.A, Rotation: c.Rotation + shape.Rotation));
+            if (shape.Kind == "line") { double angle = shape.Rotation * Math.PI / 180, dx = shape.A - shape.X, dy = shape.B - shape.Y; var b = c.Transform(shape.X + dx * Math.Cos(angle) - dy * Math.Sin(angle), shape.Y + dx * Math.Sin(angle) + dy * Math.Cos(angle)); result.Add(new("line", p.X, p.Y, b.X, b.Y,Color:project.Presentation.SymbolColor)); }
+            else result.Add(new(shape.Kind, p.X, p.Y, shape.A, shape.B, shape.Text, Color:project.Presentation.SymbolColor,Size: shape.A, Rotation: c.Rotation + shape.Rotation));
         }
         foreach (var port in c.Definition.Ports)
         {
             var p = c.PortPoint(port.Id);
-            if (!c.Definition.PrintedTerminals) result.Add(new("circle", p.X, p.Y, 2));
+            if (!c.Definition.PrintedTerminals) result.Add(new("circle", p.X, p.Y, 2,Color:project.Presentation.SymbolColor));
 
         }
         result.AddRange(ComponentTexts.Scene(project, c, references));

@@ -53,12 +53,14 @@ public static class Export
         byte[] Bytes(string s) => Encoding.ASCII.GetBytes(s);
         byte[] Stream(byte[] data, string extra = "") { using var m = new MemoryStream(); m.Write(Bytes($"<< /Length {data.Length} {extra} >>\nstream\n")); m.Write(data); m.Write(Bytes("\nendstream")); return m.ToArray(); }
         List<int> pages = [];
+        var pageRecords=new List<(PdfPage Page,int Id,int ContentId,string Images,double Scale)>();
         var imageObjects=new Dictionary<string,(string Name,int Id)>();
-        foreach (var sheet in project.Sheets)
+        foreach (var pdfPage in PdfNavigation.Pages(project))
         {
+            var sheet=pdfPage.Sheet;
             var b = new StringBuilder(); double scale = Math.Min(1190.55 / sheet.Width, 841.89 / sheet.Height);
             b.AppendLine($"q {N(scale)} 0 0 {N(-scale)} 0 841.89 cm 1.6 w");
-            foreach (var s in Drawing.Scene(project, sheet).SelectMany(Drawing.TextLines))
+            foreach (var s in pdfPage.Scene.SelectMany(Drawing.TextLines))
             {
                 var color = (System.Windows.Media.SolidColorBrush)Drawing.Brush(s.Color);
                 string rgb = $"{N(color.Color.R / 255.0)} {N(color.Color.G / 255.0)} {N(color.Color.B / 255.0)}";
@@ -99,9 +101,27 @@ public static class Export
             b.AppendLine("Q");
             int contentId = objects.Count + 1; objects.Add(Stream(Bytes(b.ToString())));
             var imageResources=string.Join(' ',imageObjects.Values.Select(i=>$"/{i.Name} {i.Id} 0 R"));
-            int pageId = objects.Count + 1; pages.Add(pageId); objects.Add(Bytes($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.55 841.89] /Resources << /Font << /F1 3 0 R >> /XObject << {imageResources} >> >> /Contents {contentId} 0 R >>"));
+            int pageId = objects.Count + 1; pages.Add(pageId); objects.Add([]);pageRecords.Add((pdfPage,pageId,contentId,imageResources,scale));
         }
-        objects[0] = Bytes("<< /Type /Catalog /Pages 2 0 R >>");
+        var pageMap=pageRecords.ToDictionary(r=>r.Page.Sheet.Id);
+        foreach(var record in pageRecords)
+        {
+            List<int> annotations=[];foreach(var link in record.Page.Links)
+            {
+                if(!pageMap.TryGetValue(link.TargetSheetId,out var target))continue;var r=link.Bounds;r.Intersect(new System.Windows.Rect(0,0,record.Page.Sheet.Width,record.Page.Sheet.Height));if(r.IsEmpty||r.Width<=0||r.Height<=0)continue;int id=objects.Count+1;annotations.Add(id);
+                objects.Add(Bytes($"<< /Type /Annot /Subtype /Link /Rect [{N(r.Left*record.Scale)} {N(841.89-r.Bottom*record.Scale)} {N(r.Right*record.Scale)} {N(841.89-r.Top*record.Scale)}] /Border [0 0 0] /Dest [{target.Id} 0 R /XYZ {N(link.TargetX*target.Scale)} {N(841.89-link.TargetY*target.Scale)} null] >>"));
+            }
+            string annots=annotations.Count>0?" /Annots ["+string.Join(' ',annotations.Select(i=>$"{i} 0 R"))+"]":"";
+            objects[record.Id-1]=Bytes($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.55 841.89] /Resources << /Font << /F1 3 0 R >> /XObject << {record.Images} >> >> /Contents {record.ContentId} 0 R{annots} >>");
+        }
+        int outlineId=0;
+        if(project.PdfOptions.Bookmarks&&pageRecords.Count>0)
+        {
+            outlineId=objects.Count+1;objects.Add([]);var itemIds=pageRecords.Select((_,i)=>objects.Count+i+1).ToList();
+            for(int i=0;i<pageRecords.Count;i++){var r=pageRecords[i];string title="FEFF"+Convert.ToHexString(Encoding.BigEndianUnicode.GetBytes(r.Page.Title));string neighbors=(i>0?$" /Prev {itemIds[i-1]} 0 R":"")+(i+1<itemIds.Count?$" /Next {itemIds[i+1]} 0 R":"");objects.Add(Bytes($"<< /Title <{title}> /Parent {outlineId} 0 R /Dest [{r.Id} 0 R /Fit]{neighbors} >>"));}
+            objects[outlineId-1]=Bytes($"<< /Type /Outlines /First {itemIds[0]} 0 R /Last {itemIds[^1]} 0 R /Count {itemIds.Count} >>");
+        }
+        objects[0] = Bytes("<< /Type /Catalog /Pages 2 0 R"+(outlineId>0?$" /Outlines {outlineId} 0 R /PageMode /UseOutlines":"")+" >>");
         objects[1] = Bytes($"<< /Type /Pages /Count {pages.Count} /Kids [{string.Join(' ', pages.Select(p => $"{p} 0 R"))}] >>");
         objects[2] = Bytes("<< /Type /Font /Subtype /Type0 /BaseFont /SegoeUI /Encoding /Identity-H /DescendantFonts [4 0 R] /ToUnicode 7 0 R >>");
         var widths = string.Join(' ', glyphMap.Keys.Select(g => $"{g} [{N(font.AdvanceWidths[g] * 1000)}]"));

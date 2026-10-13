@@ -58,7 +58,7 @@ Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `li
 
 `tools/list` fournit les paramètres, types et champs requis. L’export PDF travaille en arrière-plan sur un instantané et répond après écriture du fichier, avec le retour `{path}` habituel ; l’interface peut rester active. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.15 propose 47 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
+La version 0.18 propose 68 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
 
 ## Bobines et contacts (0.13)
 
@@ -179,3 +179,30 @@ Les versions négociées sont `2024-11-05`, `2025-03-26`, `2025-06-18` et `2025-
 Une création avec `numberIndependent: true` et un numéro explicite conserve ce numéro uniquement sur le nouveau conducteur. Sans numéro explicite, un nouveau W… libre est attribué. `wire_update` avec `numberIndependent: true` et `number` permet de protéger et renommer en une transaction. Un renommage commun ignore les fils indépendants, qui continuent à participer au parcours électrique. Les fils indépendants ne fournissent pas le numéro automatique des fils communs. `numberIndependent: false` rétablit le numéro commun présent ; un `number` explicite dans le même appel peut renommer cette continuité.
 
 Les styles sont repris dans l’écran et les exports SVG/PDF. Une épaisseur ou un type de trait invalide annule l’opération complète, y compris un éventuel changement d’indépendance. Les tronçons créés par une dérivation reprennent les attributs du fil coupé ; le nouveau fil de branche conserve son propre aspect.
+
+## Outils ajoutés dans la sélection 0.16 à 0.18
+
+Les schémas exacts sont accessibles via tools/list. Les modifications du projet partagent son historique ; les créations de fichiers ont une protection overwrite. Les ouvertures/remplacements refusent un projet modifié sans discardUnsaved.
+
+| Outils | Paramètres et comportement |
+| --- | --- |
+| project_search | query ; localisations dans tout le projet, accents/casse normalisés. |
+| circuit_read | id du fil ; highlight facultatif ; inclut bornes de passage, pontages et reports. |
+| selection_align | ids et operation : left, right, top, bottom, centerX, centerY, distributeX, distributeY. |
+| wire_label_update | id et placement : offsetX/Y, fontSize, color, visible, rotation nullable. |
+| numbering_preview / numbering_apply | rules ; l’application exige sourceHash retourné par l’aperçu. Formats, périmètre, compteur et verrous sont communs à l’interface. |
+| terminal_strips_list / terminal_strip_put | Lire les borniers ; strip contient affectations et pontages sur ports réels. |
+| terminal_plan_generate | id du bornier ; crée ou régénère ses folios paginés. |
+| cabinets_list / cabinet_put | Lire ou remplacer cabinet : dimensions mm et objets device, rail, duct. |
+| cabinet_plan_generate | id de l’armoire ; vue de face et pages de cotes. |
+| article_fiches_list / article_fiche_assign | query ; componentId et ficheId ; données exactes sourcées sans changement du bornage. |
+| presentation_apply | style : tailles, couleurs, épaisseur et preserveIndividual ; opération annulable. |
+| pdf_options_update | contents, bookmarks, links facultatifs ; options persistantes et annulables. |
+| template_save | path absolu .gemtemplate, includeObjects et overwrite ; conserve aussi la palette. |
+| template_open | path, title facultatif, discardUnsaved ; projet indépendant et palette du gabarit. |
+| recovery_list / recovery_write | Métadonnées des copies ; création asynchrone séparée du fichier de travail. |
+| recovery_open | path absolu .gemrecovery, discardUnsaved ; intégrité vérifiée puis projet non enregistré. |
+
+component_update accepte tagLocked pour protéger la numérotation automatique d’une famille bobine/contact. L’export PDF applique les options du projet et conserve ses numéros de folios ; le sommaire reste une page PDF indépendante. Le format projet courant est v7. Les transactions scalaires ciblées accélèrent l’inspecteur ; les actions générales et mises à jour MCP gardent leur validation complète.
+
+Test-Mcp.ps1 -Headless vérifie 116 contrôles sur une session séparée. L’option -RoundTripProjectPath ajoute deux contrôles de relecture sur une copie et d’intégrité de la source ; ne pas l’utiliser sur une session utilisateur non isolée.

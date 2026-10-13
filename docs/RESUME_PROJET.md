@@ -1,6 +1,6 @@
 # GeMMeElec — résumé du travail réalisé
 
-État au **13 octobre 2026**, version publiée **0.15.0.0**.
+État au **13 octobre 2026**, version publiée **0.18.0.0**.
 
 Ce document résume les réalisations présentes dans le dépôt et la dernière livraison vérifiée. L’objectif initial reste un outil de conception de schémas électriques industriels pour la Belgique et l’Europe, avec une richesse fonctionnelle inspirée d’EPLAN P8. La version actuelle constitue une base fonctionnelle ; l’équivalence complète avec EPLAN n’est pas réalisée.
 
@@ -13,15 +13,19 @@ Ce document résume les réalisations présentes dans le dépôt et la dernière
 - Dépôt de travail : `C:\dev\QElectroTech_GeMMe`.
 - Exécutable autonome : `C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`.
 - Une seule version de l’exécutable est conservée à ce chemin ; le runtime et les bibliothèques nécessaires y sont embarqués.
-- Les projets utilisent le format JSON **`.gemelec` version 4**, avec migration en mémoire des fichiers versions 1, 2 et 3, sauvegarde atomique, contrôle de structure et historique compressé d’annulation/rétablissement. L’ouverture ne réécrit pas le fichier source. Limites : 200 folios, 64 Mo à la lecture et à l’enregistrement.
+- Les projets utilisent le format JSON **`.gemelec` version 7**, avec migration en mémoire des fichiers versions 1 à 6, sauvegarde atomique, contrôle de structure et historique compressé d’annulation/rétablissement. L’ouverture ne réécrit pas le fichier source. Limites : 200 folios, 64 Mo à la lecture et à l’enregistrement.
 
 Le travail reste dans le dépôt de l’utilisateur ; le dépôt public de QElectroTech n’est pas modifié. Le projet utilisateur `C:\Users\pravi\Documents\LaserSieve_GH.gemelec`, travaillé lors d’une étape précédente à partir du schéma LaserSieve, est laissé intact pendant les évolutions actuelles du logiciel.
+
+## Sélection du 13 octobre livrée en 0.16 à 0.18
+
+Les 14 propositions 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17 et 18 sont livrées. Déplacement des numéros, circuit complet, recherche et anomalies, numérotation avec aperçu/verrous, borniers/plans, implantation, trois fiches sourcées, copies de récupération, PDF navigable, gabarits avec palette, alignement/guides, transactions ciblées et présentation avec aperçu. 129 scénarios applicatifs et 118 contrôles MCP incluant la copie utilisateur (116 sans cette option), 68 outils. Exécutable 0.18 au chemin habituel. Récapitulatif utilisateur : LIVRAISON_0.18.md et Word/PDF dans output/. Mesures comparatives dans MESURES_0.18.json. Les caractéristiques fabricant non vérifiées restent absentes ; la fiche Phoenix n’embarque pas son PDF refusé par le serveur.
 
 ## Numéro et aspect propres à un conducteur (0.15)
 
 La case **Numéro indépendant** protège le numéro d’un fil connecté contre les renommages du réseau, sans changer la connectivité électrique. Son propre renommage ne modifie que lui ; décocher reprend le numéro commun. Couleur, épaisseur 0,25–10 et type de trait continu/tirets/pointillés/mixte sont immédiats et persistants. PDF/SVG, reconnexion, division en tronçons, nettoyage des jonctions et annulation sont vérifiés. La sélection conserve le style sous son halo.
 
-Format v4 avec migration v1/v2/v3 sans réécriture implicite. Les exceptions de folio v3 sont conservées. Le lot a été préparé dans `build/update-0.15` pendant que l’application utilisateur était ouverte, puis publié à `build/GeMMeElec.exe` après enregistrement et fermeture par l’utilisateur. Le SHA-256 du binaire publié correspond à celui de la copie testée. Les tests utilisent cette copie et le MCP de test isolé. Propositions futures numérotées : `PROPOSITIONS_AMELIORATIONS.md`, en attente du choix utilisateur.
+Format v4 avec migration v1/v2/v3 sans réécriture implicite. Les exceptions de folio v3 sont conservées. Le lot a été préparé dans `build/update-0.15` pendant que l’application utilisateur était ouverte, puis publié à `build/GeMMeElec.exe` après enregistrement et fermeture par l’utilisateur. Le SHA-256 du binaire publié correspond à celui de la copie testée. Les tests utilisent cette copie et le MCP de test isolé. Les numéros de `PROPOSITIONS_AMELIORATIONS.md` ont ensuite guidé la sélection livrée en 0.16–0.18.
 
 ## Ajustements 0.14 validés avec l’utilisateur
 
@@ -162,10 +166,10 @@ Le serveur a été testé directement par son transport MCP. Une configuration f
 
 Les améliorations comprennent le cache de la scène et de la grille, l’indexation des composants et renvois, des caches bornés pour les textes/images, la virtualisation des tableaux, les imports en arrière-plan et la pagination BOM à la demande. L’aperçu des textes travaille sur le composant sélectionné et le panneau de propriétés n’est pas reconstruit à chaque caractère.
 
-Dernier lot vérifié : **0.15.0.0**, le 13 octobre 2026.
+Dernier lot vérifié : **0.18.0.0**, le 13 octobre 2026.
 
-- **105 scénarios applicatifs réussis** sur l’exécutable préparé séparément, sans erreur ni avertissement.
-- **97 vérifications MCP réussies** via `Test-Mcp.ps1 -Headless` ; 47 outils, avec les 45 anciens conservés.
+- **129 scénarios applicatifs réussis** sur l’exécutable publié, sans erreur ni avertissement.
+- **118 vérifications MCP réussies** via `Test-Mcp.ps1 -Headless -RoundTripProjectPath ...` ; 68 outils conservant les anciens. Le script ordinaire compte 116 contrôles.
 - Quatre combinaisons Compacte/Ruban × Clair/Sombre, commandes communes activables, conservation des panneaux, rendu à 1440 × 900 et disposition à 1000 × 600. Le compact libère 68 unités verticales de plus que le ruban.
 - Propriétés immédiates, erreurs en ligne, curseur conservé pendant la saisie, connexion suivant les coordonnées/rotations, historique cohérent ; propriétés documentaires et textes immédiats.
 - Associations bobines/contacts complètes : persistance, migration v1/v2 → v3, repère partagé, navigation, réorganisation des folios, duplication, détachement et suppression/annulation sans perte de conducteurs ; déclaration des symboles personnels et contrôles de bornes.
@@ -173,9 +177,9 @@ Dernier lot vérifié : **0.15.0.0**, le 13 octobre 2026.
 - PDF multipage en arrière-plan sur un instantané, depuis l’interface et le MCP. Les caches WPF sont propres au fil de rendu. Test d’édition/rendu concurrent avec image officielle : résultat identique octet pour octet à l’export de référence, indépendant des modifications suivantes. L’application attend la fin de l’export avant de fermer.
 - PDF invariant entre thèmes/dispositions, y compris avec les nouvelles références. Exports A3 de deux folios et PDF de charge de 200 pages contrôlés avec Poppler ; interface et fenêtres documentaires/texte inspectées hors écran. Aucune manipulation souris/clavier d’un projet utilisateur.
 - Lecture/enregistrement/relecture d’une **copie** de `LaserSieve_GH.gemelec`, original intact : SHA-256 `E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C`. Échec d’enregistrement préservant le modèle, son état modifié et l’absence de fichier temporaire.
-- Mesures représentatives dans **un processus dédié par taille** : 100/5 000 et 200/10 000, avec conducteurs, textes et contacts associés. Détails et limites dans `VALIDATION.md` et `build/benchmark.json`. Les gros projets restent coûteux en propriétés/historique ; ces mesures ne garantissent pas une cadence de souris ou GPU.
+- Mesures représentatives dans **un processus dédié par taille** : 100/5 000 et 200/10 000, avec conducteurs, textes et contacts associés. Détails et limites dans `VALIDATION.md` et `build/benchmark.json`. Les champs usuels de composants et leur historique sont maintenant ciblés ; les opérations globales restent coûteuses. Les mesures ne garantissent pas une cadence de souris ou GPU.
 
-Les préférences et panneaux des tests utilisent des fichiers séparés. Le budget de fichier est contrôlé des deux côtés pour éviter une sauvegarde impossible à rouvrir. JSON compact et snapshots compressés réduisent les volumes sans modifier les données. La validation de structure reste exigée pour les transactions ; la seconde validation n’est exécutée après nettoyage des jonctions que si ce nettoyage a modifié le modèle.
+Les préférences et panneaux des tests utilisent des fichiers séparés. Le budget de fichier est contrôlé des deux côtés pour éviter une sauvegarde impossible à rouvrir. JSON compact et snapshots compressés réduisent les volumes sans modifier les données. La validation complète reste exigée pour les transactions structurelles ; les champs scalaires ciblés sont contrôlés avant mutation et les snapshots ne changent pas leur topologie. la seconde validation n’est exécutée après nettoyage des jonctions que si ce nettoyage a modifié le modèle.
 
 Reprise : modifications 0.11 vérifiées et préservées dans `306a101be`, puis refonte 0.12 dans `358d4f13e`, tous deux poussés sur `origin/GeMMeElec`. Les 0.13 et 0.14 poursuivent cette base. Aucune ancienne branche n’a été réécrite ; `upstream` et les documents utilisateur restent intacts.
 

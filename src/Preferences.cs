@@ -10,6 +10,9 @@ namespace GeMMeElec;
 public sealed record PaletteColor(string Name, string Color);
 public sealed class EditorPreferences
 {
+    public bool RecoveryEnabled { get; set; } = true;
+    public int RecoveryIntervalSeconds { get; set; } = 120;
+    public int RecoveryKeepCount { get; set; } = 5;
     public string InterfaceLayout { get; set; } = "compact";
     public string InterfaceTheme { get; set; } = "light";
     public bool GridVisible { get; set; } = true;
@@ -20,6 +23,7 @@ public sealed class EditorPreferences
     public static bool IsColor(string? value) => value is not null && Regex.IsMatch(value, "^#[0-9A-Fa-f]{6}$");
     public void Validate()
     {
+        if(RecoveryIntervalSeconds is <30 or >3600||RecoveryKeepCount is <1 or >20)throw new ArgumentException("Copies automatiques : intervalle 30–3600 secondes et 1–20 copies.");
         if (InterfaceLayout is not ("compact" or "ribbon") || InterfaceTheme is not ("light" or "dark")) throw new ArgumentException("Disposition ou thème de l’interface invalide.");
         if (!double.IsFinite(GridIntensity) || GridIntensity is < 0 or > 100 || !IsColor(WireColor) || Colors is null || Colors.Count > 64 || Colors.Any(c => c is null || string.IsNullOrWhiteSpace(c.Name) || c.Name.Length > 60 || !IsColor(c.Color))) throw new ArgumentException("Réglages de grille ou de palette invalides.");
     }

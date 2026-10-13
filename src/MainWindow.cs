@@ -50,9 +50,10 @@ public sealed partial class MainWindow : Window
         Canvas.ContextRequested += ShowSchematicMenu;
         Canvas.ReferenceRequested += FollowReference; Canvas.Status += text => status.Text = text; Canvas.SelectionChanged += Inspect; Canvas.TextRequested += p => { var text = Prompt("Texte du schéma", "Texte", "Texte"); if (text is not null) Editor.Change(() => Editor.Sheet.Notes.Add(new() { X = Editor.Snap(p.X), Y = Editor.Snap(p.Y), Text = text })); };
         Editor.Changed += Refresh; PreviewKeyDown += Keys;
-        Closing += (_, e) => { if (exportInProgress) { e.Cancel = true; status.Text = "Export PDF en cours · fermer après sa fin."; return; } Canvas.CancelDrag(); if (!CanReplace()) e.Cancel = true; }; Closed += (_, _) => bridge?.Dispose();
+        Closing += (_, e) => { if (exportInProgress||recoveryWriting) { e.Cancel = true; status.Text = "Export ou copie en cours · fermer après sa fin."; return; } Canvas.CancelDrag(); if (!CanReplace()) e.Cancel = true; }; Closed += (_, _) => { recoveryTimer.Stop();bridge?.Dispose(); };
         bridge = new LocalBridge(this); Filter(); Refresh(); Canvas.SetMode("select");
         if (file is not null) Run(() => Editor.Open(file));
+        StartRecovery();
     }
     private static TextBlock Heading(string text) => UiTheme.Bind(new TextBlock { Text = text, FontSize = 11, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center }, TextBlock.ForegroundProperty, "Ui.Muted");
     private Button Button(string text, Action action) { var b = new Button { Content = text }; b.Click += (_, _) => Run(action); return b; }
@@ -180,7 +181,7 @@ public sealed partial class MainWindow : Window
     private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nGlisser dans le vide : sélection par rectangle · Ctrl : ajouter\nClic droit : commandes rapides · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour glisser les textes dans l’aperçu, choisir un côté ou une icône d’alignement et saisir des coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Pour une dérivation, tirez une borne sur le trajet d’un fil : un point de jonction est créé. Les simples croisements restent sans connexion.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
     private void McpHelp() => MessageBox.Show(this, "Le serveur MCP fait partie du même exécutable.\n\nCommande :\n" + Environment.ProcessPath + " --mcp\n\nTransport stdio. Gardez l’application ouverte. Le serveur rejoint cette fenêtre par un canal Windows limité à votre compte. Les modifications sont annulables avec Ctrl+Z.\n\nVoir docs/MCP.md dans le dépôt pour la configuration du client.", "MCP GeMMeElec");
     public void McpActivity(string tool) { mcpStatus.Text = "● MCP · " + tool; status.Text = "Commande MCP exécutée : " + tool; }
-    internal void DisposeTestBridge() => bridge.Dispose();
+    internal void DisposeTestBridge() { recoveryTimer.Stop();bridge.Dispose(); }
     private void Demo()
     {
         if (!CanReplace()) return; Editor.New("Exemple · départ moteur triphasé"); Examples.Motor(Editor); Canvas.Fit();

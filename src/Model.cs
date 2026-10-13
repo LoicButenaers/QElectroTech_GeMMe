@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 6;
+    public const int CurrentVersion = 7;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -28,6 +28,8 @@ public sealed class Project
     public NumberingRules NumberingRules { get; set; } = new();
     public List<TerminalStrip> TerminalStrips { get; set; } = [];
     public List<CabinetLayout> Cabinets { get; set; } = [];
+    public ProjectPresentation Presentation { get; set; } = new();
+    public PdfOptions PdfOptions { get; set; } = new();
     public int ZoneColumns { get; set; } = 20;
     public int ZoneRows { get; set; } = 10;
     public List<Sheet> Sheets { get; set; } = [new()];
@@ -232,7 +234,7 @@ public sealed record Finding(string Level, string SheetId, string ComponentId, s
 public static class ProjectStore
 {
     public static readonly JsonSerializerOptions Json = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
-    private static readonly JsonSerializerOptions ProjectJson = new(Json) { WriteIndented = false };
+    internal static readonly JsonSerializerOptions ProjectJson = new(Json) { WriteIndented = false };
     public static string Serialize(Project project) => JsonSerializer.Serialize(project, ProjectJson);
     public static Project Deserialize(string json)
     {
@@ -246,8 +248,9 @@ public static class ProjectStore
             project.ZoneColumns = first?.ZoneColumns ?? 20; project.ZoneRows = first?.ZoneRows ?? 10;
             foreach (var sheet in project.Sheets ?? []) if (sheet is not null) sheet.UseProjectZones = sheet.ZoneColumns == project.ZoneColumns && sheet.ZoneRows == project.ZoneRows;
             project.Version = Project.CurrentVersion;
+            project.PdfOptions.Contents=false;
         }
-        else if (project.Version is 3 or 4 or 5) project.Version = Project.CurrentVersion;
+        else if (project.Version is 3 or 4 or 5 or 6) {project.Version = Project.CurrentVersion;project.PdfOptions.Contents=false;}
         ValidateStructure(project);
         return project;
     }
@@ -257,6 +260,8 @@ public static class ProjectStore
         void Text(string? value) { if (value is null || value.Length > 2000) throw new InvalidDataException("Champ texte absent ou trop long."); }
         Text(p.Title); Text(p.Author); Text(p.Revision);
         if(p.NumberingRules is null)throw new InvalidDataException("Règles de numérotation absentes.");p.NumberingRules.Validate(p);
+        if(p.Presentation is null)throw new InvalidDataException("Présentation absente.");p.Presentation.Validate();
+        if(p.PdfOptions is null)throw new InvalidDataException("Options PDF absentes.");
         if (p.ZoneColumns is < 1 or > 40 || p.ZoneRows is < 1 or > 26) throw new InvalidDataException("Repérage du projet : 1 à 40 colonnes et 1 à 26 lignes.");
         CustomSymbols.Validate(p);
         DocumentModel.Validate(p);
@@ -357,7 +362,7 @@ public sealed partial class Editor
     public bool CanRedo => redo.Count > 0;
     internal string ExportSnapshot => currentState;
     public void Notify() => Notify(ProjectStore.Serialize(Project));
-    private void Notify(string state) { currentState = state; Changed?.Invoke(); }
+    private void Notify(string state) { sheetStateCache = null; currentState = state; Changed?.Invoke(); }
     public void SelectSheet(string id)
     {
         if (!Project.Sheets.Any(s => s.Id == id)) throw new ArgumentException("Folio introuvable.");
@@ -405,12 +410,14 @@ public sealed partial class Editor
     public void Undo()
     {
         EndPropertyEdit(); if (!CanUndo || InteractionInProgress) return;
+        if (undo[^1].SheetIds is not null) { RestoreSheets(undo, redo); return; }
         var state = undo[^1].Restore(); var restored = ProjectStore.Deserialize(state); var outgoing = HistorySnapshot.Capture(ProjectStore.Serialize(Project));
         redo.Add(outgoing); Project = restored; undo.RemoveAt(undo.Count - 1); TrimHistory(); RepairSelection(); Notify(state);
     }
     public void Redo()
     {
         EndPropertyEdit(); if (!CanRedo || InteractionInProgress) return;
+        if (redo[^1].SheetIds is not null) { RestoreSheets(redo, undo); return; }
         var state = redo[^1].Restore(); var restored = ProjectStore.Deserialize(state); var outgoing = HistorySnapshot.Capture(ProjectStore.Serialize(Project));
         undo.Add(outgoing); Project = restored; redo.RemoveAt(redo.Count - 1); TrimHistory(); RepairSelection(); Notify(state);
     }

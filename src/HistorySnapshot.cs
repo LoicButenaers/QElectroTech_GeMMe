@@ -8,7 +8,9 @@ namespace GeMMeElec;
 // data, so a large document can retain useful undo depth. Project files stay JSON.
 internal sealed class HistorySnapshot(byte[] data, int characters)
 {
-    public long MemoryBytes => data.LongLength + 64;
+    public string[]? SheetIds { get; private set; }
+    public long MemoryBytes => data.LongLength + 64 + (SheetIds?.Sum(s=>s.Length*2+24)??0);
+    public static HistorySnapshot CaptureSheets(string state,string[] ids) { var snapshot=Capture(state);snapshot.SheetIds=ids;return snapshot; }
     public static HistorySnapshot Capture(string state)
     {
         using var buffer = new MemoryStream();

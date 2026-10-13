@@ -1,8 +1,8 @@
 # GeMMeElec — feuille de route
 
-## Sélection en cours du 13 octobre 2026
+## Sélection livrée du 13 octobre 2026
 
-L’utilisateur a engagé les propositions 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17 et 18 et demande un récapitulatif Word/PDF. Premier lot 0.16 : 2, 3, 10, 11 et 16 vérifiés (111 scénarios / 101 MCP, 51 outils). Suivi détaillé dans `LOT_SELECTION_20261013.md`. Ce choix prend priorité sur l’ordre métier ci-dessous ; les fonctions non choisies restent hors de ce lot.
+La sélection 2, 3, 4, 5, 8, 9, 10, 11, 12, 14, 15, 16, 17 et 18 est livrée en 0.16–0.18, avec guide Word/PDF de six pages. 129 scénarios applicatifs et 118 contrôles MCP avec copie utilisateur, 68 outils. Détails et limites dans LIVRAISON_0.18.md ; suivi dans LOT_SELECTION_20261013.md. Les fonctions 1, 6, 7 et 13 restent hors de ce lot.
 
 
 Demandes métier du 13 octobre 2026. Dépôt `C:\dev\QElectroTech_GeMMe`, branche `GeMMeElec`, livraison `build/GeMMeElec.exe`. Toute étape inclut persistance, annulation, validation et parcours complet. Le résumé doit décrire uniquement les livraisons vérifiées.
@@ -27,7 +27,7 @@ Alignement lettres/cartouche validé sur aperçu ; repérage commun au projet av
 
 Numéro propre protégé des renommages du réseau ; retour au numéro commun, couleur, épaisseur et type de trait par conducteur. Persistance v4, PDF/SVG, connexions, dérivations et nettoyage vérifiés. Préparation séparée pour préserver l’application ouverte ; publié au chemin habituel après enregistrement et fermeture par l’utilisateur. 105 scénarios applicatifs / 97 contrôles MCP. Voir `REPERAGE_CONDUCTEURS_TEXTES.md` et `VALIDATION.md`.
 
-Une liste de propositions numérotées stables figure dans `PROPOSITIONS_AMELIORATIONS.md`. L’utilisateur choisira les numéros à engager ; ces idées ne sont pas des livraisons annoncées et peuvent infléchir l’ordre des prochains lots.
+Une liste de propositions numérotées stables figure dans `PROPOSITIONS_AMELIORATIONS.md`. Les numéros sélectionnés le 13 octobre sont maintenant livrés ; les autres idées restent des propositions.
 
 ## Prochain lot : automates et entrées/sorties
 

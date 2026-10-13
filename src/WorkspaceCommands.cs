@@ -62,6 +62,11 @@ public sealed partial class MainWindow
         Add("terminalStrips", "Borniers et plans de raccordement…", "wire", TerminalStripsDialog);
         Add("cabinet", "Implantation d’armoire…", "page", CabinetDialog);
         Add("articleFiches", "Fiches fabricants hors ligne…", "library", ArticleFichesDialog);
+        Add("recovery", "Sauvegarde automatique / récupérer…", "save", RecoveryDialog);
+        Add("templateSave", "Enregistrer comme gabarit…", "save", SaveProjectTemplate);
+        Add("templateNew", "Nouveau depuis un gabarit…", "new", NewFromProjectTemplate);
+        Add("presentation", "Présentation commune du schéma…", "edit", PresentationDialog);
+        Add("pdfOptions", "Options du PDF navigable…", "page", PdfOptionsDialog);
         Add("bom", "Nomenclature configurable…", "library", Bom);
         Add("references", "Navigateur des renvois…", "wire", ReferenceNavigator);
         Add("coilContacts", "Bobines et contacts…", "wire", CoilNavigator);
@@ -98,14 +103,14 @@ public sealed partial class MainWindow
             foreach (var id in ids) { var c = commands[id]; group.Items.Add(new MenuItem { Header = c.Label, Command = c.Command, CommandTarget = this, InputGestureText = c.Shortcut, Icon = CommandIcon(c.Icon, 15) }); }
             menu.Items.Add(group);
         }
-        Menu("_Fichier", "new", "open", "save", "saveAs", "projectInfo", "demo", "close");
+        Menu("_Fichier", "new", "templateNew", "open", "save", "saveAs", "templateSave", "recovery", "projectInfo", "demo", "close");
         Menu("_Édition", "undo", "redo", "duplicate", "rotate", "delete", "alignment", "projectSearch");
         Menu("_Folio", "pageAdd", "sheetInfo", "titleblocks", "zones", "pageUp", "pageDown", "pageRename", "pageDelete");
         Menu("_Insérer", "wire", "text", "select", "newSymbol", "editSymbol", "importSymbol");
         Menu("I_mporter", "importQet", "importDxf");
         Menu("_Projet", "validate", "projectSearch", "circuit", "clearCircuit", "numbering", "terminalStrips", "cabinet", "articleFiches", "titleblocks", "bom", "references", "coilContacts");
-        Menu("E_xporter", "pdf", "svg", "csv");
-        Menu("_Affichage", "fit", "grid", "palette", "library", "properties", "pages", "resetPanels", "settings");
+        Menu("E_xporter", "pdf", "pdfOptions", "svg", "csv");
+        Menu("_Affichage", "fit", "grid", "palette", "presentation", "library", "properties", "pages", "resetPanels", "settings");
         Menu("_Aide", "help", "mcpHelp", "license");
         DockPanel.SetDock(menu, Dock.Top); root.Children.Add(menu);
         commandHost.BorderThickness = new(0, 0, 0, 1); UiTheme.Bind(commandHost, Border.BorderBrushProperty, "Ui.Border"); UiTheme.Bind(commandHost, Border.BackgroundProperty, "Ui.Surface");
