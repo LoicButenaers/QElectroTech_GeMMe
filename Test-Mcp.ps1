@@ -383,7 +383,29 @@ try {
     $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
     $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
     $state = Call 'project_get'
-    Assert ($state.project.version -eq 3 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format v3 et réglages relus via MCP'
+    Assert ($state.project.version -eq 4 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
+    $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$true;number='CABLE-01';color='#D32F2F';thickness=3.2;lineStyle='dashed'}
+    $null = Call 'wire_update' @{id=$wire.id;number='27'}
+    $state = Call 'project_get'
+    Assert (($state.project.sheets[0].wires | Where-Object id -eq $continuation.id).number -eq 'CABLE-01' -and ($state.project.sheets[0].wires | Where-Object id -eq $branch.id).number -eq '27') 'Numéro indépendant protégé du renommage commun MCP'
+    $trace = Call 'connection_trace' @{componentId=$terminal.id;portId='1'}
+    Assert (@($trace | Where-Object { $_.componentId -eq $load.id -and $_.portId -eq 'A1' }).Count -eq 1) 'Numéro indépendant conservant la connexion électrique MCP'
+    $null = Call 'wire_update' @{id=$continuation.id;number='CABLE-02'}
+    Assert (((Call 'project_get').project.sheets[0].wires | Where-Object id -eq $wire.id).number -eq '27') 'Renommage individuel sans propagation MCP'
+    $errorText = Call 'wire_update' @{id=$continuation.id;numberIndependent=$false;thickness=99} -ExpectError
+    $state = Call 'project_get'
+    Assert ($errorText.Length -gt 0 -and ($state.project.sheets[0].wires | Where-Object id -eq $continuation.id).numberIndependent -and ($state.project.sheets[0].wires | Where-Object id -eq $continuation.id).number -eq 'CABLE-02') 'Style invalide refusé sans perdre le numéro indépendant MCP'
+    $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$false}
+    Assert (((Call 'project_get').project.sheets[0].wires | Where-Object id -eq $continuation.id).number -eq '27') 'Retour au numéro commun MCP'
+    $null = Call 'history_undo' @{}
+    $styledPath = Join-Path $root 'build/MCP-wire-appearance.gemelec'
+    $null = Call 'project_save' @{path=$styledPath;overwrite=$true}
+    $null = Call 'project_open' @{path=$styledPath;discardUnsaved=$true}
+    $savedWire = (Call 'project_get').project.sheets[0].wires | Where-Object id -eq $continuation.id
+    Assert ($savedWire.numberIndependent -and $savedWire.number -eq 'CABLE-02' -and $savedWire.thickness -eq 3.2 -and $savedWire.lineStyle -eq 'dashed') 'Numéro indépendant et style relus MCP'
+    $wireAppearanceSvgPath = Join-Path $root 'build/MCP-wire-appearance.svg'
+    $null = Call 'export_svg' @{path=$wireAppearanceSvgPath;overwrite=$true}
+    Assert ((Get-Content -LiteralPath $wireAppearanceSvgPath -Raw).Contains('stroke-dasharray="12.8 9.6"')) 'Export SVG du trait personnalisé MCP'
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

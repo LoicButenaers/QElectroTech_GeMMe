@@ -18,6 +18,12 @@ Livré et vérifié : références, bornages et conducteurs conservés, repère 
 
 Alignement lettres/cartouche validé sur aperçu ; repérage commun au projet avec exception par folio ; même numéro sur les branches issues d’une même borne et à travers les bornes de passage/PE ; Maj + glisser pour déplacer les textes directement sur le schéma. Persistance v3 avec migration v1/v2, sauvegarde, annulation, parcours des connexions et MCP vérifiés. Les bornes distinctes d’un équipement restent des départs distincts. Voir `REPERAGE_CONDUCTEURS_TEXTES.md` et `VALIDATION.md`.
 
+## Lot vérifié : conducteur indépendant et styles 0.15
+
+Numéro propre protégé des renommages du réseau ; retour au numéro commun, couleur, épaisseur et type de trait par conducteur. Persistance v4, PDF/SVG, connexions, dérivations et nettoyage vérifiés. Préparation séparée pour préserver l’application ouverte ; publié au chemin habituel après enregistrement et fermeture par l’utilisateur. 105 scénarios applicatifs / 97 contrôles MCP. Voir `REPERAGE_CONDUCTEURS_TEXTES.md` et `VALIDATION.md`.
+
+Une liste de propositions numérotées stables figure dans `PROPOSITIONS_AMELIORATIONS.md`. L’utilisateur choisira les numéros à engager ; ces idées ne sont pas des livraisons annoncées et peuvent infléchir l’ordre des prochains lots.
+
 ## Prochain lot : automates et entrées/sorties
 
 Périmètre initial : stations locales et modules génériques, canaux DI/DO/AI/AO avec identifiants stables, adresse explicitement saisie, nom de signal et commentaire. Les caractéristiques et bornages proviennent d’une saisie explicite ou d’une future fiche fabricant sourcée, jamais d’une supposition.

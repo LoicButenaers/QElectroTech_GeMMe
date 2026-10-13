@@ -126,7 +126,9 @@ public sealed class SheetCanvas : FrameworkElement
         foreach (var w in sheet.Wires.Where(w => Selected.Contains(w.Id)))
         {
             var points = w.Route(sheet);
-            for (int i = 1; i < points.Count; i++) { dc.DrawLine(pen, points[i - 1], points[i]); var mid = Mid(points[i - 1], points[i]); dc.DrawRectangle(Brushes.White, pen, new(mid.X - 4 / Zoom, mid.Y - 4 / Zoom, 8 / Zoom, 8 / Zoom)); }
+            var highlight = new Pen(new SolidColorBrush(Color.FromArgb(55, 0, 127, 134)), w.Thickness + 4 / Zoom);
+            var wirePen = new Pen(Drawing.Brush(w.Color), w.Thickness) { DashStyle = new DashStyle(Drawing.DashPattern(w.LineStyle), 0) };
+            for (int i = 1; i < points.Count; i++) { dc.DrawLine(highlight, points[i - 1], points[i]); dc.DrawLine(wirePen, points[i - 1], points[i]); var mid = Mid(points[i - 1], points[i]); dc.DrawRectangle(Brushes.White, pen, new(mid.X - 4 / Zoom, mid.Y - 4 / Zoom, 8 / Zoom, 8 / Zoom)); }
             dc.DrawEllipse(accent, new Pen(Brushes.White, 1 / Zoom), points[0], 5 / Zoom, 5 / Zoom);
             dc.DrawEllipse(accent, new Pen(Brushes.White, 1 / Zoom), points[^1], 5 / Zoom, 5 / Zoom);
         }

@@ -58,7 +58,7 @@ Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `li
 
 `tools/list` fournit les paramètres, types et champs requis. L’export PDF travaille en arrière-plan sur un instantané et répond après écriture du fichier, avec le retour `{path}` habituel ; l’interface peut rester active. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.14 propose 47 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
+La version 0.15 propose 47 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
 
 ## Bobines et contacts (0.13)
 
@@ -67,7 +67,7 @@ La version 0.14 propose 47 outils. `component_text_update` prend `id`, `target` 
 - `component_update` accepte `relayFunction` (`coil`, `no`, `nc`, `changeover`, `power`, ou vide) pour une déclaration explicite. Changer le rôle d’une bobine détache ses contacts si elle n’est plus une bobine ; l’opération est annulable.
 - `component_update` et `component_text_update` sur le repère d’une fonction associée renomme tout l’appareil. Le contenu de `coilReferences` reste calculé ; sa position et son style restent modifiables.
 
-Les fichiers sont en version 3, avec migration des fichiers versions 1 et 2 en mémoire. [Parcours et limites](BOBINES_CONTACTS.md).
+Les fichiers sont en version 4, avec migration des fichiers versions 1, 2 et 3 en mémoire. [Parcours et limites](BOBINES_CONTACTS.md).
 
 ## Textes individuels et alignement (0.11)
 
@@ -171,3 +171,11 @@ Les versions négociées sont `2024-11-05`, `2025-03-26`, `2025-06-18` et `2025-
 `wire_add` sans numéro reprend celui du réseau raccordé, en priorité du départ ; un numéro explicite s’applique à toute cette continuité. Une dérivation reprend le numéro du fil cible. `wire_update` avec `number` renomme la continuité complète en une transaction annulable. Une reconnexion adopte le numéro déjà présent sur la continuité de destination ; s’il n’y en a pas, elle conserve son numéro. Les couleurs et les tracés restent propres à chaque conducteur.
 
 `connection_trace` traverse désormais les continuités permanentes déclarées (`internalConnections` : liste de paires `{from,to}` dans une définition de symbole). Les bornes de passage et PE génériques déclarent 1↔2 ; leurs copies conservent cette déclaration. Aucun lien interne n’est déduit pour les appareils, contacts ou images importées. Une association bobine/contact reste indépendante des connexions électriques.
+
+## Conducteur indépendant et styles (0.15)
+
+`wire_add` et `wire_update` acceptent `numberIndependent` (booléen), `color` (#RRGGBB), `thickness` (0.25..10) et `lineStyle` (`solid`, `dashed`, `dotted`, `dashdot`). Par défaut : numéro commun, épaisseur 1.6 et trait continu. Ces métadonnées sont retournées dans le projet.
+
+Une création avec `numberIndependent: true` et un numéro explicite conserve ce numéro uniquement sur le nouveau conducteur. Sans numéro explicite, un nouveau W… libre est attribué. `wire_update` avec `numberIndependent: true` et `number` permet de protéger et renommer en une transaction. Un renommage commun ignore les fils indépendants, qui continuent à participer au parcours électrique. Les fils indépendants ne fournissent pas le numéro automatique des fils communs. `numberIndependent: false` rétablit le numéro commun présent ; un `number` explicite dans le même appel peut renommer cette continuité.
+
+Les styles sont repris dans l’écran et les exports SVG/PDF. Une épaisseur ou un type de trait invalide annule l’opération complète, y compris un éventuel changement d’indépendance. Les tronçons créés par une dérivation reprennent les attributs du fil coupé ; le nouveau fil de branche conserve son propre aspect.

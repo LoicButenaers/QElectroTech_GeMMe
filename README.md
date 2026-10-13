@@ -8,13 +8,14 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.14)
+## Fonctionnalités (version 0.15)
 
 - Bande des lettres raccordée directement au cartouche, sur le même bord gauche (alignement validé).
 - Nombre de colonnes et de lettres commun au projet, avec une case d’exception par folio ; les nouveaux folios héritent du réglage.
+- Numéro indépendant par conducteur, protégé des renommages de la continuité. Couleur, épaisseur et type de trait individuels, avec conservation dans PDF/SVG et les dérivations.
 - Même numéro de conducteur sur une borne de départ, ses dérivations et les bornes de passage/PE. Renommage de la continuité en une action annulable.
 - Maj + clic gauche puis glisser sur un texte du symbole pour le déplacer directement. Échap annule ; Ctrl+Z annule le déplacement terminé. [Mode d’emploi](docs/REPERAGE_CONDUCTEURS_TEXTES.md).
-- Projets JSON `.gemelec` version 3, migration des fichiers versions 1 et 2 sans écriture implicite, sauvegarde atomique et contrôle de structure. Jusqu’à 200 folios ; taille de fichier limitée à 64 Mo avec contrôle identique à la lecture et à l’enregistrement.
+- Projets JSON `.gemelec` version 4, migration des fichiers versions 1, 2 et 3 sans écriture implicite, sauvegarde atomique et contrôle de structure. Jusqu’à 200 folios ; taille de fichier limitée à 64 Mo avec contrôle identique à la lecture et à l’enregistrement.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
 - 92 symboles génériques GeMMeElec ; deux bibliothèques documentées distinctes : 3 dessins fabricants raccordables (Schneider LC1D09BD, ABB AF09-30-01-13, Eaton 276705) et 4 aperçus officiels EPLAN en consultation. Les 75 anciennes associations de gammes ont été retirées du catalogue.
 - Cadre de repérage avec colonnes numérotées et lignes lettrées, configurable pour le projet avec exception par folio ; localisation des composants dans la BOM, par exemple `K1 : 3 / C7`.

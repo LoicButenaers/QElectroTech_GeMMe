@@ -24,7 +24,7 @@ public static class Export
             else if (s.Kind == "triangle") el = new(ns + "polygon", new XAttribute("points", $"{N(s.X)},{N(s.Y)} {N(s.X)},{N(s.Y+s.B)} {N(s.X+s.A)},{N(s.Y+s.B/2)}"));
             else { el = new(ns + "text", new XAttribute("x", N(s.X)), new XAttribute("y", N(s.Y + s.Size)), new XAttribute("font-family", "Segoe UI,Arial,sans-serif"), new XAttribute("font-size", N(s.Size)), s.Text); }
             el.Add(new XAttribute("fill", s.Kind is "text" or "dot" or "triangle" ? s.Color : s.Kind == "circle" ? "white" : "none"));
-            if (s.Kind != "text") { el.Add(new XAttribute("stroke", s.Color)); el.Add(new XAttribute("stroke-width", "1.6")); }
+            if (s.Kind != "text") { el.Add(new XAttribute("stroke", s.Color)); el.Add(new XAttribute("stroke-width", N(s.Thickness))); if (s.LineStyle != "solid") el.Add(new XAttribute("stroke-dasharray", string.Join(' ', Drawing.DashPattern(s.LineStyle).Select(n => N(n * s.Thickness))))); }
             if (s.Rotation != 0) el.Add(new XAttribute("transform", $"rotate({N(s.Rotation)} {N(s.X)} {N(s.Y)})"));
             root.Add(el);
         }
@@ -63,6 +63,7 @@ public static class Export
                 var color = (System.Windows.Media.SolidColorBrush)Drawing.Brush(s.Color);
                 string rgb = $"{N(color.Color.R / 255.0)} {N(color.Color.G / 255.0)} {N(color.Color.B / 255.0)}";
                 b.AppendLine($"q {rgb} RG {rgb} rg");
+                if (s.Thickness != 1.6 || s.LineStyle != "solid") b.AppendLine($"{N(s.Thickness)} w [{string.Join(' ', Drawing.DashPattern(s.LineStyle).Select(n => N(n * s.Thickness)))}] 0 d");
                 if (s.Rotation != 0) { double a = s.Rotation * Math.PI / 180, cos = Math.Cos(a), sin = Math.Sin(a); b.AppendLine($"{N(cos)} {N(sin)} {N(-sin)} {N(cos)} {N(s.X - cos * s.X + sin * s.Y)} {N(s.Y - sin * s.X - cos * s.Y)} cm"); }
                 switch (s.Kind)
                 {

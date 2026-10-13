@@ -31,7 +31,7 @@ public sealed partial class Editor
         var route = target.Route(Sheet); var hit = WirePoint(route, location);
         if (hit.Distance > 100) throw new ArgumentException("Position trop éloignée du conducteur.");
         Wire? result = null;
-        var newNumber = target.Number; var tag = NextTag("J");
+        var newNumber = target.NumberIndependent ? NumberForConnection(from, target.From) : target.Number; var tag = NextTag("J");
         Change(() =>
         {
             Endpoint destination;
@@ -49,7 +49,7 @@ public sealed partial class Editor
                 var junction = new Component { Symbol = "junction", AutoJunction = true, Tag = tag, X = hit.Point.X, Y = hit.Point.Y,
                     TagPlacement = new() { Visible = false }, DetailPlacement = new() { Visible = false }, DescriptionPlacement = new() { Visible = false } };
                 destination = new(junction.Id, "1"); Sheet.Components.Add(junction);
-                var right = new Wire { From = destination, To = target.To, Number = target.Number, Color = target.Color,
+                var right = new Wire { From = destination, To = target.To, Number = target.Number, Color = target.Color, NumberIndependent = target.NumberIndependent, Thickness = target.Thickness, LineStyle = target.LineStyle,
                     Waypoints = Interior(new[] { hit.Point }.Concat(route.Skip(hit.Segment))) };
                 target.To = destination; target.Waypoints = Interior(route.Take(hit.Segment).Append(hit.Point));
                 Sheet.Wires.Add(right);
@@ -61,7 +61,7 @@ public sealed partial class Editor
                 if (branchPoints is not null) result.Waypoints = branchPoints;
             }
             else { result = new Wire { From = from, To = destination, Waypoints = branchPoints ?? points?.ToList() ?? [], Number = newNumber, Color = CurrentWireColor }; Sheet.Wires.Add(result); }
-            SynchronizeWireNumbers(result, newNumber);
+            SynchronizeWireNumbers(result, result.NumberIndependent ? result.Number : newNumber);
         });
         return result!;
     }

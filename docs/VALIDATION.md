@@ -1,5 +1,28 @@
 # Vérifications de livraison
 
+## Version 0.15 — 13 octobre 2026
+
+Lot compilé sans erreur ni avertissement, préparé dans `build/update-0.15` pendant que GeMMeElec était ouvert, puis publié au chemin habituel après fermeture par l’utilisateur. Les empreintes SHA-256 du binaire préparé et du binaire publié sont identiques. **105 scénarios applicatifs et 97 vérifications MCP réussis** ; 47 outils conservés. Les contrôles MCP utilisent `Test-Mcp.ps1 -Headless -AssemblyPath build/bin/Release/net10.0-windows/win-x64/GeMMeElec.dll`, sans agir sur l’application ouverte.
+
+- Numéro indépendant conservé lors du renommage commun et de la reconnexion ; renommage individuel, retour au numéro commun et annulation atomique. L’exception ne coupe pas le parcours électrique et ne fournit pas le numéro automatique commun.
+- Styles validés et persistants : couleur, épaisseur 0,25–10, continu/tirets/pointillés/mixte. Contrôles d’inspecteur immédiats, refus des valeurs invalides et actualisation du champ numéro au retour au numéro commun.
+- Division en tronçons conservant les attributs ; nettoyage ne fusionnant pas les différences de style ou d’indépendance. Rendu de sélection conservant la couleur et le motif.
+- SVG contrôlés pour les quatre motifs, largeur et couleur ; PDF vectoriel A3 contrôlé dans son flux et rendu avec Poppler, puis inspecté. Capture du nouvel inspecteur et aperçu natif de conducteur rouge indépendant.
+- Format v4, migration v3 conservant le repérage et les exceptions de folio, valeurs historiques des traits par défaut. Migration v1/v2 et persistance générale couvertes par les scénarios existants.
+- Original utilisateur toujours intact : SHA-256 `E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C`.
+
+Charge dans un processus dédié par taille, avec 500 / 1 000 conducteurs indépendants rouges à tirets en plus des composants, fils, textes et contacts associés :
+
+| Opération | 100 folios / 5 000 composants | 200 folios / 10 000 composants |
+| --- | ---: | ---: |
+| Renommer une continuité commune | 186 ms | 413 ms |
+| Construire la scène du folio actif | 6,8 ms | 15,7 ms |
+| Rendu logiciel hors écran 1440×900 | 126 ms | 134 ms |
+| PDF complet | 1,71 s | 4,35 s |
+
+Ces mesures ne représentent pas le délai d’une souris ou une cadence GPU. La transaction de propriétés complète garde une latence visible sur les gros projets. Rapports dans `build/update-0.15/self-test.json`, `benchmark-100.json`, `benchmark-200.json` et `build/mcp-test.json`. Aperçus dans le dossier de préparation : `apercu-conducteur-independant.png`, `ui-wire-appearance.png`, `self-test-wire-styles.pdf`, `wire-styles-pdf-verifie.png`.
+
+
 ## Version 0.14 — 13 octobre 2026
 
 Exécutable autonome Windows x64 au chemin habituel, version fichier **0.14.0.0**. **99 scénarios applicatifs et 90 vérifications MCP réussis**, compilation sans erreur ni avertissement ; 47 outils MCP conservés.

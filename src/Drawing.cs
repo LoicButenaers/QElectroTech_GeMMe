@@ -5,7 +5,7 @@ using System.Windows.Media;
 namespace GeMMeElec;
 
 // A single scene description drives screen, SVG and PDF rendering.
-public sealed record Ink(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "", string Color = "#203348", double Size = 12, double Rotation = 0);
+public sealed record Ink(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "", string Color = "#203348", double Size = 12, double Rotation = 0, double Thickness = 1.6, string LineStyle = "solid");
 public sealed class SymbolPreview(string symbol) : FrameworkElement
 {
     public SymbolDefinition? Definition { get; set; }
@@ -40,7 +40,7 @@ public static class Drawing
         foreach (var wire in sheet.Wires)
         {
             var path = routes[wire.Id];
-            for (int i = 1; i < path.Count; i++) result.Add(new("line", path[i - 1].X, path[i - 1].Y, path[i].X, path[i].Y, Color: wire.Color));
+            for (int i = 1; i < path.Count; i++) result.Add(new("line", path[i - 1].X, path[i - 1].Y, path[i].X, path[i].Y, Color: wire.Color, Thickness: wire.Thickness, LineStyle: wire.LineStyle));
             var label = WireLabel(wire, path); if (label is not null) result.Add(label);
         }
         foreach (var c in sheet.Components) result.AddRange(ComponentScene(project, c, references, false));
@@ -105,6 +105,7 @@ public static class Drawing
         for (int i = 0; i < lines.Length; i++) yield return ink with { Text = lines[i], X = ink.X - Math.Sin(angle) * i * step, Y = ink.Y + Math.Cos(angle) * i * step };
     }
     public static Rect TextBounds(Ink ink) => new RotateTransform(ink.Rotation, ink.X, ink.Y).TransformBounds(new Rect(new Point(ink.X, ink.Y), Measure(ink.Text, ink.Size)));
+    public static double[] DashPattern(string style) => style switch { "dashed" => [4, 3], "dotted" => [1, 2], "dashdot" => [4, 2, 1, 2], _ => [] };
     private static void AddLabel(List<Ink> scene, Component c, LabelPlacement p, string text, double size, string color) { var label = Label(c, p, text, size, color); if (label is not null) scene.Add(label); }
     [ThreadStatic] private static Dictionary<string,Brush>? brushesCache;
     [ThreadStatic] private static Dictionary<(string,double,string),FormattedText>? textCache;
@@ -120,7 +121,7 @@ public static class Drawing
     {
         foreach (var s in scene)
         {
-            var brush = Brush(s.Color); var pen = new Pen(brush, 1.6);
+            var brush = Brush(s.Color); var pen = new Pen(brush, s.Thickness); if (s.LineStyle != "solid") pen.DashStyle = new DashStyle(DashPattern(s.LineStyle), 0);
             if(s.Rotation!=0)dc.PushTransform(new RotateTransform(s.Rotation, s.X, s.Y));
             switch (s.Kind)
             {

@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -147,6 +147,9 @@ public sealed record Position(double X, double Y)
 }
 public sealed class Wire
 {
+    public bool NumberIndependent { get; set; }
+    public double Thickness { get; set; } = 1.6;
+    public string LineStyle { get; set; } = "solid";
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public Endpoint From { get; set; } = new("", "");
     public Endpoint To { get; set; } = new("", "");
@@ -235,6 +238,7 @@ public static class ProjectStore
             foreach (var sheet in project.Sheets ?? []) if (sheet is not null) sheet.UseProjectZones = sheet.ZoneColumns == project.ZoneColumns && sheet.ZoneRows == project.ZoneRows;
             project.Version = Project.CurrentVersion;
         }
+        else if (project.Version == 3) project.Version = Project.CurrentVersion;
         ValidateStructure(project);
         return project;
     }
@@ -279,6 +283,7 @@ public static class ProjectStore
             {
                 if (w is null) throw new InvalidDataException("Conducteur vide.");
                 Text(w.Number);
+                if (!double.IsFinite(w.Thickness) || w.Thickness is < .25 or > 10 || w.LineStyle is not ("solid" or "dashed" or "dotted" or "dashdot")) throw new InvalidDataException("Trait du conducteur : épaisseur 0,25 à 10 ; continu, tirets, pointillés ou mixte.");
                 if (w.Color is null || !System.Text.RegularExpressions.Regex.IsMatch(w.Color, "^#[0-9A-Fa-f]{6}$")) throw new InvalidDataException("Couleur de conducteur : utiliser #RRGGBB.");
                 Id(w.Id);
                 if (w.From is null || w.To is null || w.From == w.To) throw new InvalidDataException("Connexion invalide.");
@@ -377,7 +382,7 @@ public sealed partial class Editor
     public void Reconnect(string wireId, bool from, Endpoint endpoint)
     {
         var wire = Sheet.Wires.Single(w => w.Id == wireId);
-        var number = new ConductorNetworks(Project).ExistingNumber(endpoint, from ? wire.To : wire.From, wire.Id) ?? wire.Number;
+        var number = wire.NumberIndependent ? wire.Number : new ConductorNetworks(Project).ExistingNumber(endpoint, from ? wire.To : wire.From, wire.Id) ?? wire.Number;
         Change(() => { if (from) wire.From = endpoint; else wire.To = endpoint; SynchronizeWireNumbers(wire, number); });
     }
     public void Undo()
@@ -421,11 +426,11 @@ public sealed partial class Editor
         if (CrossReferences.IsPoint(c)) { c.TagPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; c.DetailPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; }
         Change(() => Sheet.Components.Add(c)); return c;
     }
-    public Wire Connect(Endpoint from, Endpoint to, IEnumerable<Position>? points = null, string number = "", string? color = null)
+    public Wire Connect(Endpoint from, Endpoint to, IEnumerable<Position>? points = null, string number = "", string? color = null, bool numberIndependent = false, double thickness = 1.6, string lineStyle = "solid")
     {
         if (from == to) throw new ArgumentException("Choisir deux bornes distinctes.");
         if (Sheet.Wires.Any(w => (w.From == from && w.To == to) || (w.To == from && w.From == to))) throw new ArgumentException("Ces bornes sont déjà reliées.");
-        var w = new Wire { From = from, To = to, Waypoints = points?.ToList() ?? [], Number = number.Length > 0 ? number : NumberForConnection(from, to), Color = color ?? CurrentWireColor };
+        var w = new Wire { From = from, To = to, Waypoints = points?.ToList() ?? [], Number = number.Length > 0 ? number : numberIndependent ? $"W{NextWireNumber()}" : NumberForConnection(from, to), Color = color ?? CurrentWireColor, NumberIndependent = numberIndependent, Thickness = thickness, LineStyle = lineStyle };
         Change(() => { Sheet.Wires.Add(w); SynchronizeWireNumbers(w, w.Number); }); return w;
     }
     private int NextWireNumber() { var used = Project.Sheets.SelectMany(s => s.Wires).Select(w => w.Number).ToHashSet(); int i = 1; while (used.Contains($"W{i}")) i++; return i; }

@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>GeMMeElec</AssemblyName>
     <RootNamespace>GeMMeElec</RootNamespace>
-    <Version>0.14.0</Version>
+    <Version>0.15.0</Version>
     <Product>GeMMeElec</Product>
     <Description>Atelier de conception de schémas électriques</Description>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>

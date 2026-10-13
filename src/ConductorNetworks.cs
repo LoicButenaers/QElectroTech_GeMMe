@@ -26,7 +26,7 @@ public sealed class ConductorNetworks
         return seen;
     }
     public IEnumerable<Wire> Connected(Endpoint start) => Trace(start).SelectMany(at => wires.GetValueOrDefault(at) ?? []).DistinctBy(w => w.Id);
-    public string? ExistingNumber(Endpoint from, Endpoint to, string? except = null) => Connected(from).Concat(Connected(to)).FirstOrDefault(w => w.Id != except && w.Number.Length > 0)?.Number;
+    public string? ExistingNumber(Endpoint from, Endpoint to, string? except = null) => Connected(from).Concat(Connected(to)).FirstOrDefault(w => w.Id != except && !w.NumberIndependent && w.Number.Length > 0)?.Number;
 }
 
 public sealed partial class Editor
@@ -34,7 +34,15 @@ public sealed partial class Editor
     internal string NumberForConnection(Endpoint from, Endpoint to, string? except = null) => new ConductorNetworks(Project).ExistingNumber(from, to, except) ?? $"W{NextWireNumber()}";
     internal void SynchronizeWireNumbers(Wire wire, string number)
     {
-        foreach (var connected in new ConductorNetworks(Project).Connected(wire.From)) connected.Number = number;
+        if (wire.NumberIndependent) { wire.Number = number; return; }
+        foreach (var connected in new ConductorNetworks(Project).Connected(wire.From).Where(w => !w.NumberIndependent)) connected.Number = number;
     }
+    internal void ConfigureIndependentNumber(Wire wire, bool independent)
+    {
+        if (wire.NumberIndependent == independent) return;
+        wire.NumberIndependent = independent;
+        if (!independent) SynchronizeWireNumbers(wire, new ConductorNetworks(Project).ExistingNumber(wire.From, wire.To, wire.Id) ?? wire.Number);
+    }
+    public void SetWireNumberIndependent(string id, bool independent) => Change(() => ConfigureIndependentNumber(Sheet.Wires.Single(w => w.Id == id), independent));
     public void SetWireNumber(string id, string number, string? historyKey = null) => Change(() => SynchronizeWireNumbers(Sheet.Wires.Single(w => w.Id == id), number), historyKey);
 }

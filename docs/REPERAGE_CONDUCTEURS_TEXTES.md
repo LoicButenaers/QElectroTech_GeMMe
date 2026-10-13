@@ -1,4 +1,4 @@
-# Repérage, continuité et déplacement des textes — 0.14
+# Repérage, continuité et déplacement des textes — 0.15
 
 ## Cadre et cartouche
 
@@ -21,6 +21,16 @@ Un nouveau fil reprend le numéro déjà présent, en priorité du côté du dé
 Modifier **Numéro du conducteur** dans l’inspecteur renomme toute la continuité, avec une seule annulation pour la saisie groupée. Les couleurs et les trajets de chaque fil sont conservés. Les bornes distinctes d’un équipement restent distinctes, même lorsque son repère est commun : aucune continuité interne n’est supposée pour les contacts, bobines ou appareils.
 
 L’ouverture d’un ancien projet ne renumérote pas ses conducteurs. Pour harmoniser un réseau ancien présentant plusieurs numéros, sélectionner un de ses fils et saisir le numéro souhaité dans l’inspecteur. Cette numérotation porte sur les conducteurs ; la gestion de câbles multicœurs reste un lot distinct de la feuille de route.
+
+### Numéro et aspect propres à un conducteur (0.15)
+
+Sélectionner un fil, puis dans **Propriétés → Identification et aspect**, cocher **Numéro indépendant** avant de saisir son numéro. Ce numéro s’applique à ce conducteur ; les renommages des autres fils de la continuité le conservent. Les connexions électriques restent inchangées. Décocher reprend le numéro commun du réseau, en une action annulable.
+
+La couleur, l’**épaisseur du trait** (0,25 à 10 unités de dessin) et le **type de trait** (continu, tirets, pointillés ou mixte) sont propres à chaque fil. Ces réglages sont immédiats, conservés à l’enregistrement et rendus dans le PDF et le SVG. Une sélection affiche toujours la couleur et le type de trait sous son halo de sélection.
+
+Diviser un conducteur pour créer une dérivation conserve les attributs des tronçons. Une nouvelle branche utilise son propre aspect et le numéro commun, sans adopter un numéro indépendant comme numéro commun. Une reconnexion conserve le numéro propre du fil indépendant. Le nettoyage des jonctions ne fusionne pas des tronçons dont le style ou le statut d’indépendance diffère.
+
+Le format passe en **version 4**, avec migration en mémoire des fichiers v1, v2 et v3. La migration v3 conserve les exceptions de folio existantes et ajoute les valeurs de trait historiques : continu, épaisseur 1,6, numéro commun. Les anciennes versions de l’application refusent ce nouveau format plutôt que de perdre silencieusement ces réglages.
 
 ## Maj + glisser sur le schéma
 

@@ -87,8 +87,16 @@ public sealed partial class MainWindow
             properties.Children.Add(new TextBlock { Text = "Conducteur", FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new(0, 14, 0, 4) });
             properties.Children.Add(Hint("Modifications immédiates · Ctrl+S enregistre le fichier."));
             PropertyGroup("Identification et aspect", () => {
-                Field("number", "Numéro du conducteur", wire.Number, "Commun aux fils raccordés à la même borne et aux bornes de passage. Modifier ce champ renomme toute cette continuité."); Field("color", "Couleur · #RRGGBB", wire.Color, "Six chiffres hexadécimaux. Exemple : #2474D2.");
+                var independent = new CheckBox { Name = "IndependentWireNumber", Content = "Numéro indépendant", IsChecked = wire.NumberIndependent, Margin = new(0, 4, 0, 8), ToolTip = "Ce conducteur garde son propre numéro. Décocher reprend le numéro commun aux fils raccordés." }; PropertyContents.Children.Add(independent); RegisterPropertyControl(independent);
+                Field("number", "Numéro du conducteur", wire.Number, "Numéro indépendant coché : modifier seulement ce conducteur. Décoché : renommer la continuité commune."); Field("color", "Couleur · #RRGGBB", wire.Color, "Six chiffres hexadécimaux. Exemple : #2474D2.");
                 PropertyContents.Children.Add(Button("Palette de couleurs…", () => PaletteDialog(fields["color"].Text, color => fields["color"].Text = color)));
+                Field("thickness", "Épaisseur du trait · 0,25 à 10", Number(wire.Thickness));
+                PropertyContents.Children.Add(Hint("Type de trait")); var style = new ComboBox { Name = "WireLineStyle", SelectedValuePath = "Tag", Margin = new(0, 3, 0, 4) };
+                foreach (var (id, name) in new[] { ("solid", "Continu"), ("dashed", "Tirets"), ("dotted", "Pointillés"), ("dashdot", "Mixte · tiret / point") }) style.Items.Add(new ComboBoxItem { Content = name, Tag = id });
+                style.SelectedValue = wire.LineStyle; PropertyContents.Children.Add(style); RegisterPropertyControl(style);
+                void Independence() => LiveProperty(independent, () => { Editor.SetWireNumberIndependent(wire.Id, independent.IsChecked == true); updatingPropertyControls = true; try { fields["number"].Text = Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Number; } finally { updatingPropertyControls = false; } });
+                independent.Checked += (_, _) => Independence(); independent.Unchecked += (_, _) => Independence();
+                style.SelectionChanged += (_, _) => LiveProperty(style, () => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).LineStyle = (string)style.SelectedValue));
             });
             PropertyGroup("Tracé et raccordements", () => {
                 var a = Editor.Sheet.Components.Single(c => c.Id == wire.From.ComponentId); var b = Editor.Sheet.Components.Single(c => c.Id == wire.To.ComponentId);
@@ -99,6 +107,7 @@ public sealed partial class MainWindow
                 PropertyContents.Children.Add(Hint("Poignée carrée : déplacer un segment. Poignée ronde : changer de borne. Les simples croisements restent indépendants."));
             });
             LiveText(fields["number"], value => Editor.SetWireNumber(wire.Id, value, wire.Id + ":number"));
+            LiveText(fields["thickness"], value => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Thickness = ReadNumber(value), wire.Id + ":thickness"));
             LiveText(fields["color"], value => { if (!EditorPreferences.IsColor(value)) throw new ArgumentException("Saisir # suivi de six chiffres hexadécimaux (exemple : #2474D2)."); Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Color = value, wire.Id + ":color"); });
         }
         else if (note is not null)
