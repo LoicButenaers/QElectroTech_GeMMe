@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace GeMMeElec;
 
-public sealed class SheetCanvas : FrameworkElement
+public sealed partial class SheetCanvas : FrameworkElement
 {
     public static readonly DependencyProperty WorkspaceBackgroundProperty = DependencyProperty.Register(nameof(WorkspaceBackground), typeof(Brush), typeof(SheetCanvas), new FrameworkPropertyMetadata(Drawing.Brush("#E7EDF3"), FrameworkPropertyMetadataOptions.AffectsRender));
     public Brush WorkspaceBackground { get => (Brush)GetValue(WorkspaceBackgroundProperty); set => SetValue(WorkspaceBackgroundProperty, value); }
@@ -62,8 +62,9 @@ public sealed class SheetCanvas : FrameworkElement
     internal bool ActivateReference(Point point)
     {
         var refs = new CrossReferences(Editor.Project);
-        var c = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && ReferenceDisplay.HitBounds(Editor.Project, c, refs).Contains(point));
-        c ??= Editor.Sheet.Components.LastOrDefault(c => (CoilContacts.IsCoil(c) || CoilContacts.IsContact(c)) && ComponentTexts.Ink(Editor.Project, c, refs, "coilReferences") is Ink ink && Drawing.TextBounds(ink).Contains(point));
+        Rect ReferenceBounds(Component component){var bounds=component.Bounds();foreach(var ink in Reading.ComponentTexts(Editor.Project,component,refs))bounds.Union(Drawing.TextBounds(ink));bounds.Inflate(5,5);return bounds;}
+        var c = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && ReferenceBounds(c).Contains(point));
+        c ??= Editor.Sheet.Components.LastOrDefault(c => (CoilContacts.IsCoil(c) || CoilContacts.IsContact(c)) && Reading.Text("coilReferences",ComponentTexts.Ink(Editor.Project, c, refs, "coilReferences")) is Ink ink && Drawing.TextBounds(ink).Contains(point));
         if (c is null) return false;
         SetMode("select"); Select(c.Id); ReferenceRequested?.Invoke(c.Id); return true;
     }
@@ -90,11 +91,11 @@ public sealed class SheetCanvas : FrameworkElement
         Editor = editor; previousSheet = editor.Sheet.Id; Focusable = true; ClipToBounds = true;
         ToolTip = "Maj + clic gauche puis glisser sur un texte : déplacer ce texte · Échap : annuler";
         Editor.Changed += () => { sceneCache=null; routeCache=null; RefreshCircuitHighlight(); if (previousSheet != Editor.Sheet.Id) { previousSheet = Editor.Sheet.Id; Selected.Clear(); SetMode("select"); Fit(); } InvalidateVisual(); };
-        Loaded += (_, _) => Fit();
+        bool firstLoad=true; Loaded += (_, _) => { if(firstLoad){firstLoad=false;Fit();} };
     }
     public void SetMode(string mode)
     {
-        CancelDrag(); Mode = mode; connection = null; waypoints.Clear();
+        CancelDrag(); CancelBand();Mode = mode; connection = null; waypoints.Clear();
         Cursor = mode == "select" ? Cursors.Arrow : Cursors.Cross;
         InvalidateVisual(); Status?.Invoke(mode switch { "place" => "Cliquer pour placer • Tirer depuis une borne pour câbler • Échap : terminer", "wire" => "Tirer d’une borne à l’autre, ou cliquer les bornes et les points de passage", "text" => "Cliquer sur le folio pour ajouter un texte", _ => "Tirer depuis une borne : câbler • Sélectionner un fil : déplacer ses poignées" });
     }
@@ -128,7 +129,8 @@ public sealed class SheetCanvas : FrameworkElement
         }
         dc.DrawDrawing(gridCache);
         foreach (var wire in sheet.Wires.Where(w => HighlightedWires.Contains(w.Id))) { var path = wire.Route(sheet); var highlight = new Pen(new SolidColorBrush(Color.FromArgb(90, 255, 170, 0)), wire.Thickness + 7 / Zoom); for (int i = 1; i < path.Count; i++) dc.DrawLine(highlight, path[i-1], path[i]); }
-        if(sceneCache is null) {sceneCache=new();using(var context=sceneCache.Open())Drawing.Render(context,Drawing.Scene(Editor.Project,sheet));sceneCache.Freeze();}
+        RenderBand(dc); RenderBlock(dc);
+        if(sceneCache is null) {sceneCache=new();using(var context=sceneCache.Open())Drawing.Render(context,ReadingScene());sceneCache.Freeze();}
         dc.DrawDrawing(sceneCache);
         var accent = Drawing.Brush("#007F86"); var pen = new Pen(accent, 2 / Zoom);
         foreach (var c in sheet.Components)
@@ -214,14 +216,14 @@ public sealed class SheetCanvas : FrameworkElement
     }
     private void StartSegment(Wire wire, int index)
     {
-        before = ProjectStore.Serialize(Editor.Project); editingWire = wire.Id; segmentIndex = index; originalRoute = wire.Route(Editor.Sheet); dragStart = pointer; Editor.InteractionInProgress = true; CaptureMouse();
+        before = ProjectStore.Serialize(Editor.Project); wire.RoutingMode="manual";wire.RoutingWarning="";editingWire = wire.Id; segmentIndex = index; originalRoute = wire.Route(Editor.Sheet); dragStart = pointer; Editor.InteractionInProgress = true; CaptureMouse();
         Status?.Invoke("Déplacer le segment • Bornes conservées • Échap : annuler"); InvalidateVisual();
     }
     private string? Hit(Point p)
     {
         CrossReferences? references = null;
         foreach (var c in Editor.Sheet.Components.AsEnumerable().Reverse().Where(c => !Junctions.Automatic(c))) { var r = CrossReferences.IsPoint(c) ? ReferenceDisplay.HitBounds(Editor.Project, c, references ??= new CrossReferences(Editor.Project)) : c.Bounds(); r.Inflate(8, 8); if (r.Contains(p)) return c.Id; }
-        foreach (var n in Editor.Sheet.Notes.AsEnumerable().Reverse()) if (new Rect(n.X, n.Y, Math.Max(60, n.Text.Length * 9), 24).Contains(p)) return n.Id;
+        foreach (var n in Editor.Sheet.Notes.AsEnumerable().Reverse().Where(_=>Reading.Notes)) if (new Rect(new Point(n.X,n.Y), Drawing.Measure(n.Text,16*Reading.TextScale)).Contains(p)) return n.Id;
         foreach (var w in Editor.Sheet.Wires.AsEnumerable().Reverse()) { var r = w.Route(Editor.Sheet); for (int i = 1; i < r.Count; i++) if (Distance(p, r[i - 1], r[i]) < 7 / Zoom) return w.Id; }
         return null;
     }
@@ -242,7 +244,7 @@ public sealed class SheetCanvas : FrameworkElement
         foreach (var text in ComponentTexts.List(c).AsEnumerable().Reverse())
         {
             if (!text.Placement.Visible) continue;
-            var ink = ComponentTexts.Ink(Editor.Project, c, refs ??= new(Editor.Project), text.Key);
+            var ink = Reading.TextInk(Editor.Project, c, refs ??= new(Editor.Project), text.Key);
             if (ink is not null && Drawing.TextBounds(ink) is var bounds && bounds.Contains(point)) return (c, text, bounds);
         }
         return null;
@@ -250,7 +252,7 @@ public sealed class SheetCanvas : FrameworkElement
     internal bool BeginTextMove(Point point)
     {
         if (before is not null || connection is not null || (Editor.Sheet.BomPage is not null || Editor.Sheet.TerminalPlanId.Length>0 || Editor.Sheet.CabinetPlanId.Length>0)) return false;
-        var wire = Editor.Sheet.Wires.AsEnumerable().Reverse().OrderByDescending(w => Selected.Contains(w.Id)).FirstOrDefault(w => Drawing.WireLabel(w, w.Route(Editor.Sheet)) is Ink ink && Drawing.TextBounds(ink).Contains(point));
+        var wire = Editor.Sheet.Wires.AsEnumerable().Reverse().OrderByDescending(w => Selected.Contains(w.Id)).FirstOrDefault(w => Reading.WireNumbers && Drawing.WireLabel(w, w.Route(Editor.Sheet)) is Ink ink && Drawing.TextBounds(Reading.Scale(ink)).Contains(point));
         if (wire is not null) { before = Editor.ExportSnapshot; dragStart = point; wireTextDrag = (wire.Id, DocumentModel.Copy(wire.NumberPlacement)); textMoved = false; Editor.InteractionInProgress = true; Select(wire.Id); Status?.Invoke("Déplacer le numéro du conducteur • Échap : annuler"); return true; }
         if (HitText(point) is not { } hit) return false;
         before = Editor.ExportSnapshot; dragStart = point;
@@ -306,6 +308,7 @@ public sealed class SheetCanvas : FrameworkElement
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
+            if(HandleBlockClick(pointer) || HandleBandClick(pointer)){e.Handled=true;return;}
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && BeginTextMove(pointer)) { CaptureMouse(); e.Handled = true; return; }
             if (e.ClickCount == 2 && ActivateReference(pointer)) { e.Handled = true; return; }
             if (Mode == "place" && Hit(pointer) is string existing && Editor.Sheet.Components.Any(c => c.Id == existing && CrossReferences.IsPoint(c))) { SetMode("select"); Select(existing); return; }
@@ -378,6 +381,7 @@ public sealed class SheetCanvas : FrameworkElement
     protected override void OnLostMouseCapture(MouseEventArgs e) { base.OnLostMouseCapture(e); if (before is not null || connectionPressed || marqueeStart is not null) CancelDrag(); panning = false; }
     public void CancelDrag()
     {
+        CancelBand();
         var snapshot = before; before = null; textDrag = null; wireTextDrag = null; guideX = guideY = null; marqueeStart = null; originalRoute = null; editingWire = null; connection = null; hoveredWire = null; connectionPressed = false; connectionMoved = false; waypoints.Clear(); panning = false; Editor.InteractionInProgress = false;
         ReleaseMouseCapture(); if (snapshot is not null) Editor.CancelPreview(snapshot); InvalidateVisual();
     }

@@ -1,0 +1,99 @@
+{
+  "version": "0.19",
+  "projectFormat": 8,
+  "applicationTests": 150,
+  "mcpChecksIncludingUserCopy": 135,
+  "mcpTools": 87,
+  "executableSha256": "C4FF0954EA4274BC36711F64C8920A320CB0058E88A9D00CF56E98D99EF960A2",
+  "originalUserDocumentSha256": "E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C",
+  "benchmarks": [
+    {
+      "passed": true,
+      "version": "0.19",
+      "logicalProcessors": 12,
+      "renderer": "WPF hors écran, logiciel",
+      "samples": [
+        {
+          "folios": 100,
+          "components": 5000,
+          "conductors": 4900,
+          "annotations": 100,
+          "associatedContacts": 2000,
+          "projectBytes": 8939724,
+          "saveMs": 146.4749,
+          "openMs": 514.336,
+          "propertyEditMs": [
+            40.9223,
+            9.1948,
+            9.8256,
+            9.6867,
+            16.8746
+          ],
+          "undoMs": 38.7129,
+          "redoMs": 22.1717,
+          "moveRotateMs": 221.8793,
+          "textDragBeginMs": 19.0476,
+          "textDrag120MovesMs": 2.17,
+          "textDragCommitMs": 139.4837,
+          "conductorRenumberMs": 213.6783,
+          "sceneMs": 8.99,
+          "offscreenRasterMs": 127.8258,
+          "pdfMs": 2096.4308,
+          "privateMemoryBeforeBytes": 112930816,
+          "privateMemoryAfterOpenBytes": 297119744,
+          "privateMemoryAfterEditsBytes": 517292032,
+          "privateMemoryAfterPdfBytes": 598171648,
+          "workingSetBytes": 663666688,
+          "primitivesOnActiveSheet": 725
+        }
+      ]
+    },
+    {
+      "passed": true,
+      "version": "0.19",
+      "logicalProcessors": 12,
+      "renderer": "WPF hors écran, logiciel",
+      "samples": [
+        {
+          "folios": 200,
+          "components": 10000,
+          "conductors": 9800,
+          "annotations": 200,
+          "associatedContacts": 4000,
+          "projectBytes": 17880625,
+          "saveMs": 293.5993,
+          "openMs": 815.8998,
+          "propertyEditMs": [
+            65.4535,
+            19.0608,
+            27.5312,
+            17.5806,
+            23.506
+          ],
+          "undoMs": 51.2472,
+          "redoMs": 36.5051,
+          "moveRotateMs": 435.0338,
+          "textDragBeginMs": 22.8798,
+          "textDrag120MovesMs": 1.9145,
+          "textDragCommitMs": 238.7875,
+          "conductorRenumberMs": 483.6172,
+          "sceneMs": 11.4834,
+          "offscreenRasterMs": 139.7804,
+          "pdfMs": 4979.4709,
+          "privateMemoryBeforeBytes": 112947200,
+          "privateMemoryAfterOpenBytes": 405962752,
+          "privateMemoryAfterEditsBytes": 889872384,
+          "privateMemoryAfterPdfBytes": 607424512,
+          "workingSetBytes": 700239872,
+          "primitivesOnActiveSheet": 725
+        }
+      ]
+    }
+  ],
+  "routing": {
+    "components": 104,
+    "wires": 4,
+    "milliseconds": 18
+  },
+  "renderer": "WPF hors écran, logiciel; mesures locales en processus séparés"
+}

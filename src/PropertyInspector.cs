@@ -105,14 +105,15 @@ public sealed partial class MainWindow
                 var a = Editor.Sheet.Components.Single(c => c.Id == wire.From.ComponentId); var b = Editor.Sheet.Components.Single(c => c.Id == wire.To.ComponentId);
                 PropertyContents.Children.Add(Hint($"De : {a.Tag} · borne {a.PortLabels.GetValueOrDefault(wire.From.PortId, wire.From.PortId)}\nVers : {b.Tag} · borne {b.PortLabels.GetValueOrDefault(wire.To.PortId, wire.To.PortId)}"));
                 var points = Field("waypoints", "Points de passage · X ; Y (unités de dessin)", string.Join(Environment.NewLine, wire.Waypoints.Select(p => $"{Number(p.X)} ; {Number(p.Y)}")), "Un point par ligne, par exemple 300 ; 450. Vide : tracé automatique."); points.AcceptsReturn = true; points.Height = 100; points.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-                LiveText(points, value => { var parsed = ParsePoints(value); Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Waypoints = parsed, wire.Id + ":waypoints"); });
-                PropertyContents.Children.Add(Button("Rétablir le parcours automatique", () => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Waypoints.Clear())));
+                LiveText(points, value => { var parsed = ParsePoints(value); Editor.Change(() => {var routed=Editor.Sheet.Wires.Single(w => w.Id == wire.Id);routed.Waypoints=parsed;routed.RoutingMode="manual";routed.RoutingWarning="";}, wire.Id + ":waypoints"); });
+                PropertyContents.Children.Add(Button("Rétablir le parcours automatique", () => Editor.Change(() => {var routed=Editor.Sheet.Wires.Single(w => w.Id == wire.Id);routed.Waypoints.Clear();routed.RoutingMode="manual";routed.RoutingWarning="";})));
                 PropertyContents.Children.Add(Hint("Poignée carrée : déplacer un segment. Poignée ronde : changer de borne. Les simples croisements restent indépendants."));
             });
             LiveText(fields["number"], value => Editor.SetWireNumber(wire.Id, value, wire.Id + ":number"));
             LiveText(fields["thickness"], value => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Thickness = ReadNumber(value), wire.Id + ":thickness"));
             LiveText(fields["color"], value => { if (!EditorPreferences.IsColor(value)) throw new ArgumentException("Saisir # suivi de six chiffres hexadécimaux (exemple : #2474D2)."); Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Color = value, wire.Id + ":color"); });
             WireLabelInspector(wire);
+            PropertyGroup("Câble section et routage",()=>{Field("sectionMm2","Section du conducteur en mm² · vide = section du câble",wire.SectionMm2 is double area?Number(area):"");LiveText(fields["sectionMm2"],value=>Editor.Change(()=>Editor.Sheet.Wires.Single(w=>w.Id==wire.Id).SectionMm2=value.Trim().Length==0?null:ReadNumber(value),wire.Id+":section"));PropertyContents.Children.Add(Hint(wire.CableId.Length==0?"Aucun câble affecté.":"Câble : "+Editor.Project.Cables.Single(c=>c.Id==wire.CableId).Name+" · conducteur "+wire.CableCore));PropertyContents.Children.Add(Button("Câbles et sections…",CablesDialog));PropertyContents.Children.Add(Button("Routage intelligent",()=>Editor.RouteWires([wire.Id])));PropertyContents.Children.Add(Button("Insérer un symbole sur ce fil…",InsertSymbolOnWireDialog));if(wire.RoutingWarning.Length>0)PropertyContents.Children.Add(Hint(wire.RoutingWarning));});
         }
         else if (note is not null)
         {

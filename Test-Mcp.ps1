@@ -1,4 +1,4 @@
-param([switch]$Headless, [string]$AssemblyPath = '', [string]$RoundTripProjectPath = '')
+param([switch]$Headless, [string]$AssemblyPath = '', [string]$RoundTripProjectPath = '', [string]$ExecutablePath = '')
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $stem = if ($Headless) { 'MCP-headless-demo' } else { 'MCP-demo' }
@@ -8,13 +8,14 @@ function ProcessInfo([string]$mode) {
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true
     if ($AssemblyPath) { $info.FileName = Join-Path $root 'build/dotnet/dotnet.exe'; $info.ArgumentList.Add($AssemblyPath) }
+    elseif ($ExecutablePath) { $info.FileName = $ExecutablePath }
     else { $info.FileName = Join-Path $root 'build/GeMMeElec.exe' }
     $info.ArgumentList.Add($mode)
     if ($Headless) { $info.Environment['GEMMEELEC_TEST_SESSION'] = '1' }
     return $info
 }
 if ($Headless) {
-    $sessionDir = if ($AssemblyPath) { Split-Path $AssemblyPath } else { Join-Path $root 'build' }
+    $sessionDir = if ($AssemblyPath) { Split-Path $AssemblyPath } elseif ($ExecutablePath) { Split-Path $ExecutablePath } else { Join-Path $root 'build' }
     $sessionFile = Join-Path $sessionDir 'GeMMeElec.test-session.json'
     $hostProcess = [System.Diagnostics.Process]::Start((ProcessInfo '--test-host'))
     $ready = $false
@@ -63,7 +64,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 68) '68 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 87) '87 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -246,7 +247,7 @@ try {
     $null = Call 'project_save' @{ path=$path; overwrite=$true }
     $null = Call 'project_open' @{ path=$path }
     Assert ((Call 'symbol_get' @{id=$custom.id}).name -eq 'Bobine MCP personnelle') 'Bibliothèque personnelle persistante'
-    $fixtureDir = if ($AssemblyPath) { Split-Path $AssemblyPath } else { Join-Path $root 'build' }
+    $fixtureDir = if ($AssemblyPath) { Split-Path $AssemblyPath } elseif ($ExecutablePath) { Split-Path $ExecutablePath } else { Join-Path $root 'build' }
     $qetPath = Join-Path $fixtureDir 'qet-import-fixture.qet'
     $report = Call 'project_import' @{ path=$qetPath }
     Assert ($report.sheets -eq 1 -and !$report.applied -and (Call 'project_get').project.title -eq 'Essai MCP · circuit de commande') 'Analyse de conversion sans remplacer le projet courant'
@@ -383,7 +384,7 @@ try {
     $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
     $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
     $state = Call 'project_get'
-    Assert ($state.project.version -eq 7 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
+    Assert ($state.project.version -eq 8 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
     $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$true;number='CABLE-01';color='#D32F2F';thickness=3.2;lineStyle='dashed'}
     $null = Call 'wire_update' @{id=$wire.id;number='27'}
     $state = Call 'project_get'
@@ -463,6 +464,65 @@ try {
     Assert ($recoveredState.project.id -eq $originalId -and $recoveredState.filePath -eq $null -and $recoveredState.dirty -and $recoveredState.project.presentation.name -eq 'Noir') 'Récupération sans écraser le fichier de travail MCP'
     $errorText = Rpc 'tools/call' @{name='presentation_apply';arguments=@{style=@{tagSize=1}}} -AllowError
     Assert ($errorText.Length -gt 0 -and (Call 'project_get').project.presentation.name -eq 'Noir') 'Présentation invalide refusée atomiquement MCP'
+    $null = Call 'project_new' @{title='Vidéo et nouveaux outils';discardUnsaved=$true}
+    for ($i=0; $i -lt 4; $i++) {
+        $a = Call 'component_add' @{symbol='terminal';x=(200+100*$i);y=140}
+        $b = Call 'component_add' @{symbol='terminal';x=(200+100*$i);y=600}
+        $null = Call 'wire_add' @{fromComponent=$a.id;fromPort='2';toComponent=$b.id;toPort='1';number="P$($i+1)"}
+    }
+    $stripVideo = Call 'terminal_line_create' @{a=@{x=160;y=300};b=@{x=540;y=300};name='X1'}
+    Assert ($stripVideo.terminals.Count -eq 4 -and (Call 'project_get').project.sheets[0].wires.Count -eq 8) 'Geste vidéo insère quatre bornes via MCP'
+    $cableVideo = Call 'cable_line_create' @{a=@{x=160;y=400};b=@{x=540;y=400};name='W1';sectionMm2=2.5;type='H07V-K'}
+    $cableState = Call 'cables_list'
+    Assert ($cableState.definitions[0].sectionMm2 -eq 2.5 -and $cableState.assignments.Count -eq 4) 'Ligne câble et section 2,5 mm² MCP'
+    $wireVideo = (Call 'project_get').project.sheets[0].wires[0]
+    Assert ((Call 'circuit_read' @{id=$wireVideo.id}).Count -eq 2) 'Ligne transversale sans pont électrique MCP'
+    $snapshotVideo = (Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress
+    $errorText = Rpc 'tools/call' @{name='cable_put';arguments=@{cable=@{id=$cableVideo.id;name='W1';sectionMm2=-1}}} -AllowError
+    Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $snapshotVideo) 'Section négative refusée atomiquement MCP'
+    $null = Call 'wire_update' @{id=$wireVideo.id;sectionMm2=1.5}
+    Assert ((Call 'project_get').project.sheets[0].wires[0].sectionMm2 -eq 1.5) 'Section individuelle modifiable MCP'
+    $null = Call 'wire_update' @{id=$wireVideo.id;clearSection=$true}
+    $planVideo = Call 'terminal_plan_generate' @{id=$stripVideo.id;style='graphic'}
+    Assert ($planVideo.Count -ge 2 -and $planVideo[0].terminalPlanStyle -eq 'graphic') 'Vue graphique et tableau du bornier MCP'
+    $null = Call 'page_select' @{id=(Call 'project_get').project.sheets[0].id}
+    $c = Call 'wire_insert_component' @{id=$wireVideo.id;symbol='terminal';x=200;y=230;inputPort='1';outputPort='2'}
+    Assert ((Call 'circuit_read' @{id=$wireVideo.id}).Count -eq 3) 'Insertion sur un fil maintient sa continuité MCP'
+    $ids = @((Call 'project_get').project.sheets[0].components | ForEach-Object {$_.id})
+    $blockPath = Join-Path $root 'build/MCP-new-circuit.gemblock'
+    $null = Call 'block_save' @{ids=$ids;name='Bornier quatre fils';category='Borniers';tags='câble';path=$blockPath;overwrite=$true}
+    $inserted = Call 'block_insert' @{path=$blockPath;x=750;y=100}
+    Assert ($inserted.ids.Count -eq 22 -and (Call 'cables_list').definitions.Count -eq 2) 'Bloc autonome copié avec repères distincts MCP'
+    $beforeReading = (Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress
+    $null = Call 'view_reading' @{options=@{textScale=1.5;details=$false;ports=$false;wireNumbers=$false;notes=$false}}
+    $null = Call 'view_zoom_selection' @{ids=@($c.id)}
+    Assert (((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $beforeReading) 'Lecture et cadrage ne modifient pas le projet MCP'
+    $favoriteId = [Guid]::NewGuid().ToString('N')
+    $null = Call 'personal_library_put' @{entry=@{id=$favoriteId;name='Favori de test';category='Test';tags='borne';builtinId='terminal'}}
+    Assert (@(Call 'personal_library_list' @{query='Favori de test'}).Count -ge 1) 'Favori classé enregistré MCP'
+    $placedFavorite = Call 'personal_library_place' @{id=$favoriteId;x=600;y=700}
+    Assert ($placedFavorite.ids.Count -eq 1) 'Favori placé MCP'
+    $null = Call 'personal_library_delete' @{id=$favoriteId}
+    Assert (@(Call 'personal_library_list' @{query='Favori de test'}).Count -eq 0) 'Favori supprimé sans enlever ses placements MCP'
+    $originalTab = (Call 'projects_list').activeId
+    $newTab = Call 'project_tab_add' @{title='Second onglet'}
+    $null = Call 'component_add' @{symbol='terminal';x=200;y=200}
+    $errorText = Rpc 'tools/call' @{name='project_tab_close';arguments=@{id=$newTab.id}} -AllowError
+    Assert ($errorText.Length -gt 0 -and (Call 'projects_list').projects.Count -eq 2) 'Onglet modifié protégé MCP'
+    $null = Call 'project_tab_select' @{id=$originalTab}
+    Assert ((Call 'project_get').project.title -eq 'Vidéo et nouveaux outils') 'Projet initial conservé par les onglets MCP'
+    $null = Call 'project_tab_close' @{id=$newTab.id;discardUnsaved=$true}
+    Assert ((Call 'projects_list').projects.Count -eq 1) 'Fermeture explicite du second onglet MCP'
+    $null = Call 'project_new' @{title='Routage MCP';discardUnsaved=$true}
+    $a = Call 'component_add' @{symbol='terminal';x=200;y=150}
+    $b = Call 'component_add' @{symbol='terminal';x=200;y=650}
+    $null = Call 'component_add' @{symbol='coil';x=200;y=400}
+    $w = Call 'wire_add' @{fromComponent=$a.id;fromPort='2';toComponent=$b.id;toPort='1'}
+    $null = Call 'wire_route_smart' @{ids=@($w.id)}
+    Assert ((Call 'project_get').project.sheets[0].wires[0].routingMode -eq 'smart' -and (Call 'project_get').project.sheets[0].wires[0].waypoints.Count -gt 0) 'Routage avec obstacle via MCP'
+    $null = Call 'wire_segment_move' @{id=$w.id;segment=2;x=100;y=300}
+    Assert ((Call 'project_get').project.sheets[0].wires[0].routingMode -eq 'manual') 'Déplacement de segment conserve le parcours manuel MCP'
+
     if ($RoundTripProjectPath) {
         if (!$Headless) { throw 'La relecture du document utilisateur exige un hôte de test isolé.' }
         $originalHash = (Get-FileHash -LiteralPath $RoundTripProjectPath -Algorithm SHA256).Hash

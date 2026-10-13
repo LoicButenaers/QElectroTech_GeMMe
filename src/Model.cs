@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 7;
+    public const int CurrentVersion = 8;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -30,12 +30,16 @@ public sealed class Project
     public List<CabinetLayout> Cabinets { get; set; } = [];
     public ProjectPresentation Presentation { get; set; } = new();
     public PdfOptions PdfOptions { get; set; } = new();
+    public List<CableDefinition> Cables { get; set; } = [];
     public int ZoneColumns { get; set; } = 20;
     public int ZoneRows { get; set; } = 10;
     public List<Sheet> Sheets { get; set; } = [new()];
 }
 public sealed class Sheet
 {
+    public List<CableMarker> CableMarkers { get; set; } = [];
+    public List<TerminalMarker> TerminalMarkers { get; set; } = [];
+    public string TerminalPlanStyle {get;set;}="table";
     public string TerminalPlanId { get; set; } = "";
     public int TerminalPlanPage { get; set; }
     public string CabinetPlanId { get; set; } = "";
@@ -65,6 +69,7 @@ public sealed class Sheet
 }
 public sealed class Component
 {
+    public bool TerminalNumberOnly {get;set;}
     public bool TagLocked { get; set; }
     public string CoilId { get; set; } = "";
     public string RelayFunction { get; set; } = "";
@@ -157,6 +162,11 @@ public sealed record Position(double X, double Y)
 }
 public sealed class Wire
 {
+    public string CableId { get; set; } = "";
+    public string CableCore { get; set; } = "";
+    public double? SectionMm2 { get; set; }
+    public string RoutingMode { get; set; } = "manual";
+    public string RoutingWarning { get; set; } = "";
     public WireNumberPlacement NumberPlacement { get; set; } = new();
     public bool NumberIndependent { get; set; }
     public double Thickness { get; set; } = 1.6;
@@ -251,6 +261,7 @@ public static class ProjectStore
             project.PdfOptions.Contents=false;
         }
         else if (project.Version is 3 or 4 or 5 or 6) {project.Version = Project.CurrentVersion;project.PdfOptions.Contents=false;}
+        else if (project.Version==7) project.Version=Project.CurrentVersion;
         ValidateStructure(project);
         return project;
     }
@@ -279,7 +290,7 @@ public static class ProjectStore
             Id(s.Id);
             if (!double.IsFinite(s.Width) || !double.IsFinite(s.Height) || s.Width is < 200 or > 10000 || s.Height is < 200 or > 10000) throw new InvalidDataException("Dimensions de folio invalides.");
             if (s.Components is null || s.Wires is null || s.Notes is null || s.Components.Count > 10000 || s.Wires.Count > 20000 || s.Notes.Count > 5000) throw new InvalidDataException("Contenu du folio invalide ou trop volumineux.");
-            if((s.TerminalPlanId.Length>0||s.CabinetPlanId.Length>0)&&(s.Components.Count>0||s.Wires.Count>0||s.Notes.Count>0))throw new InvalidDataException("Modifier les plans générés depuis leur gestionnaire.");
+            if((s.TerminalPlanId.Length>0||s.CabinetPlanId.Length>0)&&(s.Components.Count>0||s.Wires.Count>0||s.Notes.Count>0||s.CableMarkers?.Count>0||s.TerminalMarkers?.Count>0))throw new InvalidDataException("Modifier les plans générés depuis leur gestionnaire.");
             BomFolios.Validate(p, s);
             foreach (var c in s.Components)
             {
@@ -302,6 +313,7 @@ public static class ProjectStore
             {
                 if (w is null) throw new InvalidDataException("Conducteur vide.");
                 Text(w.Number);
+                Text(w.RoutingWarning);if(w.RoutingMode is not ("manual" or "smart"))throw new InvalidDataException("Mode de routage invalide.");
                 if (w.NumberPlacement is null) throw new InvalidDataException("Position du numéro de fil absente."); w.NumberPlacement.Validate();
                 if (!double.IsFinite(w.Thickness) || w.Thickness is < .25 or > 10 || w.LineStyle is not ("solid" or "dashed" or "dotted" or "dashdot")) throw new InvalidDataException("Trait du conducteur : épaisseur 0,25 à 10 ; continu, tirets, pointillés ou mixte.");
                 if (w.Color is null || !System.Text.RegularExpressions.Regex.IsMatch(w.Color, "^#[0-9A-Fa-f]{6}$")) throw new InvalidDataException("Couleur de conducteur : utiliser #RRGGBB.");
@@ -321,6 +333,7 @@ public static class ProjectStore
         CoilContacts.Validate(p);
         TerminalStrips.Validate(p);
         Cabinets.Validate(p);
+        CableDefinitions.Validate(p);TerminalGraphics.Validate(p);
     }
     public static Project Load(string path)
     {
@@ -392,6 +405,7 @@ public sealed partial class Editor
     public void Commit(string before, string? historyKey = null)
     {
         ProjectStore.ValidateStructure(Project);
+        RefreshSmartRoutes();
         if (Junctions.Cleanup(Project)) ProjectStore.ValidateStructure(Project);
         var after = ProjectStore.Serialize(Project);
         if (before != after) {
@@ -479,7 +493,7 @@ public sealed partial class Editor
         }
         list.AddRange(CrossReferences.Findings(Project));
         list.AddRange(CoilContacts.Findings(Project));
-        foreach (var s in Project.Sheets) foreach (var w in s.Wires) if (string.IsNullOrWhiteSpace(w.Number)) list.Add(new("Conducteur", s.Id, w.Id, "Numéro de conducteur manquant"));
+        foreach (var s in Project.Sheets) foreach (var w in s.Wires) { if (string.IsNullOrWhiteSpace(w.Number)) list.Add(new("Conducteur", s.Id, w.Id, "Numéro de conducteur manquant"));if(w.RoutingWarning.Length>0)list.Add(new("Routage",s.Id,w.Id,w.RoutingWarning)); }
         var networks = new ConductorNetworks(Project); var checkedWires = new HashSet<string>();
         foreach (var s in Project.Sheets) foreach (var wire in s.Wires) if (checkedWires.Add(wire.Id)) { var connected = networks.Connected(wire.From).ToList(); foreach (var w in connected) checkedWires.Add(w.Id); var numbers = connected.Where(w => !w.NumberIndependent && w.Number.Length > 0).Select(w => w.Number).Distinct(StringComparer.OrdinalIgnoreCase).ToList(); if (numbers.Count > 1) list.Add(new("Conducteur", s.Id, wire.Id, "Numéros communs différents sur une même continuité : " + string.Join(", ", numbers))); }
         return list;

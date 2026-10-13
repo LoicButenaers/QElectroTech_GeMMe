@@ -62,14 +62,14 @@ public static class TerminalStrips
         if(strip.Bridges.Count>0){pages.Add([]);used=0;foreach(var bridge in strip.Bridges){var a=strip.Terminals.First(t=>t.ComponentId==bridge.FromComponent&&(t.InternalPort==bridge.FromPort||t.ExternalPort==bridge.FromPort));var b=strip.Terminals.First(t=>t.ComponentId==bridge.ToComponent&&(t.InternalPort==bridge.ToPort||t.ExternalPort==bridge.ToPort));Add(["Pont",a.Level.ToString(),a.Number+" ↔ "+b.Number,"",a.Number+":"+bridge.FromPort,b.Number+":"+bridge.ToPort,""]);}}
         return pages;
     }
-    public static int PageCount(Project p,TerminalStrip strip)=>Pages(p,strip).Count;
+    public static int PageCount(Project p,TerminalStrip strip,string style="table")=>Pages(p,strip).Count+(style=="graphic"?TerminalGraphics.PageCount(strip):0);
     public static List<Ink> Scene(Project p,Sheet sheet)
     {
-        var strip=p.TerminalStrips.Single(t=>t.Id==sheet.TerminalPlanId);var pages=Pages(p,strip);List<Ink> scene=[new("text",60,50,Text:"Plan de bornier "+strip.Name+" · "+strip.Location,Size:22)];scene.AddRange(SheetZones.Frame(p,sheet));scene.AddRange(DocumentModel.Scene(p,sheet));
+        var strip=p.TerminalStrips.Single(t=>t.Id==sheet.TerminalPlanId);int page=sheet.TerminalPlanPage;if(sheet.TerminalPlanStyle=="graphic"){int diagrams=TerminalGraphics.PageCount(strip);if(page<diagrams)return TerminalGraphics.Scene(p,sheet);page-=diagrams;}var pages=Pages(p,strip);List<Ink> scene=[new("text",60,50,Text:"Plan de bornier "+strip.Name+" · "+strip.Location,Size:22)];scene.AddRange(SheetZones.Frame(p,sheet));scene.AddRange(DocumentModel.Scene(p,sheet));
         string[] headers=["Borne","Niveau","Repère","Folio / zone","Interne","Externe","Commentaire"];for(int col=0;col<headers.Length;col++){scene.Add(new("rect",Xs[col],100,Widths[col],30));scene.Add(new("text",Xs[col]+5,108,Text:headers[col],Size:11));}
-        double y=130;if(sheet.TerminalPlanPage<pages.Count)foreach(var row in pages[sheet.TerminalPlanPage]){double height=Math.Max(30,row.Max(l=>l.Length)*13+10);for(int col=0;col<headers.Length;col++){scene.Add(new("rect",Xs[col],y,Widths[col],height));scene.Add(new("text",Xs[col]+5,y+5,Text:string.Join("\n",row[col]),Size:10));}y+=height;}
+        double y=130;if(page<pages.Count)foreach(var row in pages[page]){double height=Math.Max(30,row.Max(l=>l.Length)*13+10);for(int col=0;col<headers.Length;col++){scene.Add(new("rect",Xs[col],y,Widths[col],height));scene.Add(new("text",Xs[col]+5,y+5,Text:string.Join("\n",row[col]),Size:10));}y+=height;}
         else scene.Add(new("text",60,150,Text:"Ce plan a changé. Régénérer ses folios depuis Projet → Borniers.",Size:14));
-        scene.Add(new("text",1050,65,Text:$"Page {sheet.TerminalPlanPage+1}/{pages.Count}",Size:12));return scene;
+        scene.Add(new("text",1050,65,Text:$"Page {sheet.TerminalPlanPage+1}/{PageCount(p,strip,sheet.TerminalPlanStyle)}",Size:12));return scene;
     }
 
 }
@@ -77,11 +77,11 @@ public sealed partial class Editor
 {
     public TerminalStrip PutTerminalStrip(TerminalStrip strip)
     {
-        Change(()=>{int at=Project.TerminalStrips.FindIndex(t=>t.Id==strip.Id);if(at>=0)Project.TerminalStrips[at]=DocumentModel.Copy(strip);else Project.TerminalStrips.Add(DocumentModel.Copy(strip));});return Project.TerminalStrips.Single(t=>t.Id==strip.Id);
+        Change(()=>{int at=Project.TerminalStrips.FindIndex(t=>t.Id==strip.Id);if(at>=0)Project.TerminalStrips[at]=DocumentModel.Copy(strip);else Project.TerminalStrips.Add(DocumentModel.Copy(strip));foreach(var t in strip.Terminals){var c=Project.Sheets.SelectMany(s=>s.Components).Single(c=>c.Id==t.ComponentId);if(c.TerminalNumberOnly)c.Tag=strip.Name+":"+t.Number;}});return Project.TerminalStrips.Single(t=>t.Id==strip.Id);
     }
-    public List<Sheet> GenerateTerminalPlan(string id)
+    public List<Sheet> GenerateTerminalPlan(string id,string style="table")
     {
-        var strip=Project.TerminalStrips.Single(t=>t.Id==id);List<Sheet> pages=[];Change(()=> { var existing=Project.Sheets.Where(s=>s.TerminalPlanId==id).ToList();int at=existing.Count>0?Project.Sheets.IndexOf(existing[0]):Project.Sheets.Count;Project.Sheets.RemoveAll(s=>s.TerminalPlanId==id);for(int i=0;i<TerminalStrips.PageCount(Project,strip);i++){var sheet=new Sheet{Id=i<existing.Count?existing[i].Id:Guid.NewGuid().ToString("N"),Title="Plan bornier "+strip.Name,TitleBlockId="technical",TerminalPlanId=id,TerminalPlanPage=i};Project.Sheets.Insert(at+i,sheet);pages.Add(sheet);} });SelectSheet(pages[0].Id);return pages;
+        var strip=Project.TerminalStrips.Single(t=>t.Id==id);List<Sheet> pages=[];Change(()=> { var existing=Project.Sheets.Where(s=>s.TerminalPlanId==id).ToList();int at=existing.Count>0?Project.Sheets.IndexOf(existing[0]):Project.Sheets.Count;Project.Sheets.RemoveAll(s=>s.TerminalPlanId==id);for(int i=0;i<TerminalStrips.PageCount(Project,strip,style);i++){var sheet=new Sheet{Id=i<existing.Count?existing[i].Id:Guid.NewGuid().ToString("N"),Title="Plan bornier "+strip.Name,TitleBlockId="technical",TerminalPlanId=id,TerminalPlanPage=i,TerminalPlanStyle=style};Project.Sheets.Insert(at+i,sheet);pages.Add(sheet);} });SelectSheet(pages[0].Id);return pages;
     }
     internal void RemoveTerminalAssignments(HashSet<string> ids)
     {
@@ -94,7 +94,7 @@ public sealed partial class MainWindow
     private sealed record TerminalChoice(string Id,string Name);
     private void TerminalStripsDialog()
     {
-        Canvas.CancelDrag();var dialog=DocumentWindow("Borniers · affectations et plans de raccordement",1200,850);var root=new DockPanel{Margin=new(18)};dialog.Content=root;var top=new WrapPanel();DockPanel.SetDock(top,Dock.Top);root.Children.Add(top);var choose=new ComboBox{Width=250,DisplayMemberPath="Name",SelectedValuePath="Id",Margin=new(0,0,10,10)};top.Children.Add(choose);var name=new TextBox{Width=120,Padding=new(5),Margin=new(0,0,10,10)};top.Children.Add(name);var location=new TextBox{Width=250,Padding=new(5),ToolTip="Localisation du bornier",Margin=new(0,0,10,10)};top.Children.Add(location);
+        Canvas.CancelDrag();var dialog=DocumentWindow("Borniers · affectations et plans de raccordement",1200,850);var root=new DockPanel{Margin=new(18)};dialog.Content=root;var top=new WrapPanel();DockPanel.SetDock(top,Dock.Top);root.Children.Add(top);var choose=new ComboBox{Width=250,DisplayMemberPath="Name",SelectedValuePath="Id",Margin=new(0,0,10,10)};top.Children.Add(choose);var name=new TextBox{Width=120,Padding=new(5),Margin=new(0,0,10,10)};top.Children.Add(name);var location=new TextBox{Width=250,Padding=new(5),ToolTip="Localisation du bornier",Margin=new(0,0,10,10)};top.Children.Add(location);var graphic=new CheckBox{Content="Vue graphique et tableau détaillé",IsChecked=true,Margin=new(8)};top.Children.Add(graphic);
         var bottom=new WrapPanel();DockPanel.SetDock(bottom,Dock.Bottom);root.Children.Add(bottom);var tabs=new TabControl();root.Children.Add(tabs);var assignments=new DataGrid{AutoGenerateColumns=false,CanUserAddRows=false};var bridges=new DataGrid{AutoGenerateColumns=false,CanUserAddRows=false};
         var options=Editor.Project.Sheets.SelectMany(s=>s.Components.Where(c=>c.Definition.InternalConnections.Count>0).Select(c=>new TerminalChoice(c.Id,c.Tag+" · "+DocumentModel.PageNumber(Editor.Project,s)))).ToList();
         void ComponentColumn(DataGrid grid,string header,string path){grid.Columns.Add(new DataGridComboBoxColumn{Header=header,ItemsSource=options,DisplayMemberPath="Name",SelectedValuePath="Id",SelectedValueBinding=new System.Windows.Data.Binding(path),Width=170});}
@@ -113,8 +113,8 @@ public sealed partial class MainWindow
         bottom.Children.Add(DocButton("Ajouter un pontage",dialog,()=>{if(draft.Terminals.Count<2)throw new ArgumentException("Affecter deux bornes d’abord.");draft.Bridges.Add(new(){FromComponent=draft.Terminals[0].ComponentId,FromPort=draft.Terminals[0].InternalPort,ToComponent=draft.Terminals[1].ComponentId,ToPort=draft.Terminals[1].InternalPort});Display();}));
         bottom.Children.Add(DocButton("Retirer le pontage choisi",dialog,()=>{if(bridges.SelectedItem is TerminalBridge b){draft.Bridges.Remove(b);Display();}}));
         bottom.Children.Add(DocButton("Enregistrer le bornier",dialog,()=>{Read();draft=DocumentModel.Copy(Editor.PutTerminalStrip(draft));ReloadChoices();choose.SelectedValue=draft.Id;preview.ItemsSource=TerminalStrips.Rows(Editor.Project,draft);}));
-        bottom.Children.Add(DocButton("Générer les folios du plan",dialog,()=>{Read();Editor.PutTerminalStrip(draft);Editor.GenerateTerminalPlan(draft.Id);dialog.Close();}));
-        bottom.Children.Add(DocButton("Supprimer le bornier",dialog,()=>{if(!Editor.Project.TerminalStrips.Any(t=>t.Id==draft.Id))return;Editor.Change(()=>{Editor.Project.Sheets.RemoveAll(s=>s.TerminalPlanId==draft.Id);Editor.Project.TerminalStrips.RemoveAll(t=>t.Id==draft.Id);});draft=new();ReloadChoices();Display();}));
+        bottom.Children.Add(DocButton("Générer les folios du plan",dialog,()=>{Read();Editor.PutTerminalStrip(draft);Editor.GenerateTerminalPlan(draft.Id,graphic.IsChecked==true?"graphic":"table");dialog.Close();}));
+        bottom.Children.Add(DocButton("Supprimer le bornier",dialog,()=>{if(!Editor.Project.TerminalStrips.Any(t=>t.Id==draft.Id))return;Editor.Change(()=>{Editor.Project.Sheets.RemoveAll(s=>s.TerminalPlanId==draft.Id);Editor.Project.TerminalStrips.RemoveAll(t=>t.Id==draft.Id);foreach(var s in Editor.Project.Sheets)s.TerminalMarkers.RemoveAll(m=>m.StripId==draft.Id);});draft=new();ReloadChoices();Display();}));
         ReloadChoices();if(choose.Items.Count>0)choose.SelectedIndex=0;else Display();ShowDocumentDialog(dialog);
     }
 }

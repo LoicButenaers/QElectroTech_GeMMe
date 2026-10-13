@@ -24,7 +24,7 @@ public sealed partial class Editor
         var affected=key=="tag"?Project.Sheets.Where(s=>s.Components.Any(x=>x.Id==root||x.CoilId==root)).ToList():[located.Sheet];
         var ids=affected.Select(s=>s.Id).ToArray();var cache=StateCache;string before=cache.Bundle(ids);string historyKey="local:"+id+":"+key;
         switch(key){case "tag":SetApparatusTag(c,value);break;case "description":c.Description=value;break;case "brand":c.Brand=value;break;case "range":c.Range=value;break;case "reference":c.Reference=value;break;case "rating":c.Rating=value;break;case "X":c.X=coordinate;break;case "Y":c.Y=coordinate;break;case "rotation":c.Rotation=angle;break;default:c.PortLabels[key[5..]]=value;break;}
-        cache.Update(affected);string after=cache.Bundle(ids);
+        foreach(var affectedSheet in affected.Where(s=>s.Wires.Any(w=>w.RoutingMode=="smart")))RefreshSmartRoutes(affectedSheet);cache.Update(affected);string after=cache.Bundle(ids);
         if(before!=after){if(propertyHistoryKey!=historyKey||undo.Count==0||DateTime.UtcNow-propertyHistoryTime>TimeSpan.FromSeconds(2))undo.Add(HistorySnapshot.CaptureSheets(before,ids));redo.Clear();TrimHistory();propertyHistoryKey=historyKey;propertyHistoryTime=DateTime.UtcNow;}
         currentState=cache.Compose();Changed?.Invoke();
     }

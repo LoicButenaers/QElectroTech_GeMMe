@@ -32,8 +32,8 @@ public sealed partial class MainWindow
         Add("projectInfo", "Informations du projet…", "edit", ProjectInfo);
         Add("demo", "Exemple de départ moteur", "library", Demo);
         Add("close", "Quitter", "delete", Close);
-        Add("undo", "Annuler", "undo", Editor.Undo, "Ctrl+Z", () => Editor.CanUndo && !Editor.InteractionInProgress);
-        Add("redo", "Rétablir", "redo", Editor.Redo, "Ctrl+Y", () => Editor.CanRedo && !Editor.InteractionInProgress);
+        Add("undo", "Annuler", "undo", () => Editor.Undo(), "Ctrl+Z", () => Editor.CanUndo && !Editor.InteractionInProgress);
+        Add("redo", "Rétablir", "redo", () => Editor.Redo(), "Ctrl+Y", () => Editor.CanRedo && !Editor.InteractionInProgress);
         Add("duplicate", "Dupliquer", "new", Duplicate, "Ctrl+D", Selection);
         Add("rotate", "Rotation 90°", "rotate", Rotate, "R", Selection);
         Add("delete", "Supprimer", "delete", Delete, "Suppr", Selection);
@@ -56,8 +56,16 @@ public sealed partial class MainWindow
         Add("validate", "Vérifier les connexions et les repères", "check", Validate);
         Add("projectSearch", "Rechercher dans le projet…", "select", ProjectSearchDialog, "Ctrl+F");
         Add("circuit", "Surligner / parcourir le circuit…", "wire", CircuitDialog);
-        Add("clearCircuit", "Effacer le surlignage du circuit", "wire", Canvas.ClearCircuitHighlight);
+        Add("clearCircuit", "Effacer le surlignage du circuit", "wire", () => Canvas.ClearCircuitHighlight());
         Add("alignment", "Aligner / répartir la sélection…", "fit", AlignmentDialog, enabled: Selection);
+        Add("smartRoute","Router les fils sélectionnés…","wire",SmartRouteSelection,enabled:Selection);
+        Add("insertOnWire","Insérer un symbole sur un fil…","new",InsertSymbolOnWireDialog,enabled:Selection);
+        Add("terminalLine","Tracer une ligne de bornes","wire",()=>Canvas.SetMode("terminalLine"));
+        Add("cableLine","Tracer une ligne de câble","wire",()=>Canvas.SetMode("cableLine"));
+        Add("blockSave", "Créer un bloc depuis la sélection…", "save", SaveCircuitBlock, enabled: Selection);
+        Add("blockImport", "Importer / placer un bloc…", "open", ImportCircuitBlock);
+        Add("personalLibrary", "Bibliothèque personnelle…", "library", PersonalLibraryDialog);
+        Add("cables","Câbles et sections…","wire",CablesDialog);
         Add("numbering", "Numérotation automatique…", "edit", NumberingDialog);
         Add("terminalStrips", "Borniers et plans de raccordement…", "wire", TerminalStripsDialog);
         Add("cabinet", "Implantation d’armoire…", "page", CabinetDialog);
@@ -73,7 +81,9 @@ public sealed partial class MainWindow
         Add("pdf", "Tous les folios en PDF…", "page", () => ExportFile("pdf"), enabled: () => !exportInProgress);
         Add("svg", "Folio courant en SVG…", "page", () => ExportFile("svg"));
         Add("csv", "Nomenclature CSV…", "library", () => ExportFile("csv"));
-        Add("fit", "Ajuster le folio", "fit", Canvas.Fit, "F");
+        Add("fit", "Ajuster le folio", "fit", () => Canvas.Fit(), "F");
+        Add("zoomSelection", "Cadrer la sélection", "fit", () => Canvas.ZoomSelection(), enabled: Selection);
+        Add("reading", "Lecture et détails…", "text", ReadingDialog);
         Add("grid", "Grille du plan…", "fit", GridDialog);
         Add("palette", "Palette des conducteurs…", "edit", () => PaletteDialog());
         Add("library", "Bibliothèque", "library", () => workspace?.Show("library"));
@@ -106,11 +116,11 @@ public sealed partial class MainWindow
         Menu("_Fichier", "new", "templateNew", "open", "save", "saveAs", "templateSave", "recovery", "projectInfo", "demo", "close");
         Menu("_Édition", "undo", "redo", "duplicate", "rotate", "delete", "alignment", "projectSearch");
         Menu("_Folio", "pageAdd", "sheetInfo", "titleblocks", "zones", "pageUp", "pageDown", "pageRename", "pageDelete");
-        Menu("_Insérer", "wire", "text", "select", "newSymbol", "editSymbol", "importSymbol");
+        Menu("_Insérer", "wire", "text", "select", "terminalLine", "cableLine", "insertOnWire", "blockSave", "blockImport", "personalLibrary", "newSymbol", "editSymbol", "importSymbol");
         Menu("I_mporter", "importQet", "importDxf");
-        Menu("_Projet", "validate", "projectSearch", "circuit", "clearCircuit", "numbering", "terminalStrips", "cabinet", "articleFiches", "titleblocks", "bom", "references", "coilContacts");
+        Menu("_Projet", "validate", "projectSearch", "circuit", "clearCircuit", "smartRoute", "cables", "numbering", "terminalStrips", "cabinet", "articleFiches", "titleblocks", "bom", "references", "coilContacts");
         Menu("E_xporter", "pdf", "pdfOptions", "svg", "csv");
-        Menu("_Affichage", "fit", "grid", "palette", "presentation", "library", "properties", "pages", "resetPanels", "settings");
+        Menu("_Affichage", "fit", "zoomSelection", "reading", "grid", "palette", "presentation", "library", "properties", "pages", "resetPanels", "settings");
         Menu("_Aide", "help", "mcpHelp", "license");
         DockPanel.SetDock(menu, Dock.Top); root.Children.Add(menu);
         commandHost.BorderThickness = new(0, 0, 0, 1); UiTheme.Bind(commandHost, Border.BorderBrushProperty, "Ui.Border"); UiTheme.Bind(commandHost, Border.BackgroundProperty, "Ui.Surface");
@@ -179,8 +189,9 @@ public sealed partial class MainWindow
         }
         Tab("Accueil", ("Projet", [("new", "Nouveau"), ("open", "Ouvrir"), ("save", "Enregistrer"), ("pdf", "PDF")]), ("Historique", [("undo", "Annuler"), ("redo", "Rétablir")]), ("Édition", [("select", "Sélection"), ("wire", "Conducteur"), ("text", "Texte"), ("rotate", "Rotation"), ("duplicate", "Dupliquer"), ("delete", "Supprimer")]));
         Tab("Dessiner", ("Symboles", [("newSymbol", "Créer"), ("editSymbol", "Copie"), ("importSymbol", "Importer")]), ("Dessin", [("select", "Sélection"), ("wire", "Conducteur"), ("text", "Texte")]), ("Folios", [("pageAdd", "Ajouter"), ("sheetInfo", "Propriétés"), ("titleblocks", "Cartouches"), ("zones", "Repérage")]));
+        Tab("Circuits", ("Câblage", [("terminalLine", "Bornes"), ("cableLine", "Câble"), ("insertOnWire", "Insérer"), ("smartRoute", "Router")]), ("Organisation", [("cables", "Sections"), ("terminalStrips", "Plans borniers")]), ("Réutiliser", [("blockSave", "Créer un bloc"), ("blockImport", "Importer un bloc"), ("personalLibrary", "Favoris")]));
         Tab("Projet", ("Données", [("projectInfo", "Informations"), ("bom", "Nomenclature"), ("references", "Renvois"), ("coilContacts", "Bobines / contacts"), ("validate", "Vérifier")]), ("Importer", [("importQet", "QElectroTech"), ("importDxf", "DXF")]), ("Exporter", [("pdf", "PDF"), ("svg", "SVG"), ("csv", "CSV")]));
-        Tab("Affichage", ("Vue", [("fit", "Ajuster"), ("grid", "Grille"), ("palette", "Palette")]), ("Panneaux", [("library", "Bibliothèque"), ("pages", "Folios"), ("properties", "Propriétés"), ("resetPanels", "Rétablir")]), ("Interface", [("settings", "Paramètres")]));
+        Tab("Affichage", ("Vue", [("fit", "Ajuster"), ("zoomSelection", "Sélection"), ("reading", "Lecture"), ("grid", "Grille"), ("palette", "Palette")]), ("Panneaux", [("library", "Bibliothèque"), ("pages", "Folios"), ("properties", "Propriétés"), ("resetPanels", "Rétablir")]), ("Interface", [("settings", "Paramètres")]));
         commandHost.Child = ribbon;
     }
 

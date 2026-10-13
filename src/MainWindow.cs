@@ -11,8 +11,8 @@ namespace GeMMeElec;
 
 public sealed partial class MainWindow : Window
 {
-    public Editor Editor { get; } = new();
-    public SheetCanvas Canvas { get; }
+    public Editor Editor { get; private set; } = new();
+    public SheetCanvas Canvas { get; private set; }
     private readonly ListBox library = new(), pages = new();
     private readonly TextBox search = new();
     private readonly ComboBox family = new(), brand = new(), libraryMode = new();
@@ -33,25 +33,23 @@ public sealed partial class MainWindow : Window
         Canvas = new(Editor) { GridVisible = preferences.GridVisible, GridIntensity = preferences.GridIntensity }; Editor.CurrentWireColor = preferences.WireColor;
         UiTheme.Bind(Canvas, SheetCanvas.WorkspaceBackgroundProperty, "Ui.Background");
         var root = UiTheme.Bind(new DockPanel(), Panel.BackgroundProperty, "Ui.Background"); Content = root;
-        BuildShell(root);
+        BuildShell(root); InitializeSessions(root);
         var left = UiTheme.Bind(new DockPanel(), Panel.BackgroundProperty, "Ui.Surface");
         var leftTop = new StackPanel { Margin = new(14, 4, 14, 8) };
         search.ToolTip = "Rechercher un équipement, une marque ou une gamme"; search.Margin = new(0, 10, 0, 8); search.TextChanged += (_, _) => Filter(); leftTop.Children.Add(search);
-        libraryMode.ItemsSource = new[] { "Symboles industriels", "GeMMe fabricant · dessins officiels", "Mes symboles", "EPLAN · aperçus officiels" }; libraryMode.SelectedIndex = 0; libraryMode.Margin = new(0, 0, 0, 8); leftTop.Children.Add(libraryMode);
+        libraryMode.ItemsSource = new[] { "Symboles industriels", "GeMMe fabricant · dessins officiels", "Mes symboles", "EPLAN · aperçus officiels", "Favoris et circuits" }; libraryMode.SelectedIndex = 0; libraryMode.Margin = new(0, 0, 0, 8); leftTop.Children.Add(libraryMode);
         family.Margin = new(0, 0, 0, 8); family.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(family);
         brand.Items.Add("Tous les fabricants"); foreach (var b in Catalog.Entries.Where(e=>e.Library=="manufacturer").Select(e => e.Brand).Distinct().Order()) brand.Items.Add(b); brand.SelectedIndex = 0; brand.Margin = new(0, 0, 0, 8); brand.SelectionChanged += (_, _) => Filter(); leftTop.Children.Add(brand);
         libraryMode.SelectionChanged += (_, _) => LibraryCategories(); LibraryCategories();
         UiTheme.Bind(libraryCount, TextBlock.ForegroundProperty, "Ui.Muted"); libraryCount.FontSize = 11; leftTop.Children.Add(libraryCount); DockPanel.SetDock(leftTop, Dock.Top); left.Children.Add(leftTop);
         var pagePanel = new DockPanel { Margin = new(10, 4, 10, 8) }; var addPage = Button("+ Ajouter un folio", AddPage); DockPanel.SetDock(addPage, Dock.Bottom); pagePanel.Children.Add(addPage);
         pages.DisplayMemberPath = "Display"; pages.SelectionChanged += (_, _) => { if (!refreshing && pages.SelectedItem is Sheet s) { Canvas.CancelDrag(); Editor.SelectSheet(s.Id); Inspect(); } }; pagePanel.Children.Add(pages);
-        library.BorderThickness = new(0); library.Margin = new(8, 0, 8, 0); ScrollViewer.SetHorizontalScrollBarVisibility(library, ScrollBarVisibility.Disabled); library.SelectionChanged += (_, _) => { if (library.SelectedItem is ListBoxItem item && item.Tag is string id) SelectLibrary(id); }; left.Children.Add(library);
+        library.BorderThickness = new(0); library.Margin = new(8, 0, 8, 0); ScrollViewer.SetHorizontalScrollBarVisibility(library, ScrollBarVisibility.Disabled); library.SelectionChanged += (_, _) => { if (library.SelectedItem is ListBoxItem item && item.Tag is string id) Run(() => { if(id.StartsWith("personal:"))SelectPersonalEntry(id[9..]);else SelectLibrary(id); }); }; left.Children.Add(library);
         var right = UiTheme.Bind(new ScrollViewer { Content = properties, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, Control.BackgroundProperty, "Ui.Surface"); properties.Margin = new(14, 0, 14, 16);
         workspace = new WorkspacePanels(Canvas, left, pagePanel, right); root.Children.Add(workspace);
-        Canvas.ContextRequested += ShowSchematicMenu;
-        Canvas.ReferenceRequested += FollowReference; Canvas.Status += text => status.Text = text; Canvas.SelectionChanged += Inspect; Canvas.TextRequested += p => { var text = Prompt("Texte du schéma", "Texte", "Texte"); if (text is not null) Editor.Change(() => Editor.Sheet.Notes.Add(new() { X = Editor.Snap(p.X), Y = Editor.Snap(p.Y), Text = text })); };
-        Editor.Changed += Refresh; PreviewKeyDown += Keys;
-        Closing += (_, e) => { if (exportInProgress||recoveryWriting) { e.Cancel = true; status.Text = "Export ou copie en cours · fermer après sa fin."; return; } Canvas.CancelDrag(); if (!CanReplace()) e.Cancel = true; }; Closed += (_, _) => { recoveryTimer.Stop();bridge?.Dispose(); };
-        bridge = new LocalBridge(this); Filter(); Refresh(); Canvas.SetMode("select");
+        PreviewKeyDown += Keys;
+        Closing += (_, e) => { if (exportInProgress||recoveryWriting) { e.Cancel = true; status.Text = "Export ou copie en cours · fermer après sa fin."; return; } Canvas.CancelDrag(); if (!CanCloseAllProjects()) e.Cancel = true; }; Closed += (_, _) => { recoveryTimer.Stop();bridge?.Dispose(); };
+        bridge = new LocalBridge(this); Run(ReloadPersonalLibrary); Filter(); Refresh(); Canvas.SetMode("select");
         if (file is not null) Run(() => Editor.Open(file));
         StartRecovery();
     }
@@ -63,14 +61,15 @@ public sealed partial class MainWindow : Window
         family.Visibility = libraryMode.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible;
         family.Items.Clear(); family.Items.Add("Toutes les familles");
         Canvas.SetMode("select"); Canvas.CatalogId = null;
-        foreach (var category in libraryMode.SelectedIndex is 1 or 3 ? Catalog.Entries.Where(e=>e.Library==(libraryMode.SelectedIndex==1?"manufacturer":"eplan")).Select(e => e.Family).Distinct().Order() : Symbols.All.Values.Where(s=>!s.Id.StartsWith("official-")).Select(s => s.Category).Distinct().Order()) family.Items.Add(category);
+        foreach (var category in libraryMode.SelectedIndex == 4 ? personalEntries.Select(e=>e.Category).Distinct().Order() : libraryMode.SelectedIndex is 1 or 3 ? Catalog.Entries.Where(e=>e.Library==(libraryMode.SelectedIndex==1?"manufacturer":"eplan")).Select(e => e.Family).Distinct().Order() : Symbols.All.Values.Where(s=>!s.Id.StartsWith("official-")).Select(s => s.Category).Distinct().Order()) family.Items.Add(category);
         brand.Visibility = libraryMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed; family.SelectedIndex = 0; Filter();
     }
     private void Filter()
     {
         if (family.SelectedItem is null || brand.SelectedItem is null) return;
         library.Items.Clear(); var f = family.SelectedIndex > 0 ? (string)family.SelectedItem : "";
-        if (libraryMode.SelectedIndex is 1 or 3) foreach (var e in Catalog.Search(search.Text, f, libraryMode.SelectedIndex==1 && brand.SelectedIndex > 0 ? (string)brand.SelectedItem : "", libraryMode.SelectedIndex==1?"manufacturer":"eplan")) OfficialLibraryItem(e);
+        if(libraryMode.SelectedIndex==4) foreach(var entry in personalEntries.Where(e=>(f.Length==0||e.Category==f)&&Symbols.SearchKey(e.Name+" "+e.Category+" "+e.Tags).Contains(Symbols.SearchKey(search.Text)))) PersonalLibraryItem(entry);
+        else if (libraryMode.SelectedIndex is 1 or 3) foreach (var e in Catalog.Search(search.Text, f, libraryMode.SelectedIndex==1 && brand.SelectedIndex > 0 ? (string)brand.SelectedItem : "", libraryMode.SelectedIndex==1?"manufacturer":"eplan")) OfficialLibraryItem(e);
         else if (libraryMode.SelectedIndex == 2) foreach (var s in Editor.Project.CustomSymbols.Values.Where(s => Symbols.SearchKey(s.Name).Contains(Symbols.SearchKey(search.Text)))) LibraryItem(s.Id, s.Name, s.Category, "Copie enregistrée dans ce projet · modifier ou exporter depuis Insérer");
         else foreach (var s in Symbols.Search(search.Text, f).Where(s=>!s.Id.StartsWith("official-"))) LibraryItem(s.Id, s.Name, s.Category, "Symbole fonctionnel générique GeMMeElec · cliquer puis placer · R pour tourner");
         libraryCount.Text = $"{library.Items.Count} résultats · " + (libraryMode.SelectedIndex == 3 ? "double-clic : aperçu et source" : "cliquer puis placer");
@@ -82,6 +81,7 @@ public sealed partial class MainWindow : Window
         var stack = new StackPanel { Margin = new(7, 0, 0, 0) }; stack.Children.Add(new TextBlock { Text = name, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap }); stack.Children.Add(UiTheme.Bind(new TextBlock { Text = detail, FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new(0, 3, 0, 0) }, TextBlock.ForegroundProperty, "Ui.Muted")); row.Children.Add(stack);
         var item = new ListBoxItem { Tag = id, Content = row, ToolTip = tip, HorizontalContentAlignment = HorizontalAlignment.Stretch };
         var context = new ContextMenu();
+        context.Items.Add(QuickAction("Ajouter aux favoris…", () => FavoriteSymbol(symbol)));
         context.Items.Add(QuickAction("Placer sur le folio", () => { var entry = Catalog.Entries.FirstOrDefault(e => e.Id == id); Canvas.Symbol = symbol; Canvas.CatalogId = entry?.Id; Canvas.SetMode("place"); }));
         if (symbol is not ("junction" or "folio_next" or "folio_previous")) context.Items.Add(QuickAction("Modifier en copie…", () => EditSymbol(CustomSymbols.Resolve(Editor.Project, symbol))));
         item.ContextMenu = context;
@@ -124,13 +124,13 @@ public sealed partial class MainWindow : Window
         if (result == MessageBoxResult.Yes) { try { return Save(false); } catch (Exception ex) { MessageBox.Show(this, "Enregistrement échoué. Le projet reste ouvert et ses modifications sont conservées.\n\n" + ex.Message, "GeMMeElec", MessageBoxButton.OK, MessageBoxImage.Error); return false; } }
         return true;
     }
-    private void NewProject() { Canvas.CancelDrag(); if (!CanReplace()) return; var title = Prompt("Nouveau projet", "Nom du projet", "Nouveau projet"); if (title is not null) Editor.New(title); }
-    private void Open() { Canvas.CancelDrag(); if (!CanReplace()) return; var dialog = new OpenFileDialog { Filter = "Projet GeMMeElec|*.gemelec" }; if (dialog.ShowDialog(this) == true) Editor.Open(dialog.FileName); }
+    private void NewProject() { Canvas.CancelDrag(); var title = Prompt("Nouveau projet", "Nom du projet", "Nouveau projet"); if (title is not null) AddProjectTab(title: title); }
+    private void Open() { Canvas.CancelDrag(); var dialog = new OpenFileDialog { Filter = "Projet GeMMeElec|*.gemelec" }; if (dialog.ShowDialog(this) == true) AddProjectTab(path: dialog.FileName); }
     private bool Save(bool saveAs)
     {
         Canvas.CancelDrag(); var path = Editor.FilePath;
         if (saveAs || path is null) { var dialog = new SaveFileDialog { Filter = "Projet GeMMeElec|*.gemelec", DefaultExt = ".gemelec", FileName = path is null ? "Projet.gemelec" : Path.GetFileName(path) }; if (dialog.ShowDialog(this) != true) return false; path = dialog.FileName; }
-        Editor.Save(path); status.Text = "Projet enregistré · " + path; return true;
+        CheckProjectSavePath(path); Editor.Save(path); status.Text = "Projet enregistré · " + path; return true;
     }
     private void ProjectInfo() => MetadataDialog(false);
     private void AddPage() { var title = Prompt("Ajouter un folio", "Titre", $"Folio {Editor.Project.Sheets.Count + 1}"); if (title is not null) Editor.AddSheet(title); }

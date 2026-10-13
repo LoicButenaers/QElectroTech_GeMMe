@@ -17,7 +17,7 @@ public static class Junctions
             {
                 var edges = s.Wires.Where(w => w.From.ComponentId == c.Id || w.To.ComponentId == c.Id).ToList();
                 if (edges.Count == 0) { s.Components.Remove(c); changed = true; continue; }
-                if (edges.Count != 2 || edges[0].Number != edges[1].Number || edges[0].Color != edges[1].Color || edges[0].NumberIndependent != edges[1].NumberIndependent || edges[0].Thickness != edges[1].Thickness || edges[0].LineStyle != edges[1].LineStyle || System.Text.Json.JsonSerializer.Serialize(edges[0].NumberPlacement) != System.Text.Json.JsonSerializer.Serialize(edges[1].NumberPlacement)) continue;
+                if (edges.Count != 2 || edges[0].CableId!=edges[1].CableId||edges[0].CableCore!=edges[1].CableCore||edges[0].SectionMm2!=edges[1].SectionMm2||edges[0].RoutingMode!=edges[1].RoutingMode||edges[0].Number != edges[1].Number || edges[0].Color != edges[1].Color || edges[0].NumberIndependent != edges[1].NumberIndependent || edges[0].Thickness != edges[1].Thickness || edges[0].LineStyle != edges[1].LineStyle || System.Text.Json.JsonSerializer.Serialize(edges[0].NumberPlacement) != System.Text.Json.JsonSerializer.Serialize(edges[1].NumberPlacement)) continue;
                 var a = edges[0]; var b = edges[1]; var start = a.From.ComponentId == c.Id ? a.To : a.From; var end = b.From.ComponentId == c.Id ? b.To : b.From;
                 if (start == end || s.Wires.Except(edges).Any(w => w.From == start && w.To == end || w.From == end && w.To == start)) continue;
                 var ra = a.Route(s); if (a.From.ComponentId == c.Id) ra.Reverse(); var rb = b.Route(s); if (b.To.ComponentId == c.Id) rb.Reverse();

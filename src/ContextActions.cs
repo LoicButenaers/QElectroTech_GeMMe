@@ -18,6 +18,8 @@ public sealed partial class MainWindow
         if (Canvas.Selected.Count > 0)
         {
             menu.Items.Add(QuickAction("Propriétés", () => { workspace?.Show("properties"); Inspect(); }));
+            menu.Items.Add(QuickAction("Cadrer la sélection",()=>Canvas.ZoomSelection()));
+            if(components.Count>0)menu.Items.Add(QuickAction("Créer un bloc de circuit…",SaveCircuitBlock));
             if (components.Count > 0) menu.Items.Add(QuickAction("Rotation 90°    R", Rotate));
             if (components.Count > 0 || Editor.Sheet.Notes.Any(n => Canvas.Selected.Contains(n.Id))) menu.Items.Add(QuickAction("Dupliquer    Ctrl+D", Duplicate));
             if (components.Count == 1 && Canvas.Selected.Count == 1)
@@ -31,12 +33,13 @@ public sealed partial class MainWindow
                     if (new CrossReferences(Editor.Project).Targets(c.Id).Count > 0) menu.Items.Add(QuickAction("Aller au report lié", () => FollowReference(c.Id)));
                 }
                 else if (c.Symbol != "junction") menu.Items.Add(QuickAction("Modifier le symbole en copie…", SymbolEditor));
+                if(c.Symbol!="junction")menu.Items.Add(QuickAction("Ajouter le symbole aux favoris…",()=>FavoriteSymbol(c.Symbol)));
             }
             if (wires.Count > 0)
             {
-                menu.Items.Add(QuickAction("Surligner / parcourir le circuit…", CircuitDialog));
+                menu.Items.Add(QuickAction("Surligner / parcourir le circuit…", CircuitDialog));menu.Items.Add(QuickAction("Routage intelligent",SmartRouteSelection));if(wires.Count==1)menu.Items.Add(QuickAction("Insérer un symbole sur le fil…",InsertSymbolOnWireDialog));
                 menu.Items.Add(QuickAction("Effacer le surlignage", Canvas.ClearCircuitHighlight));
-                menu.Items.Add(QuickAction("Parcours automatique", () => Editor.Change(() => wires.ForEach(w => w.Waypoints.Clear()))));
+                menu.Items.Add(QuickAction("Parcours automatique", () => Editor.Change(() => wires.ForEach(w => {w.Waypoints.Clear();w.RoutingMode="manual";w.RoutingWarning="";}))));
                 menu.Items.Add(QuickAction("Couleur des conducteurs…", () => PaletteDialog(wires[0].Color, color => Editor.Change(() => wires.ForEach(w => w.Color = color)))));
             }
             menu.Items.Add(new Separator()); menu.Items.Add(QuickAction("Supprimer    Suppr", Delete));

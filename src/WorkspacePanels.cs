@@ -30,6 +30,9 @@ public sealed class WorkspacePanels : Grid
     private readonly GridSplitter leftSplitter, rightSplitter;
     private readonly PaneSettings settings;
     private bool arranged;
+    private readonly Border canvasHost = new();
+    private UIElement? hostedCanvas;
+    private readonly System.Windows.Input.MouseButtonEventHandler collapseHandler;
     internal static string SettingsPath => Path.Combine(AppContext.BaseDirectory, Environment.GetEnvironmentVariable("GEMMEELEC_TEST_SESSION") == "1" ? "GeMMeElec.test-layout.json" : "GeMMeElec.layout.json");
     public WorkspacePanels(UIElement canvas, UIElement library, UIElement pages, UIElement properties)
     {
@@ -50,11 +53,17 @@ public sealed class WorkspacePanels : Grid
             DockPanel.SetDock(header, Dock.Top); dock.Children.Add(header); dock.Children.Add(pane.Content); pane.Frame = UiTheme.Bind(new Border { Child = dock, BorderThickness = new(0, 0, 0, 1) }, Border.BorderBrushProperty, "Ui.Border");
         }
         ColumnDefinitions.Add(new() { Width = new(settings.LeftWidth) }); ColumnDefinitions.Add(new() { Width = new(5) }); ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star), MinWidth = 250 }); ColumnDefinitions.Add(new() { Width = new(5) }); ColumnDefinitions.Add(new() { Width = new(settings.RightWidth) });
-        SetColumn(left, 0); Children.Add(left); SetColumn(canvas, 2); Children.Add(canvas); SetColumn(right, 4); Children.Add(right);
+        SetColumn(left, 0); Children.Add(left); SetColumn(canvasHost, 2); canvasHost.Child=canvas; Children.Add(canvasHost); SetColumn(right, 4); Children.Add(right);
         leftSplitter = Splitter(1); rightSplitter = Splitter(3); Refresh();
         // Collapse transient panes after the canvas has handled the event, so its
         // coordinate system does not change in the middle of a placement/drag.
-        canvas.PreviewMouseUp += (_, _) => Dispatcher.BeginInvoke(() => { if (panes.Any(p => p.State == "auto" && p.Expanded)) { RememberWidths(); foreach (var p in panes) p.Expanded = false; Refresh(); } }, System.Windows.Threading.DispatcherPriority.Background);
+        collapseHandler = (_, _) => Dispatcher.BeginInvoke(() => { if (panes.Any(p => p.State == "auto" && p.Expanded)) { RememberWidths(); foreach (var p in panes) p.Expanded = false; Refresh(); } }, System.Windows.Threading.DispatcherPriority.Background);
+        SetCanvas(canvas);
+    }
+    public void SetCanvas(UIElement canvas)
+    {
+        if (hostedCanvas is not null) hostedCanvas.PreviewMouseUp -= collapseHandler;
+        canvasHost.Child = canvas; hostedCanvas = canvas; canvas.PreviewMouseUp += collapseHandler;
     }
     private GridSplitter Splitter(int column)
     {

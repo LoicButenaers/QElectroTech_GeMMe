@@ -15,7 +15,7 @@ public static class ComponentTexts
     public static List<ComponentTextTarget> List(Component c)
     {
         bool report = CrossReferences.IsPoint(c);
-        List<ComponentTextTarget> result = [new("tag", report ? "Nom du report" : "Repère", report ? ReferenceDisplay.Name(c) : c.Tag, c.TagPlacement, report ? 14 : 16, report ? "#000000" : "#203348"), new("detail", report ? "Destination(s)" : "Caractéristiques / référence", report ? "" : Drawing.Detail(c), c.DetailPlacement, report ? 12 : 10, report ? "#008000" : "#64748B", report), new("description", "Description", c.Description, c.DescriptionPlacement, 12, "#64748B")];
+        List<ComponentTextTarget> result = [new("tag", report ? "Nom du report" : "Repère", report ? ReferenceDisplay.Name(c) : c.TerminalNumberOnly?c.Tag.Split(':')[^1]:c.Tag, c.TagPlacement, report ? 14 : 16, report ? "#000000" : "#203348"), new("detail", report ? "Destination(s)" : "Caractéristiques / référence", report ? "" : Drawing.Detail(c), c.DetailPlacement, report ? 12 : 10, report ? "#008000" : "#64748B", report), new("description", "Description", c.Description, c.DescriptionPlacement, 12, "#64748B")];
         foreach (var port in c.Definition.Ports)
         {
             string key = "port:" + port.Id;

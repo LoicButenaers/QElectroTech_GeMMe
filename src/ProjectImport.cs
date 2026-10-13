@@ -135,7 +135,7 @@ public sealed partial class MainWindow
             IsEnabled=false;status.Text="Conversion du projet…";var result=await Task.Run(()=>dxf?ProjectImport.DxfPages(picker.FileNames):ProjectImport.Qet(picker.FileName));IsEnabled=true;
             var dialog=DocumentWindow("Rapport de conversion",800,600);var root=new DockPanel{Margin=new(18)};dialog.Content=root;var actions=new WrapPanel();DockPanel.SetDock(actions,Dock.Bottom);root.Children.Add(actions);
             root.Children.Add(new TextBox{Text=result.Report,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,VerticalScrollBarVisibility=ScrollBarVisibility.Auto});
-            actions.Children.Add(DocButton("Ouvrir le projet converti",dialog,()=>{if(!CanReplace())return;Editor.ImportProject(result.Project);libraryMode.SelectedIndex=2;Filter();dialog.Close();Canvas.Fit();}));actions.Children.Add(DocButton("Annuler",dialog,dialog.Close));ShowDocumentDialog(dialog);
+            actions.Children.Add(DocButton("Ouvrir le projet converti",dialog,()=>{AddProjectTab(result.Project);libraryMode.SelectedIndex=2;Filter();dialog.Close();Canvas.Fit();}));actions.Children.Add(DocButton("Annuler",dialog,dialog.Close));ShowDocumentDialog(dialog);
         }catch(Exception ex){MessageBox.Show(this,ex.Message,"Conversion du projet");}finally{IsEnabled=true;status.Text="Prêt";}
     }
 }

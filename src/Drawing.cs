@@ -21,7 +21,7 @@ public sealed class SymbolPreview(string symbol) : FrameworkElement
 }
 public static class Drawing
 {
-    public static List<Ink> Scene(Project project, Sheet sheet)
+    public static List<Ink> Scene(Project project, Sheet sheet, ReadingOptions? reading = null)
     {
         if (sheet.BomPage is not null) return BomFolios.Scene(project, sheet);
         if (sheet.TerminalPlanId.Length>0) return TerminalStrips.Scene(project,sheet);
@@ -43,11 +43,13 @@ public static class Drawing
         {
             var path = routes[wire.Id];
             for (int i = 1; i < path.Count; i++) result.Add(new("line", path[i - 1].X, path[i - 1].Y, path[i].X, path[i].Y, Color: wire.Color, Thickness: wire.Thickness, LineStyle: wire.LineStyle));
-            var label = WireLabel(wire, path); if (label is not null) result.Add(label);
+            var label = WireLabel(wire, path); if (label is not null && (reading?.WireNumbers ?? true)) result.Add(reading?.Scale(label) ?? label);
         }
-        foreach (var c in sheet.Components) result.AddRange(ComponentScene(project, c, references, false));
+        foreach (var c in sheet.Components) result.AddRange(ComponentScene(project, c, references, false, reading));
         foreach (var dot in Junctions.Dots(sheet, routes)) result.Add(new("dot", dot.Point.X, dot.Point.Y, 4, Color: dot.Color));
-        foreach (var n in sheet.Notes) result.Add(new("text", n.X, n.Y, Text: n.Text, Size: 16));
+        if (reading?.Notes ?? true) foreach (var n in sheet.Notes) result.Add(new("text", n.X, n.Y, Text: n.Text, Size: 16 * (reading?.TextScale ?? 1)));
+        result.AddRange(CableDefinitions.Scene(project,sheet));
+        foreach(var marker in sheet.TerminalMarkers)result.Add(new("text",Math.Max(32,Math.Min(marker.A.X,marker.B.X)-40),Math.Min(marker.A.Y,marker.B.Y)-15,Text:project.TerminalStrips.Single(t=>t.Id==marker.StripId).Name,Size:14));
         return result;
     }
     public static Ink? WireLabel(Wire wire, IReadOnlyList<Point> path)
@@ -64,10 +66,10 @@ public static class Drawing
         var origin = midpoint - tangent * (size.Width / 2) + normal * (size.Height + 4);
         return new("text", origin.X + wire.NumberPlacement.OffsetX, origin.Y + wire.NumberPlacement.OffsetY, Text: wire.Number, Color: wire.NumberPlacement.Color.Length > 0 ? wire.NumberPlacement.Color : wire.Color, Size: font, Rotation: wire.NumberPlacement.Rotation ?? Math.Atan2(tangent.Y, tangent.X) * 180 / Math.PI);
     }
-    public static List<Ink> ComponentScene(Project project, Component c, CrossReferences references, bool images = true)
+    public static List<Ink> ComponentScene(Project project, Component c, CrossReferences references, bool images = true, ReadingOptions? reading = null)
     {
         if (c.Symbol == "junction") return [];
-        if (CrossReferences.IsPoint(c)) return ReferenceDisplay.Scene(project, c, references).Concat(ComponentTexts.Scene(project, c, references)).ToList();
+        if (CrossReferences.IsPoint(c)) return reading is null ? ReferenceDisplay.Scene(project, c, references).Concat(ComponentTexts.Scene(project, c, references)).ToList() : ReferenceDisplay.Scene(project,c,references).Where(i=>i.Kind!="text").Concat(reading.ComponentTexts(project,c,references)).ToList();
         List<Ink> result = [];
         foreach (var shape in c.Definition.Shapes)
         {
@@ -82,7 +84,7 @@ public static class Drawing
             if (!c.Definition.PrintedTerminals) result.Add(new("circle", p.X, p.Y, 2,Color:project.Presentation.SymbolColor));
 
         }
-        result.AddRange(ComponentTexts.Scene(project, c, references));
+        result.AddRange(reading?.ComponentTexts(project,c,references) ?? ComponentTexts.Scene(project, c, references));
         return result;
     }
     public static string Detail(Component c) => c.Rating.Length > 0 ? c.Rating : c.Reference.Length > 0 ? c.Reference : c.Range;
