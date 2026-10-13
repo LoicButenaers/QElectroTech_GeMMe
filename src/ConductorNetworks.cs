@@ -15,6 +15,7 @@ public sealed class ConductorNetworks
         void WireAt(Endpoint at, Wire wire) { if (!wires.TryGetValue(at, out var list)) wires[at] = list = []; list.Add(wire); }
         foreach (var wire in project.Sheets.SelectMany(s => s.Wires)) { Pair(wire.From, wire.To); WireAt(wire.From, wire); WireAt(wire.To, wire); }
         foreach (var c in components.Values) foreach (var pair in c.Definition.InternalConnections) Pair(new(c.Id, pair.From), new(c.Id, pair.To));
+        foreach(var strip in project.TerminalStrips)foreach(var bridge in strip.Bridges)Pair(new(bridge.FromComponent,bridge.FromPort),new(bridge.ToComponent,bridge.ToPort));
         var refs = new CrossReferences(project);
         foreach (var point in CrossReferences.Points(project)) foreach (var target in refs.Targets(point.Component.Id)) Pair(new(point.Component.Id, "1"), new(target.Component.Id, "1"));
     }

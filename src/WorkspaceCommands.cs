@@ -58,6 +58,10 @@ public sealed partial class MainWindow
         Add("circuit", "Surligner / parcourir le circuit…", "wire", CircuitDialog);
         Add("clearCircuit", "Effacer le surlignage du circuit", "wire", Canvas.ClearCircuitHighlight);
         Add("alignment", "Aligner / répartir la sélection…", "fit", AlignmentDialog, enabled: Selection);
+        Add("numbering", "Numérotation automatique…", "edit", NumberingDialog);
+        Add("terminalStrips", "Borniers et plans de raccordement…", "wire", TerminalStripsDialog);
+        Add("cabinet", "Implantation d’armoire…", "page", CabinetDialog);
+        Add("articleFiches", "Fiches fabricants hors ligne…", "library", ArticleFichesDialog);
         Add("bom", "Nomenclature configurable…", "library", Bom);
         Add("references", "Navigateur des renvois…", "wire", ReferenceNavigator);
         Add("coilContacts", "Bobines et contacts…", "wire", CoilNavigator);
@@ -99,7 +103,7 @@ public sealed partial class MainWindow
         Menu("_Folio", "pageAdd", "sheetInfo", "titleblocks", "zones", "pageUp", "pageDown", "pageRename", "pageDelete");
         Menu("_Insérer", "wire", "text", "select", "newSymbol", "editSymbol", "importSymbol");
         Menu("I_mporter", "importQet", "importDxf");
-        Menu("_Projet", "validate", "projectSearch", "circuit", "clearCircuit", "titleblocks", "bom", "references", "coilContacts");
+        Menu("_Projet", "validate", "projectSearch", "circuit", "clearCircuit", "numbering", "terminalStrips", "cabinet", "articleFiches", "titleblocks", "bom", "references", "coilContacts");
         Menu("E_xporter", "pdf", "svg", "csv");
         Menu("_Affichage", "fit", "grid", "palette", "library", "properties", "pages", "resetPanels", "settings");
         Menu("_Aide", "help", "mcpHelp", "license");

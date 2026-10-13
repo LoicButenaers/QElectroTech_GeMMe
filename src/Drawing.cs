@@ -24,6 +24,8 @@ public static class Drawing
     public static List<Ink> Scene(Project project, Sheet sheet)
     {
         if (sheet.BomPage is not null) return BomFolios.Scene(project, sheet);
+        if (sheet.TerminalPlanId.Length>0) return TerminalStrips.Scene(project,sheet);
+        if (sheet.CabinetPlanId.Length>0) return Cabinets.PlanScene(project,sheet);
         List<Ink> result = [new("rect", 10, 10, sheet.Width - 40, sheet.Height - 40, Color: "#53677B")];
         result.AddRange(DocumentModel.Scene(project,sheet));
         result.AddRange(SheetZones.Frame(project, sheet));

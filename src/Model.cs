@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 5;
+    public const int CurrentVersion = 6;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -25,12 +25,19 @@ public sealed class Project
     public List<TitleBlockTemplate> TitleBlocks { get; set; } = TitleBlocksDefaults.Create();
     public Dictionary<string, string> Images { get; set; } = [];
     public BomOptions BomOptions { get; set; } = new();
+    public NumberingRules NumberingRules { get; set; } = new();
+    public List<TerminalStrip> TerminalStrips { get; set; } = [];
+    public List<CabinetLayout> Cabinets { get; set; } = [];
     public int ZoneColumns { get; set; } = 20;
     public int ZoneRows { get; set; } = 10;
     public List<Sheet> Sheets { get; set; } = [new()];
 }
 public sealed class Sheet
 {
+    public string TerminalPlanId { get; set; } = "";
+    public int TerminalPlanPage { get; set; }
+    public string CabinetPlanId { get; set; } = "";
+    public int CabinetPlanPage { get; set; }
     public bool UseProjectZones { get; set; } = true;
     public int ZoneColumns { get; set; } = 20;
     public int ZoneRows { get; set; } = 10;
@@ -56,6 +63,7 @@ public sealed class Sheet
 }
 public sealed class Component
 {
+    public bool TagLocked { get; set; }
     public string CoilId { get; set; } = "";
     public string RelayFunction { get; set; } = "";
     public LabelPlacement CoilReferencePlacement { get; set; } = new() { Side = "right", Horizontal = "left", Vertical = "top", Gap = 20, OffsetY = 35, FontSize = 11, Color = "#087344" };
@@ -239,7 +247,7 @@ public static class ProjectStore
             foreach (var sheet in project.Sheets ?? []) if (sheet is not null) sheet.UseProjectZones = sheet.ZoneColumns == project.ZoneColumns && sheet.ZoneRows == project.ZoneRows;
             project.Version = Project.CurrentVersion;
         }
-        else if (project.Version is 3 or 4) project.Version = Project.CurrentVersion;
+        else if (project.Version is 3 or 4 or 5) project.Version = Project.CurrentVersion;
         ValidateStructure(project);
         return project;
     }
@@ -248,6 +256,7 @@ public static class ProjectStore
         if (p.Format != "GeMMeElec" || p.Version != Project.CurrentVersion) throw new InvalidDataException("Format ou version de projet non pris en charge.");
         void Text(string? value) { if (value is null || value.Length > 2000) throw new InvalidDataException("Champ texte absent ou trop long."); }
         Text(p.Title); Text(p.Author); Text(p.Revision);
+        if(p.NumberingRules is null)throw new InvalidDataException("Règles de numérotation absentes.");p.NumberingRules.Validate(p);
         if (p.ZoneColumns is < 1 or > 40 || p.ZoneRows is < 1 or > 26) throw new InvalidDataException("Repérage du projet : 1 à 40 colonnes et 1 à 26 lignes.");
         CustomSymbols.Validate(p);
         DocumentModel.Validate(p);
@@ -258,10 +267,14 @@ public static class ProjectStore
         {
             if (s is null) throw new InvalidDataException("Folio vide.");
             Text(s.Title);
+            Text(s.TerminalPlanId);if(s.TerminalPlanPage<0||s.TerminalPlanPage>249)throw new InvalidDataException("Page de bornier invalide.");
+            Text(s.CabinetPlanId);if(s.CabinetPlanId.Length>0&&s.TerminalPlanId.Length>0)throw new InvalidDataException("Type de plan ambigu.");
+            if(s.CabinetPlanPage<0||s.CabinetPlanPage>199)throw new InvalidDataException("Page d’implantation invalide.");
             if (s.ZoneColumns is < 1 or > 40 || s.ZoneRows is < 1 or > 26) throw new InvalidDataException("Repérage : 1 à 40 colonnes et 1 à 26 lignes.");
             Id(s.Id);
             if (!double.IsFinite(s.Width) || !double.IsFinite(s.Height) || s.Width is < 200 or > 10000 || s.Height is < 200 or > 10000) throw new InvalidDataException("Dimensions de folio invalides.");
             if (s.Components is null || s.Wires is null || s.Notes is null || s.Components.Count > 10000 || s.Wires.Count > 20000 || s.Notes.Count > 5000) throw new InvalidDataException("Contenu du folio invalide ou trop volumineux.");
+            if((s.TerminalPlanId.Length>0||s.CabinetPlanId.Length>0)&&(s.Components.Count>0||s.Wires.Count>0||s.Notes.Count>0))throw new InvalidDataException("Modifier les plans générés depuis leur gestionnaire.");
             BomFolios.Validate(p, s);
             foreach (var c in s.Components)
             {
@@ -301,6 +314,8 @@ public static class ProjectStore
             foreach (var n in s.Notes) { if (n is null) throw new InvalidDataException("Annotation vide."); Id(n.Id); if (!double.IsFinite(n.X) || !double.IsFinite(n.Y) || n.X < 0 || n.X > s.Width || n.Y < 0 || n.Y > s.Height || n.Text is null || n.Text.Length > 2000) throw new InvalidDataException("Annotation invalide."); }
         }
         CoilContacts.Validate(p);
+        TerminalStrips.Validate(p);
+        Cabinets.Validate(p);
     }
     public static Project Load(string path)
     {
@@ -439,7 +454,7 @@ public sealed partial class Editor
     public void Delete(IEnumerable<string> selected)
     {
         var ids = selected.ToHashSet();
-        Change(() => { foreach (var c in Project.Sheets.SelectMany(s => s.Components).Where(c => ids.Contains(c.CoilId))) c.CoilId = ""; Sheet.Wires.RemoveAll(w => ids.Contains(w.Id) || ids.Contains(w.From.ComponentId) || ids.Contains(w.To.ComponentId)); Sheet.Components.RemoveAll(c => ids.Contains(c.Id)); Sheet.Notes.RemoveAll(n => ids.Contains(n.Id)); });
+        Change(() => { RemoveTerminalAssignments(ids);foreach (var c in Project.Sheets.SelectMany(s => s.Components).Where(c => ids.Contains(c.CoilId))) c.CoilId = ""; Sheet.Wires.RemoveAll(w => ids.Contains(w.Id) || ids.Contains(w.From.ComponentId) || ids.Contains(w.To.ComponentId)); Sheet.Components.RemoveAll(c => ids.Contains(c.Id)); Sheet.Notes.RemoveAll(n => ids.Contains(n.Id)); });
     }
     public static double Snap(double value) => Math.Round(value / 10) * 10;
     public List<Finding> Validate()

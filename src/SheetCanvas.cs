@@ -113,7 +113,7 @@ public sealed class SheetCanvas : FrameworkElement
         var sheet = Editor.Sheet;
         dc.DrawRectangle(Drawing.Brush("#CBD5E1"), null, new(6, 7, sheet.Width, sheet.Height));
         dc.DrawRectangle(Brushes.White, null, new(0, 0, sheet.Width, sheet.Height));
-        var key = (GridVisible && sheet.BomPage is null, GridIntensity, Zoom, sheet.Width, DocumentModel.DrawingBottom(Editor.Project, sheet));
+        var key = (GridVisible && sheet.BomPage is null && sheet.TerminalPlanId.Length==0 && sheet.CabinetPlanId.Length==0, GridIntensity, Zoom, sheet.Width, DocumentModel.DrawingBottom(Editor.Project, sheet));
         if (gridCache is null || gridKey != key)
         {
             gridKey = key; gridCache = new();
@@ -167,7 +167,7 @@ public sealed class SheetCanvas : FrameworkElement
         }
         if (hoveredPort is not null && sheet.Components.Any(c => c.Id == hoveredPort.ComponentId)) dc.DrawEllipse(accent, new Pen(Brushes.White, 1 / Zoom), PortPoint(hoveredPort), 6 / Zoom, 6 / Zoom);
         if (hoveredWire is { } branch && connection is not null && hoveredPort is null) dc.DrawEllipse(accent, new Pen(Brushes.White, 1 / Zoom), branch.Point, 6 / Zoom, 6 / Zoom);
-        if (sheet.BomPage is null && Mode == "place" && IsMouseOver && hoveredPort is null)
+        if (sheet.BomPage is null && sheet.TerminalPlanId.Length==0 && sheet.CabinetPlanId.Length==0 && Mode == "place" && IsMouseOver && hoveredPort is null)
         {
             var ghost = new Component { Symbol = Symbol, ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, Symbol), X = Editor.Snap(pointer.X), Y = Editor.Snap(pointer.Y), Tag = "" };
             var r = ghost.Bounds(); dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(30, 0, 127, 134)), pen, r);
@@ -249,7 +249,7 @@ public sealed class SheetCanvas : FrameworkElement
     }
     internal bool BeginTextMove(Point point)
     {
-        if (before is not null || connection is not null || Editor.Sheet.BomPage is not null) return false;
+        if (before is not null || connection is not null || (Editor.Sheet.BomPage is not null || Editor.Sheet.TerminalPlanId.Length>0 || Editor.Sheet.CabinetPlanId.Length>0)) return false;
         var wire = Editor.Sheet.Wires.AsEnumerable().Reverse().OrderByDescending(w => Selected.Contains(w.Id)).FirstOrDefault(w => Drawing.WireLabel(w, w.Route(Editor.Sheet)) is Ink ink && Drawing.TextBounds(ink).Contains(point));
         if (wire is not null) { before = Editor.ExportSnapshot; dragStart = point; wireTextDrag = (wire.Id, DocumentModel.Copy(wire.NumberPlacement)); textMoved = false; Editor.InteractionInProgress = true; Select(wire.Id); Status?.Invoke("Déplacer le numéro du conducteur • Échap : annuler"); return true; }
         if (HitText(point) is not { } hit) return false;
@@ -302,7 +302,7 @@ public sealed class SheetCanvas : FrameworkElement
         if (e.ChangedButton == MouseButton.Middle) { panning = true; panStart = e.GetPosition(this); panOffset = offset; CaptureMouse(); return; }
         if (e.ChangedButton == MouseButton.Right) { ContextAt(pointer); e.Handled = true; return; }
         if (e.ChangedButton != MouseButton.Left) return;
-        if (Editor.Sheet.BomPage is not null) { Status?.Invoke("Folio de nomenclature : Projet → Nomenclature pour actualiser son contenu."); return; }
+        if ((Editor.Sheet.BomPage is not null || Editor.Sheet.TerminalPlanId.Length>0 || Editor.Sheet.CabinetPlanId.Length>0)) { Status?.Invoke("Folio de nomenclature : Projet → Nomenclature pour actualiser son contenu."); return; }
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {

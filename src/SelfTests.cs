@@ -75,6 +75,7 @@ public static class SelfTests
         RequestedEditingTests.Run(Test,Assert,Reject,dir);
         WireAppearanceTests.Run(Test,Assert,Reject,dir);
         NavigationTests.Run(Test,Assert,Reject,dir);
+        EngineeringTests.Run(Test,Assert,Reject,dir);
         File.WriteAllText(Path.Combine(dir, "self-test.json"), JsonSerializer.Serialize(new { passed = failures == 0, failures, results }, ProjectStore.Json)); return failures == 0 ? 0 : 1;
     }
 }

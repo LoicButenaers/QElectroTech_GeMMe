@@ -77,7 +77,7 @@ public sealed partial class Editor
     {
         if (Project.Sheets.Count == 1) throw new InvalidOperationException("Conserver au moins un folio.");
         var sheet = Project.Sheets.Single(s => s.Id == id); var removed = sheet.Components.Select(c => c.Id).ToHashSet();
-        Change(() => { foreach (var c in Project.Sheets.SelectMany(s => s.Components).Where(c => removed.Contains(c.CoilId))) c.CoilId = ""; Project.Sheets.Remove(sheet); });
+        Change(() => { RemoveTerminalAssignments(removed);if(Project.NumberingRules.SheetId==id)Project.NumberingRules.SheetId="";foreach (var c in Project.Sheets.SelectMany(s => s.Components).Where(c => removed.Contains(c.CoilId))) c.CoilId = ""; Project.Sheets.Remove(sheet); });
         if (CurrentSheetId == id) SelectSheet(Project.Sheets[0].Id);
     }
 }

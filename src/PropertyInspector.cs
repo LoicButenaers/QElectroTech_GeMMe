@@ -63,6 +63,8 @@ public sealed partial class MainWindow
             if (CrossReferences.IsPoint(c)) { ReferenceInspector(c); return; }
             PropertyGroup("Identification", () => {
                 Field("tag", "Repère de l’appareil", c.Tag, "Exemple : KM1, Q1 ou A1. Ce texte est affiché sur le schéma.");
+                var tagLock = new CheckBox { Name="TagNumberingLock", Content="Conserver ce repère lors de la numérotation automatique", IsChecked=c.TagLocked, Margin=new(0,6,0,8) }; PropertyContents.Children.Add(tagLock); RegisterPropertyControl(tagLock);
+                void LockChanged() => LiveProperty(tagLock,()=>Editor.Change(()=>Editor.Project.Sheets.SelectMany(s=>s.Components).Single(x=>x.Id==c.Id).TagLocked=tagLock.IsChecked==true));tagLock.Checked+=(_,_)=>LockChanged();tagLock.Unchecked+=(_,_)=>LockChanged();
                 Field("description", "Description / fonction", c.Description);
                 Field("rating", "Caractéristiques affichées", c.Rating, "Texte libre avec unités : par exemple 24 V DC ou 16 A. Aucune valeur électrique n’est déduite.");
             });
@@ -74,6 +76,7 @@ public sealed partial class MainWindow
                 Field("brand", "Fabricant", c.Brand); Field("range", "Gamme / série", c.Range);
                 Field("reference", "Référence commandable", c.Reference, "Référence exacte du fabricant ; à vérifier dans sa documentation.");
                 propertiesForArticle(c);
+                PropertyContents.Children.Add(Button("Fiches fabricants hors ligne…",ArticleFichesDialog));
             }, false);
             PropertyGroup("Bornes de raccordement", () => {
                 PropertyContents.Children.Add(Hint("Libellés affichés sur le dessin. Vérifier le bornage de la référence retenue."));
@@ -116,6 +119,14 @@ public sealed partial class MainWindow
             properties.Children.Add(new TextBlock { Text = "Texte du folio", FontSize = 18, Margin = new(0, 14, 0, 4) });
             PropertyGroup("Contenu", () => { var input = Field("text", "Texte affiché", note.Text); input.AcceptsReturn = true; input.MinHeight = 75; LiveText(input, value => Editor.Change(() => Editor.Sheet.Notes.Single(n => n.Id == note.Id).Text = value, note.Id + ":text")); });
             PropertyGroup("Position", () => { foreach (var axis in new[] { "X", "Y" }) { var input = Field("note" + axis, axis + " (unités de dessin)", Number(axis == "X" ? note.X : note.Y)); LiveText(input, value => { double n = ReadCoordinate(value, axis); Editor.Change(() => { var live = Editor.Sheet.Notes.Single(x => x.Id == note.Id); if (axis == "X") live.X = n; else live.Y = n; }, note.Id + ":" + axis); }); } });
+        }
+        else if (Editor.Sheet.CabinetPlanId.Length>0)
+        {
+            properties.Children.Add(new TextBlock { Text="Implantation d’armoire",FontSize=20,Margin=new(0,18,0,8) });properties.Children.Add(Hint("Plan lié aux appareils du projet. Dimensions en millimètres."));properties.Children.Add(Button("Implantation…",CabinetDialog));
+        }
+        else if (Editor.Sheet.TerminalPlanId.Length>0)
+        {
+            properties.Children.Add(new TextBlock { Text="Plan de bornier",FontSize=20,Margin=new(0,18,0,8) });properties.Children.Add(Hint("Plan lié au bornier du projet. Modifier les affectations puis régénérer ses folios."));properties.Children.Add(Button("Borniers et plans…",TerminalStripsDialog));
         }
         else if (Editor.Sheet.BomPage is not null)
         {

@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 51) '51 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 61) '61 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -383,7 +383,7 @@ try {
     $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
     $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
     $state = Call 'project_get'
-    Assert ($state.project.version -eq 5 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
+    Assert ($state.project.version -eq 6 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
     $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$true;number='CABLE-01';color='#D32F2F';thickness=3.2;lineStyle='dashed'}
     $null = Call 'wire_update' @{id=$wire.id;number='27'}
     $state = Call 'project_get'
@@ -417,6 +417,33 @@ try {
     $null = Call 'history_undo' @{}
     $errorText = Call 'wire_label_update' @{id=$continuation.id;placement=@{fontSize=999}} -ExpectError
     Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project.sheets[0].wires | Where-Object id -eq $continuation.id).numberPlacement.fontSize -eq 14) 'Placement invalide refusé sans perdre le dernier réglage MCP'
+    $null = Call 'component_update' @{id=$source.id;tagLocked=$true}
+    $rule = @{scope='all';start=10;componentPattern='{prefix}{n:000}';wirePattern='{prefix}{folio}-{n:00}';wirePrefix='W';counterPerFolio=$false}
+    $numberPlan = Call 'numbering_preview' @{rules=$rule}
+    Assert ($numberPlan.canApply -and @($numberPlan.changes | Where-Object status -eq 'Verrouillé').Count -gt 0) 'Aperçu de numérotation et repère verrouillé MCP'
+    $null = Call 'numbering_apply' @{rules=$rule;sourceHash=$numberPlan.sourceHash}
+    Assert (((Call 'project_get').project.sheets[0].wires | Where-Object id -eq $continuation.id).number -eq 'CABLE-02') 'Numérotation automatique conservant le fil indépendant MCP'
+    $errorText = Call 'numbering_apply' @{rules=$rule;sourceHash=$numberPlan.sourceHash} -ExpectError
+    Assert ($errorText.Length -gt 0) 'Aperçu périmé refusé MCP'
+    $t2 = Call 'component_add' @{symbol='terminal';x=600;y=350}
+    $strip = Call 'terminal_strip_put' @{strip=@{id='strip-mcp';name='X10';location='Armoire';terminals=@(@{componentId=$terminal.id;number='1';level=1;internalPort='1';externalPort='2'},@{componentId=$t2.id;number='2';level=2;internalPort='1';externalPort='2'});bridges=@(@{fromComponent=$terminal.id;fromPort='1';toComponent=$t2.id;toPort='1'})}}
+    $trace = Call 'connection_trace' @{componentId=$terminal.id;portId='1'}
+    Assert (@($trace | Where-Object { $_.componentId -eq $t2.id -and $_.portId -eq '2' }).Count -eq 1) 'Pontage du bornier participant à la continuité MCP'
+    $terminalPages = Call 'terminal_plan_generate' @{id=$strip.id}
+    Assert (@($terminalPages).Count -ge 2 -and @((Call 'terminal_strips_list')).Count -eq 1) 'Plan de bornier et pontages paginés MCP'
+    $null = Call 'page_select' @{id=$first}
+    $cabinet = Call 'cabinet_put' @{cabinet=@{id='cabinet-mcp';name='A1';width=600;height=800;items=@(@{id='item-mcp';kind='device';componentId=$source.id;name='Appareil';x=20;y=20;width=45;height=80;rotation=0;dimensionSource='Saisie utilisateur'})}}
+    $cabinetPage = Call 'cabinet_plan_generate' @{id=$cabinet.id}
+    Assert ($cabinetPage.cabinetPlanId -eq 'cabinet-mcp' -and @((Call 'cabinets_list')).Count -eq 1) 'Armoire et folios de cotes générés MCP'
+    $fiches = Call 'article_fiches_list' @{query='phoenix'}
+    Assert (@($fiches).Count -eq 1 -and $fiches.reference -eq '3209510' -and $fiches.width -eq 5.2) 'Fiche exacte sourcée Phoenix Contact MCP'
+    $null = Call 'article_fiche_assign' @{componentId=$source.id;ficheId='schneider-LC1D09BD'}
+    $state = Call 'project_get'
+    Assert (($state.project.sheets[0].components | Where-Object id -eq $source.id).reference -eq 'LC1D09BD' -and $state.project.terminalStrips.Count -eq 1 -and $state.project.cabinets.Count -eq 1) 'Article et données métier persistantes MCP'
+    $engineeringPath = Join-Path $root 'build/MCP-engineering.gemelec'
+    $null = Call 'project_save' @{path=$engineeringPath;overwrite=$true}
+    $null = Call 'project_open' @{path=$engineeringPath;discardUnsaved=$true}
+    Assert ((Call 'project_get').project.cabinets[0].items[0].width -eq 45 -and (Call 'project_get').project.terminalStrips[0].bridges.Count -eq 1) 'Armoire et pontages relus via MCP'
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

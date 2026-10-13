@@ -1,0 +1,71 @@
+[
+  {
+    "id": "schneider-LC1D09BD",
+    "brand": "Schneider Electric",
+    "reference": "LC1D09BD",
+    "name": "TeSys D / Deca",
+    "family": "Contacteur",
+    "source": "https://iportal.se.com/Contents/docs/SQD-LC1D09BD.PDF",
+    "checkedOn": "2026-10-13",
+    "edition": "Fiche caractéristiques du 8 septembre 2017",
+    "document": "schneider-LC1D09BD.pdf",
+    "width": 45,
+    "height": 77,
+    "depth": 95,
+    "facts": {
+      "Pôles de puissance": "3 pôles normalement ouverts",
+      "Courant AC-3": "9 A jusqu’à 440 V AC, sous les conditions de la fiche",
+      "Bobine": "24 V DC",
+      "Auxiliaires intégrés": "1 NO et 1 NF"
+    },
+    "note": "Dimensions et caractéristiques tirées de cette édition. Vérifier la fiche applicable à l’article livré avant implantation. Le dessin raccordable existant et les symboles fonctionnels restent distincts.",
+    "documentSha256": "8540CE66754FAA5B92C79E7FC2C7F263E4593D20AB8DA3CC7EE836F52491FD69"
+  },
+  {
+    "id": "phoenix-3209510",
+    "brand": "Phoenix Contact",
+    "reference": "3209510",
+    "name": "PT 2,5",
+    "family": "Borne de passage",
+    "source": "https://www.phoenixcontact.com/en-gb/products/feed-through-terminal-block-pt-25-3209510?type=pdf",
+    "checkedOn": "2026-10-13",
+    "edition": "Fiche produit générée le 13 octobre 2026",
+    "document": "",
+    "width": 5.2,
+    "height": 48.6,
+    "depth": 35.3,
+    "facts": {
+      "Connexions": "2 connexions, 1 position",
+      "Raccordement": "Push-in",
+      "Section nominale": "2,5 mm²",
+      "Courant nominal": "24 A à 2,5 mm²",
+      "Tension nominale": "800 V",
+      "Montage": "NS 35/7,5 ou NS 35/15"
+    },
+    "note": "Caractéristiques vérifiées sur la fiche officielle et disponibles hors ligne. Le téléchargement local du PDF a été refusé par le serveur du fabricant ; le lien source reste fourni. Aucun dessin électrique natif supplémentaire n’est revendiqué.",
+    "documentSha256": ""
+  },
+  {
+    "id": "pilz-750104",
+    "brand": "Pilz",
+    "reference": "750104",
+    "name": "PNOZ s4 24 V DC",
+    "family": "Relais de sécurité",
+    "source": "https://www.pilz.com/en-INT/eshop/product/750104",
+    "checkedOn": "2026-10-13",
+    "edition": "Page produit vérifiée ; manuel archivé 21396-EN-14",
+    "document": "pilz-750104-21396-EN-14.pdf",
+    "width": 22.5,
+    "height": null,
+    "depth": null,
+    "facts": {
+      "Alimentation": "24 V DC",
+      "Sorties relais": "3 NO et 1 NF",
+      "Sortie semi-conducteur": "1",
+      "Raccordement": "Borniers à vis enfichables",
+      "Largeur annoncée": "22,5 mm"
+    },
+    "note": "Le manuel archivé est fourni avec son édition explicite. Hauteur, profondeur et bornage de l’édition applicable restent à vérifier avant implantation et câblage. La fiche ne certifie pas l’intégration d’une fonction de sécurité.",
+    "documentSha256": "09BB62D5219DC542D8EBDBE8DC55C64DCCF04ABA191516B583B514D64A9F5566"
+  }
+]
