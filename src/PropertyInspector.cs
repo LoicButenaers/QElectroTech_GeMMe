@@ -87,7 +87,7 @@ public sealed partial class MainWindow
             properties.Children.Add(new TextBlock { Text = "Conducteur", FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new(0, 14, 0, 4) });
             properties.Children.Add(Hint("Modifications immédiates · Ctrl+S enregistre le fichier."));
             PropertyGroup("Identification et aspect", () => {
-                Field("number", "Numéro du conducteur", wire.Number); Field("color", "Couleur · #RRGGBB", wire.Color, "Six chiffres hexadécimaux. Exemple : #2474D2.");
+                Field("number", "Numéro du conducteur", wire.Number, "Commun aux fils raccordés à la même borne et aux bornes de passage. Modifier ce champ renomme toute cette continuité."); Field("color", "Couleur · #RRGGBB", wire.Color, "Six chiffres hexadécimaux. Exemple : #2474D2.");
                 PropertyContents.Children.Add(Button("Palette de couleurs…", () => PaletteDialog(fields["color"].Text, color => fields["color"].Text = color)));
             });
             PropertyGroup("Tracé et raccordements", () => {
@@ -98,7 +98,7 @@ public sealed partial class MainWindow
                 PropertyContents.Children.Add(Button("Rétablir le parcours automatique", () => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Waypoints.Clear())));
                 PropertyContents.Children.Add(Hint("Poignée carrée : déplacer un segment. Poignée ronde : changer de borne. Les simples croisements restent indépendants."));
             });
-            LiveText(fields["number"], value => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Number = value, wire.Id + ":number"));
+            LiveText(fields["number"], value => Editor.SetWireNumber(wire.Id, value, wire.Id + ":number"));
             LiveText(fields["color"], value => { if (!EditorPreferences.IsColor(value)) throw new ArgumentException("Saisir # suivi de six chiffres hexadécimaux (exemple : #2474D2)."); Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Color = value, wire.Id + ":color"); });
         }
         else if (note is not null)

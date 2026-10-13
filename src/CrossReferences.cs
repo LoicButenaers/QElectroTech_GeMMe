@@ -4,13 +4,16 @@ namespace GeMMeElec;
 
 public static class SheetZones
 {
+    public static int Columns(Project p, Sheet s) => s.UseProjectZones ? p.ZoneColumns : s.ZoneColumns;
+    public static int Rows(Project p, Sheet s) => s.UseProjectZones ? p.ZoneRows : s.ZoneRows;
     public static Rect Area(Project p, Sheet s) => new(30, 30, s.Width - 60, DocumentModel.DrawingBottom(p, s) - 30);
     public static string Zone(Project p, Sheet s, double x, double y)
     {
         var area = Area(p, s);
         if (s.BomPage is not null || !area.Contains(new Point(x, y))) return "hors cadre";
-        int column = Math.Min(s.ZoneColumns - 1, (int)((x - area.Left) / area.Width * s.ZoneColumns));
-        int row = Math.Min(s.ZoneRows - 1, (int)((y - area.Top) / area.Height * s.ZoneRows));
+        int columns = Columns(p, s), rows = Rows(p, s);
+        int column = Math.Min(columns - 1, (int)((x - area.Left) / area.Width * columns));
+        int row = Math.Min(rows - 1, (int)((y - area.Top) / area.Height * rows));
         return $"{(char)('A' + row)}{column + 1}";
     }
     public static string Address(Project p, Sheet s, Component c) => $"{DocumentModel.PageNumber(p, s)} / {Zone(p, s, c.X, c.Y)}";
@@ -20,17 +23,18 @@ public static class SheetZones
         yield return new("rect", 10, 10, s.Width - 40, r.Bottom - 10, Color: color);
         yield return new("line", 10, 30, s.Width - 30, 30, Color: color);
         yield return new("line", 30, 10, 30, r.Bottom, Color: color);
-        for (int i = 0; i < s.ZoneColumns; i++)
+        int columns = Columns(p, s), rows = Rows(p, s);
+        for (int i = 0; i < columns; i++)
         {
-            double x = r.Left + i * r.Width / s.ZoneColumns;
+            double x = r.Left + i * r.Width / columns;
             if (i > 0) yield return new("line", x, 10, x, 30, Color: color);
-            string text = (i + 1).ToString(); yield return new("text", x + r.Width / s.ZoneColumns / 2 - Drawing.Measure(text, 10).Width / 2, 12, Text: text, Size: 10);
+            string text = (i + 1).ToString(); yield return new("text", x + r.Width / columns / 2 - Drawing.Measure(text, 10).Width / 2, 12, Text: text, Size: 10);
         }
-        for (int i = 0; i < s.ZoneRows; i++)
+        for (int i = 0; i < rows; i++)
         {
-            double y = r.Top + i * r.Height / s.ZoneRows;
+            double y = r.Top + i * r.Height / rows;
             if (i > 0) yield return new("line", 10, y, 30, y, Color: color);
-            string text = ((char)('A' + i)).ToString(); yield return new("text", 20 - Drawing.Measure(text, 10).Width / 2, y + r.Height / s.ZoneRows / 2 - 7, Text: text, Size: 10);
+            string text = ((char)('A' + i)).ToString(); yield return new("text", 20 - Drawing.Measure(text, 10).Width / 2, y + r.Height / rows / 2 - 7, Text: text, Size: 10);
         }
     }
 }
@@ -71,21 +75,9 @@ public sealed class CrossReferences
             if (links.Targets(c.Id).Count == 0) yield return new("Renvoi", point.Sheet.Id, c.Id, $"{c.Tag} : renvoi non lié, incomplet ou paramètres incompatibles ({c.LinkName})");
         }
     }
-    // Graph edges include wires and resolved interruption-point pairs. This is
-    // connectivity, not mere page navigation; electrical device internals are excluded.
-    public static List<Endpoint> Trace(Project p, Endpoint start)
-    {
-        var components = p.Sheets.SelectMany(s => s.Components).ToDictionary(c => c.Id);
-        if (!components.TryGetValue(start.ComponentId, out var c) || !c.Definition.Ports.Any(port => port.Id == start.PortId)) throw new ArgumentException("Borne introuvable.");
-        Dictionary<Endpoint, List<Endpoint>> edges = [];
-        void Edge(Endpoint a, Endpoint b) { if (!edges.TryGetValue(a, out var list)) edges[a] = list = []; list.Add(b); }
-        foreach (var w in p.Sheets.SelectMany(s => s.Wires)) { Edge(w.From, w.To); Edge(w.To, w.From); }
-        var refs = new CrossReferences(p);
-        foreach (var point in Points(p)) foreach (var target in refs.Targets(point.Component.Id)) Edge(new(point.Component.Id, "1"), new(target.Component.Id, "1"));
-        HashSet<Endpoint> visited = [start]; Queue<Endpoint> queue = new(); queue.Enqueue(start);
-        while (queue.TryDequeue(out var current)) foreach (var next in edges.GetValueOrDefault(current) ?? []) if (visited.Add(next)) queue.Enqueue(next);
-        return visited.OrderBy(x => x.ComponentId, StringComparer.Ordinal).ThenBy(x => x.PortId, StringComparer.Ordinal).ToList();
-    }
+    // Includes wires, resolved reports and explicit permanent terminal continuity.
+    public static List<Endpoint> Trace(Project p, Endpoint start) => new ConductorNetworks(p).Trace(start).OrderBy(x => x.ComponentId, StringComparer.Ordinal).ThenBy(x => x.PortId, StringComparer.Ordinal).ToList();
+
 }
 
 public sealed partial class Editor

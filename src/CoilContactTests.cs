@@ -19,7 +19,7 @@ internal static class CoilContactTests
             assert(!CrossReferences.Trace(e.Project, new(no.Id, "14")).Any(x => x.ComponentId == coil.Id), "Une association a créé une liaison électrique");
             assert(!e.Validate().Any(f => f.Message.StartsWith("Repère utilisé plusieurs fois")), "Faux doublon de repère");
             e.Change(() => e.SetApparatusTag(no, "KM-Été")); assert(coil.Tag == "KM-Été" && nc.Tag == "KM-Été", "Renommage depuis le contact"); e.Undo(); e.Redo();
-            string path = Path.Combine(dir, "self-test-coil-contacts.gemelec"); e.Save(path); var loaded = ProjectStore.Load(path); assert(loaded.Version == 2 && new CoilContacts(loaded).Contacts(coil.Id).Count == 2, "Persistance");
+            string path = Path.Combine(dir, "self-test-coil-contacts.gemelec"); e.Save(path); var loaded = ProjectStore.Load(path); assert(loaded.Version == Project.CurrentVersion && new CoilContacts(loaded).Contacts(coil.Id).Count == 2, "Persistance");
             Export.Pdf(loaded, Path.Combine(dir, "self-test-coil-contacts.pdf")); Export.Svg(loaded, loaded.Sheets[1], Path.Combine(dir, "self-test-coil-contacts.svg"));
             var text = Drawing.Scene(loaded, loaded.Sheets[0]).Where(i => i.Kind == "text"); assert(text.Any(i => i.Text.Contains("NO · 13–14")), "Références absentes du rendu commun");
             assert(BomReport.Rows(loaded, new()).Sum(r => int.Parse(r.Values["quantity"])) == 1, "Fonctions associées comptées comme appareils supplémentaires"); assert(BomReport.Rows(loaded, new() { IncludeAuxiliary = true }).Sum(r => int.Parse(r.Values["quantity"])) == 3, "Fonctions auxiliaires non accessibles");
@@ -35,7 +35,7 @@ internal static class CoilContactTests
         });
         test("Format v2 : migration v1 sans association inventée, sauvegarde et limite 200", () => {
             var p = new Project(); p.Sheets[0].Components.Add(new() { Symbol = "coil", Tag = "K1", X = 300, Y = 300 }); var old = JsonNode.Parse(ProjectStore.Serialize(p))!; old["version"] = 1; var c = old["sheets"]![0]!["components"]![0]!.AsObject(); c.Remove("coilId"); c.Remove("relayFunction"); c.Remove("coilReferencePlacement");
-            var migrated = ProjectStore.Deserialize(old.ToJsonString()); assert(migrated.Version == 2 && migrated.Sheets[0].Components[0].CoilId == "" && migrated.Sheets[0].Components[0].Tag == "K1", "Migration altérant les données");
+            var migrated = ProjectStore.Deserialize(old.ToJsonString()); assert(migrated.Version == Project.CurrentVersion && migrated.Sheets[0].Components[0].CoilId == "" && migrated.Sheets[0].Components[0].Tag == "K1", "Migration altérant les données");
             assert(ProjectStore.Serialize(ProjectStore.Deserialize(ProjectStore.Serialize(migrated))) == ProjectStore.Serialize(migrated), "Round trip v2"); old["version"] = 99; reject(() => ProjectStore.Deserialize(old.ToJsonString()));
             for (int i = 1; i < 200; i++) migrated.Sheets.Add(new()); ProjectStore.ValidateStructure(migrated); migrated.Sheets.Add(new()); reject(() => ProjectStore.ValidateStructure(migrated));
         });

@@ -94,7 +94,7 @@ public sealed partial class MainWindow
             }
             prop.Children.Add(DocButton("Appliquer à la partie", dialog, () =>
             {
-                if (p is not null) draft.Change(d => { var ports = d.Ports.ToList(); ports[pi] = new(portId!.Text, Number(x.Text), Number(y.Text)); return d with { Ports = ports }; });
+                if (p is not null) draft.Change(d => { var ports = d.Ports.ToList(); ports[pi] = new(portId!.Text, Number(x.Text), Number(y.Text)); return d with { Ports = ports, InternalConnections = d.InternalConnections.Select(c => new PortConnection(c.From == p.Id ? portId.Text : c.From, c.To == p.Id ? portId.Text : c.To)).ToList() }; });
                 else draft.Change(d => { var shapes = d.Shapes.ToList(); shapes[si] = s! with { X = Number(x.Text), Y = Number(y.Text), A = Number(a!.Text), B = b is null ? s!.B : Number(b.Text), Text = text?.Text ?? s!.Text, Rotation = rotation is null ? s!.Rotation : Number(rotation.Text) }; return d with { Shapes = shapes }; });
             }));
             prop.Children.Add(Hint("Les modifications à la souris sont immédiates. Pour les champs ci-dessus, cliquer Appliquer à la partie."));

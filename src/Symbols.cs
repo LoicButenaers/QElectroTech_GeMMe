@@ -1,11 +1,13 @@
 namespace GeMMeElec;
 
 public sealed record Port(string Id, double X, double Y);
+public sealed record PortConnection(string From, string To);
 public sealed record Shape(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "") { public double Rotation { get; init; } }
 public sealed record SymbolDefinition(string Id, string Name, string Prefix, double Width, double Height, List<Port> Ports, List<Shape> Shapes)
 {
     public string Category { get; init; } = "Divers";
     public bool PrintedTerminals { get; init; }
+    public List<PortConnection> InternalConnections { get; init; } = [];
 }
 
 // Original vector drawings. Equipment blocks describe functions; terminal numbering
@@ -61,6 +63,7 @@ public static partial class Symbols
         Add("lamp", "Voyant lumineux", "H", 60, 100, [new("X1", 0, -50), new("X2", 0, 50)], [L(0, -50, 0, -22), C(0, 0, 22), L(-15, -15, 15, 15), L(15, -15, -15, 15), L(0, 22, 0, 50)]);
         Add("terminal", "Borne de passage", "X", 40, 40, [new("1", 0, -20), new("2", 0, 20)], [L(0, -20, 0, 20), C(0, 0, 6)]);
         Add("terminal_pe", "Borne de protection PE", "X", 50, 60, [new("1", 0, -30), new("2", 0, 30)], [L(0, -30, 0, 30), C(0, 0, 6), L(0, 10, 18, 10), L(18, 0, 18, 20), L(23, 3, 23, 17), L(28, 6, 28, 14)]);
+        foreach (var id in new[] { "terminal", "terminal_pe" }) all[id] = all[id] with { InternalConnections = [new("1", "2")] };
         Add("earth", "Terre de protection", "PE", 40, 40, [new("PE", 0, -20)], [L(0, -20, 0, 0), L(-18, 0, 18, 0), L(-12, 6, 12, 6), L(-6, 12, 6, 12)]);
         Add("junction", "Jonction électrique", "J", 20, 20, [new("1", 0, 0)], [new("dot", 0, 0, 4)]);
         Add("source", "Arrivée d’alimentation", "L", 50, 40, [new("1", 0, 20)], [L(0, -10, 0, 20), L(-8, -2, 0, -10), L(8, -2, 0, -10)]);

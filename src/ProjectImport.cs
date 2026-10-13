@@ -36,7 +36,7 @@ public static class ProjectImport
         }
         foreach(var diagram in root.Elements("diagram"))
         {
-            var s=new Sheet{Title=A(diagram,"title","Folio importé"),Author=A(diagram,"author"),Date=A(diagram,"date"),ZoneColumns=Math.Clamp((int)N(diagram,"cols",20),1,40),ZoneRows=Math.Clamp((int)N(diagram,"rows",10),1,26)};p.Sheets.Add(s);
+            var s=new Sheet{UseProjectZones=false,Title=A(diagram,"title","Folio importé"),Author=A(diagram,"author"),Date=A(diagram,"date"),ZoneColumns=Math.Clamp((int)N(diagram,"cols",20),1,40),ZoneRows=Math.Clamp((int)N(diagram,"rows",10),1,26)};p.Sheets.Add(s);
             string folio=A(diagram,"folio");if(!folio.Contains('%'))s.Number=folio;
             var terminals=new Dictionary<string,Endpoint>();
             int i=0;

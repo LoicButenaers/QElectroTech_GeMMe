@@ -149,8 +149,9 @@ public sealed class TitleBlockPreview : FrameworkElement
 {
     private DrawingGroup? drawing;
     private double width,height;
+    internal Rect ContentBounds => drawing?.Bounds ?? Rect.Empty;
     public void Set(Project project,Sheet sheet,TitleBlockTemplate template)
-    {width=sheet.Width-60;height=template.Height;drawing=new();using(var dc=drawing.Open()){dc.PushTransform(new TranslateTransform(-30,-(sheet.Height-30-height)));Drawing.Render(dc,DocumentModel.Scene(project,sheet,template));}drawing.Freeze();InvalidateVisual();}
+    {width=sheet.Width-40;height=template.Height;drawing=new();using(var dc=drawing.Open()){dc.PushTransform(new TranslateTransform(-10,-(sheet.Height-30-height)));Drawing.Render(dc,DocumentModel.Scene(project,sheet,template));}drawing.Freeze();InvalidateVisual();}
     protected override void OnRender(DrawingContext dc)
     {dc.DrawRectangle(Brushes.White,new Pen(Drawing.Brush("#D5DFE9"),1),new(0,0,ActualWidth,ActualHeight));if(drawing is null)return;double scale=Math.Min((ActualWidth-12)/width,(ActualHeight-12)/height);if(scale<=0)return;dc.PushTransform(new TranslateTransform((ActualWidth-width*scale)/2,(ActualHeight-height*scale)/2));dc.PushTransform(new ScaleTransform(scale,scale));dc.DrawDrawing(drawing);dc.Pop();dc.Pop();}
 }

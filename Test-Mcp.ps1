@@ -338,6 +338,52 @@ try {
     Assert ((Call 'coil_contacts_list' | Where-Object coilId -eq $coil.id).Count -eq 2) 'Réinitialiser le rôle générique préserve les associations via MCP'
     $errorText = Call 'component_update' @{id=$coil.id;relayFunction='unknown'} -ExpectError
     Assert ($errorText.Length -gt 0 -and (Call 'coil_contacts_list' | Where-Object coilId -eq $coil.id).Count -eq 2) 'Rôle invalide refusé sans perdre les associations MCP'
+    $null = Call 'project_new' @{title='Repérage et continuité';discardUnsaved=$true}
+    $null = Call 'project_update' @{zoneColumns=24;zoneRows=12}
+    $first = (Call 'project_get').currentSheetId
+    $exception = Call 'page_add' @{title='Exception'}
+    $null = Call 'page_update' @{useProjectZones=$false;zoneColumns=8;zoneRows=6}
+    $null = Call 'project_update' @{zoneColumns=16;zoneRows=8}
+    $state = Call 'project_get'
+    Assert ($state.project.zoneColumns -eq 16 -and $state.project.sheets[0].useProjectZones -and !$state.project.sheets[1].useProjectZones -and $state.project.sheets[1].zoneColumns -eq 8) 'Repérage commun et exception MCP'
+    $newPage = Call 'page_add' @{title='Hérite'}
+    Assert ($newPage.useProjectZones) 'Nouveau folio héritant du repérage MCP'
+    $null = Call 'page_select' @{id=$exception.id}
+    $null = Call 'page_update' @{useProjectZones=$true}
+    $null = Call 'history_undo' @{}
+    Assert (!(Call 'project_get').project.sheets[1].useProjectZones) 'Annulation du retour au repérage commun MCP'
+    $errorText = Call 'project_update' @{zoneRows=27} -ExpectError
+    Assert ($errorText.Length -gt 0 -and (Call 'project_get').project.zoneRows -eq 8) 'Repérage invalide refusé atomiquement MCP'
+    $null = Call 'page_select' @{id=$first}
+    $source = Call 'component_add' @{symbol='coil';x=200;y=200}
+    $terminal = Call 'component_add' @{symbol='terminal';x=200;y=350}
+    $load = Call 'component_add' @{symbol='coil';x=200;y=550}
+    $side = Call 'component_add' @{symbol='coil';x=500;y=350}
+    $wire = Call 'wire_add' @{fromComponent=$source.id;fromPort='A1';toComponent=$terminal.id;toPort='1';number='26'}
+    $continuation = Call 'wire_add' @{fromComponent=$terminal.id;fromPort='2';toComponent=$load.id;toPort='A1'}
+    $branch = Call 'wire_add' @{fromComponent=$source.id;fromPort='A1';toComponent=$side.id;toPort='A1'}
+    Assert ($continuation.number -eq '26' -and $branch.number -eq '26') 'Même borne et borne de passage gardant le numéro MCP'
+    $other = Call 'wire_add' @{fromComponent=$source.id;fromPort='A2';toComponent=$side.id;toPort='A2'}
+    Assert ($other.number -ne '26') 'Bornes distinctes du même appareil gardant des numéros distincts MCP'
+    $trace = Call 'connection_trace' @{componentId=$terminal.id;portId='1'}
+    Assert (@($trace | Where-Object { $_.componentId -eq $terminal.id -and $_.portId -eq '2' }).Count -eq 1 -and @($trace | Where-Object { $_.componentId -eq $source.id -and $_.portId -eq 'A2' }).Count -eq 0) 'Trace incluant le passage sans court-circuiter les autres bornes MCP'
+    $null = Call 'wire_update' @{id=$continuation.id;number='24V-01'}
+    $state = Call 'project_get'
+    Assert (@($state.project.sheets[0].wires | Where-Object number -eq '24V-01').Count -eq 3) 'Renommage de toute la continuité MCP'
+    $null = Call 'history_undo' @{}
+    Assert (@((Call 'project_get').project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Renommage des conducteurs annulable en une action MCP'
+    $errorText = Call 'wire_update' @{id=$wire.id;fromPort='absente';number='Erreur'} -ExpectError
+    Assert ($errorText.Length -gt 0 -and @((Call 'project_get').project.sheets[0].wires | Where-Object number -eq 'Erreur').Count -eq 0) 'Reconnexion invalide préservant tous les numéros MCP'
+    $null = Call 'wire_update' @{id=$other.id;number='ALT'}
+    $null = Call 'wire_update' @{id=$wire.id;toComponent=$side.id;toPort='A2'}
+    $state = Call 'project_get'
+    Assert (($state.project.sheets[0].wires | Where-Object id -eq $wire.id).number -eq 'ALT' -and ($state.project.sheets[0].wires | Where-Object id -eq $continuation.id).number -eq '26') 'Reconnexion adoptant le numéro de destination sans renommer le réseau détaché MCP'
+    $null = Call 'history_undo' @{}
+    $continuityPath = Join-Path $root 'build/MCP-zones-continuity.gemelec'
+    $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
+    $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
+    $state = Call 'project_get'
+    Assert ($state.project.version -eq 3 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format v3 et réglages relus via MCP'
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

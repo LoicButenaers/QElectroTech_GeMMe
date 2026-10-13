@@ -1,5 +1,33 @@
 # Vérifications de livraison
 
+## Version 0.14 — 13 octobre 2026
+
+Exécutable autonome Windows x64 au chemin habituel, version fichier **0.14.0.0**. **99 scénarios applicatifs et 90 vérifications MCP réussis**, compilation sans erreur ni avertissement ; 47 outils MCP conservés.
+
+- Alignement de la bande des lettres sur le cartouche, validé par l’utilisateur sur aperçu. Bord commun vérifié dans le modèle, dans l’éditeur de cartouches et dans un PDF A3 rendu par Poppler et inspecté.
+- Réglages de repérage communs au projet, exception par case à cocher, héritage des nouveaux folios, limites et rollback. Dialogue rendu hors écran et testé par ses contrôles.
+- Format v3 ; migration v1/v2 conservant les nombres locaux des folios, sauvegarde/relecture et annulation. Le fichier utilisateur original conserve l’empreinte `E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C`.
+- Numéro commun sur une même borne, ses dérivations et les bornes de passage/PE ; exclusion des bornes distinctes d’un appareil ; copie personnalisée de borne avec sa continuité. Renommage atomique, reconnexion conservant/adoptant le numéro de destination, branche détachée conservée, rejets invalides, historique et persistance vérifiés aussi via MCP. Les couleurs et trajets restent propres aux fils.
+- Maj + glisser sur un texte hors de l’emprise du symbole, déplacement précis, destination calculée détachée sans saut, libellé de borne tournée, maintien du câblage et de la bibliothèque. Aperçu sans mise à jour du snapshot du projet, une seule annulation à la fin, abandon et simple clic sans modification.
+
+### Mesures du glissement et de la numérotation
+
+Processus dédié par taille, WPF hors écran, jeu de données synthétique avec 50 composants par folio, conducteurs, annotations et contacts associés. Mesures de la même machine ; résultats complets dans `build/benchmark.json` (version 0.14).
+
+| Opération | 100 folios / 5 000 composants | 200 folios / 10 000 composants |
+| --- | ---: | ---: |
+| Début du glissement du texte | 94 ms | 176 ms |
+| 120 mises à jour du placement pendant l’aperçu | 1,97 ms au total | 1,59 ms au total |
+| Validation finale du glissement | 107 ms | 204 ms |
+| Renommer une continuité de conducteurs | 203 ms | 393 ms |
+| Enregistrer le projet | 123 ms | 233 ms |
+| Ouvrir le projet | 392 ms | 765 ms |
+
+Les 120 mises à jour mesurent le modèle et l’invalidation du dessin, **sans rendre chaque image**. Elles ne mesurent donc pas la cadence graphique ou le délai d’entrée d’une souris réelle. Le début et la validation restent des transactions complètes, avec un coût visible à 10 000 composants ; aucune promesse de fluidité générale n’est tirée de ces chiffres. Les PDF complets ont également été générés pour les deux tailles.
+
+Rapports : `build/self-test.json`, `build/mcp-test.json`, `build/benchmark.json`. Aperçus : `apercu-detail-cartouche.png`, `apercu-cadre-cartouche.png`, `ui-zones-exception.png`, `self-test-frame-continuity.pdf`. Mode d’emploi : `REPERAGE_CONDUCTEURS_TEXTES.md`.
+
+
 ## Version 0.13 — 13 octobre 2026
 
 Exécutable autonome Windows x64 au chemin habituel, version fichier 0.13.0.0. **91 scénarios applicatifs et 78 vérifications MCP réussis**, compilation sans erreur ni avertissement. 47 outils MCP ; les 45 précédents restent disponibles.
@@ -38,7 +66,7 @@ Ces jeux démarrent à froid ; les durées varient entre passages. Le temps PDF 
 
 PDF A3 de deux folios avec références réciproques et PDF de charge de 200 pages contrôlés par Poppler ; pages de références, première/dernière page de charge et rendu avec image officielle inspectés. Captures hors écran de l’interface et fenêtres, dans les deux dispositions et thèmes. Aucune manipulation d’un projet utilisateur ni essai manuel à la souris n’est annoncé.
 
-Rapports : `build/self-test.json`, `build/mcp-test.json`, `build/benchmark.json`. Principaux artefacts : `build/ui-coil-contacts.png`, `self-test-coil-contacts.gemelec`, `self-test-coil-contacts.pdf`, `self-test-pdf-background.pdf`, `benchmark-100.gemelec`, `benchmark-200.gemelec` et leurs PDF. Le résumé et la feuille de route décrivent le lot suivant : automates/I/O et correction de la latence des transactions sur les grands projets.
+Rapports historiques : les mesures 0.13 sont conservées dans `build/benchmark-0.13.json` ; les rapports courants correspondent à la dernière version. Principaux artefacts : `build/ui-coil-contacts.png`, `self-test-coil-contacts.gemelec`, `self-test-coil-contacts.pdf`, `self-test-pdf-background.pdf`, `benchmark-100.gemelec`, `benchmark-200.gemelec` et leurs PDF. Le résumé et la feuille de route décrivent le lot suivant : automates/I/O et correction de la latence des transactions sur les grands projets.
 
 ## Version 0.12 — 13 octobre 2026
 

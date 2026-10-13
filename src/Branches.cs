@@ -31,7 +31,7 @@ public sealed partial class Editor
         var route = target.Route(Sheet); var hit = WirePoint(route, location);
         if (hit.Distance > 100) throw new ArgumentException("Position trop éloignée du conducteur.");
         Wire? result = null;
-        var newNumber = $"W{NextWireNumber()}"; var tag = NextTag("J");
+        var newNumber = target.Number; var tag = NextTag("J");
         Change(() =>
         {
             Endpoint destination;
@@ -61,6 +61,7 @@ public sealed partial class Editor
                 if (branchPoints is not null) result.Waypoints = branchPoints;
             }
             else { result = new Wire { From = from, To = destination, Waypoints = branchPoints ?? points?.ToList() ?? [], Number = newNumber, Color = CurrentWireColor }; Sheet.Wires.Add(result); }
+            SynchronizeWireNumbers(result, newNumber);
         });
         return result!;
     }

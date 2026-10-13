@@ -14,6 +14,10 @@ Parcours : placer une bobine et des contacts génériques → sélectionner un c
 
 Livré et vérifié : références, bornages et conducteurs conservés, repère partagé, navigation, détachement, duplication, suppression/annulation de bobine et folio, rôles des symboles personnels, contenu calculé et style éditable, BOM sans double compte et filtre par folio. Format v2 avec migration v1 sans écriture implicite ; 200 folios et 64 Mo, tests 100/5 000 et 200/10 000 dans des processus dédiés. 91 scénarios applicatifs et 78 vérifications MCP sur 47 outils. Historique compressé ; PDF en arrière-plan compatible avec l’édition. Voir `BOBINES_CONTACTS.md` et `VALIDATION.md`.
 
+## Livré : ajustements du dessin 0.14
+
+Alignement lettres/cartouche validé sur aperçu ; repérage commun au projet avec exception par folio ; même numéro sur les branches issues d’une même borne et à travers les bornes de passage/PE ; Maj + glisser pour déplacer les textes directement sur le schéma. Persistance v3 avec migration v1/v2, sauvegarde, annulation, parcours des connexions et MCP vérifiés. Les bornes distinctes d’un équipement restent des départs distincts. Voir `REPERAGE_CONDUCTEURS_TEXTES.md` et `VALIDATION.md`.
+
 ## Prochain lot : automates et entrées/sorties
 
 Périmètre initial : stations locales et modules génériques, canaux DI/DO/AI/AO avec identifiants stables, adresse explicitement saisie, nom de signal et commentaire. Les caractéristiques et bornages proviennent d’une saisie explicite ou d’une future fiche fabricant sourcée, jamais d’une supposition.

@@ -20,7 +20,7 @@ public static class WorkflowTests
             var branch = e.Branch(new(c.Id, "A1"), w.Id, new(452, 350)); var j = e.Sheet.Components.Single(x => x.Symbol == "junction");
             assert(j.X == 450 && j.Y == 350 && !j.TagPlacement.Visible, "Projection sur le segment");
             assert(e.Sheet.Wires.Count == 3 && e.Sheet.Wires.Count(x => x.From.ComponentId == j.Id || x.To.ComponentId == j.Id) == 3, "Trois branches attachées à la même jonction");
-            var parts = e.Sheet.Wires.Where(x => x.Number == "24V").ToArray(); assert(parts.Length == 2 && parts.All(x => x.Color == "#2468AC") && branch.Color == "#A02080", "Couleurs et numéros");
+            var parts = e.Sheet.Wires.Where(x => x.Id != branch.Id).ToArray(); assert(parts.Length == 2 && parts.All(x => x.Color == "#2468AC") && branch.Color == "#A02080" && e.Sheet.Wires.All(x => x.Number == "24V"), "Couleurs et numéro commun");
             var arrival = branch.Route(e.Sheet); assert(arrival[^2].Y == j.Y && arrival[^2].X != j.X, "Arrivée perpendiculaire sans longer le fil cible");
             assert(arrival[1].Y < arrival[0].Y, "Sortie vers l’extérieur de la borne haute");
             var joined = WireRouting.Simplify(parts[0].Route(e.Sheet).Concat(parts[1].Route(e.Sheet))); assert(joined.SequenceEqual(original), "Tracé d’origine conservé");

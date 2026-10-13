@@ -7,7 +7,7 @@ namespace GeMMeElec;
 // The draft is local to the dialog. Neither previews nor its history mutate the project.
 public sealed class SymbolDraft(SymbolDefinition source)
 {
-    public SymbolDefinition Definition { get; private set; } = source with { Shapes = [.. source.Shapes], Ports = [.. source.Ports] };
+    public SymbolDefinition Definition { get; private set; } = source with { Shapes = [.. source.Shapes], Ports = [.. source.Ports], InternalConnections = [.. source.InternalConnections] };
     private readonly List<SymbolDefinition> undo = [], redo = [];
     public event Action? Changed;
     public void Preview(SymbolDefinition value) { Definition = value; }
@@ -18,7 +18,7 @@ public sealed class SymbolDraft(SymbolDefinition source)
         if (!Equivalent(before, Definition)) { undo.Add(before); if (undo.Count > 40) undo.RemoveAt(0); redo.Clear(); }
         Changed?.Invoke();
     }
-    private static bool Equivalent(SymbolDefinition a, SymbolDefinition b) => a.Name == b.Name && a.Prefix == b.Prefix && a.Width == b.Width && a.Height == b.Height && a.Shapes.SequenceEqual(b.Shapes) && a.Ports.SequenceEqual(b.Ports);
+    private static bool Equivalent(SymbolDefinition a, SymbolDefinition b) => a.Name == b.Name && a.Prefix == b.Prefix && a.Width == b.Width && a.Height == b.Height && a.Shapes.SequenceEqual(b.Shapes) && a.Ports.SequenceEqual(b.Ports) && a.InternalConnections.SequenceEqual(b.InternalConnections);
     public void Change(Func<SymbolDefinition, SymbolDefinition> action) { var before = Definition; Preview(action(before)); Commit(before); }
     public void Restore(SymbolDefinition value) { Definition = value; Changed?.Invoke(); }
     public void Undo() { if (undo.Count == 0) return; redo.Add(Definition); Definition = undo[^1]; undo.RemoveAt(undo.Count - 1); Changed?.Invoke(); }
@@ -62,7 +62,7 @@ public sealed class SymbolCanvas : FrameworkElement
     public void DeleteSelection()
     {
         Cancel(); if (ShapeIndex < 0 && PortIndex < 0) return;
-        Draft.Change(d => d with { Shapes = d.Shapes.Where((_, i) => i != ShapeIndex).ToList(), Ports = d.Ports.Where((_, i) => i != PortIndex).ToList() }); SelectPart(-1, -1);
+        Draft.Change(d => d with { Shapes = d.Shapes.Where((_, i) => i != ShapeIndex).ToList(), Ports = d.Ports.Where((_, i) => i != PortIndex).ToList(), InternalConnections = d.InternalConnections.Where(c => PortIndex < 0 || c.From != d.Ports[PortIndex].Id && c.To != d.Ports[PortIndex].Id).ToList() }); SelectPart(-1, -1);
     }
     public void DuplicateSelection()
     {

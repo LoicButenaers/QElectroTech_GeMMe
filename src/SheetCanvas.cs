@@ -40,6 +40,8 @@ public sealed class SheetCanvas : FrameworkElement
     private readonly List<Position> waypoints = [];
     private string previousSheet = "";
     private DrawingGroup? sceneCache;
+    private (string ComponentId, string Key, LabelPlacement Placement, bool DetachInline)? textDrag;
+    private bool textMoved;
     public event Action? SelectionChanged;
     public event Action<string>? Status;
     public event Action<Point>? TextRequested;
@@ -74,6 +76,7 @@ public sealed class SheetCanvas : FrameworkElement
     public SheetCanvas(Editor editor)
     {
         Editor = editor; previousSheet = editor.Sheet.Id; Focusable = true; ClipToBounds = true;
+        ToolTip = "Maj + clic gauche puis glisser sur un texte : déplacer ce texte · Échap : annuler";
         Editor.Changed += () => { sceneCache=null; routeCache=null; if (previousSheet != Editor.Sheet.Id) { previousSheet = Editor.Sheet.Id; Selected.Clear(); SetMode("select"); Fit(); } InvalidateVisual(); };
         Loaded += (_, _) => Fit();
     }
@@ -214,6 +217,45 @@ public sealed class SheetCanvas : FrameworkElement
         foreach (var p in original.Values.Concat(originalWaypoints.Values.SelectMany(v => v).Select(p => p.Point))) moveBounds.Union(p);
         if (original.Count > 0) { before = ProjectStore.Serialize(Editor.Project); dragStart = point; Editor.InteractionInProgress = true; }
     }
+    private (Component Component, ComponentTextTarget Text, Rect Bounds)? HitText(Point point)
+    {
+        CrossReferences? refs = null;
+        foreach (var c in Editor.Sheet.Components.AsEnumerable().Reverse().OrderByDescending(c => Selected.Contains(c.Id)).Where(c => !Junctions.Automatic(c)))
+        foreach (var text in ComponentTexts.List(c).AsEnumerable().Reverse())
+        {
+            if (!text.Placement.Visible) continue;
+            var ink = ComponentTexts.Ink(Editor.Project, c, refs ??= new(Editor.Project), text.Key);
+            if (ink is not null && Drawing.TextBounds(ink) is var bounds && bounds.Contains(point)) return (c, text, bounds);
+        }
+        return null;
+    }
+    internal bool BeginTextMove(Point point)
+    {
+        if (before is not null || connection is not null || Editor.Sheet.BomPage is not null || HitText(point) is not { } hit) return false;
+        before = ProjectStore.Serialize(Editor.Project); dragStart = point;
+        var placement = DocumentModel.Copy(hit.Text.Placement);
+        bool detach = CrossReferences.IsPoint(hit.Component) && hit.Text.Key == "detail" && hit.Component.ReferenceDestinationInline;
+        if (detach) { placement.Side = "custom"; placement.Horizontal = "left"; placement.Vertical = "top"; placement.AnchorPort = ""; placement.OffsetX = hit.Bounds.X - hit.Component.X; placement.OffsetY = hit.Bounds.Y - hit.Component.Y; }
+        textDrag = (hit.Component.Id, hit.Text.Key, placement, detach); textMoved = false;
+        Editor.InteractionInProgress = true; Select(hit.Component.Id);
+        Status?.Invoke("Déplacer le texte • Relâcher pour valider • Échap : annuler"); return true;
+    }
+    internal void MoveText(Point point)
+    {
+        if (textDrag is not { } drag || before is null) return;
+        var delta = point - dragStart; if (!textMoved && delta.Length * Zoom < 3) return; textMoved = true;
+        var c = Editor.Sheet.Components.Single(c => c.Id == drag.ComponentId); var placement = DocumentModel.Copy(drag.Placement);
+        if (drag.DetachInline) c.ReferenceDestinationInline = false;
+        // Rebuild from the original placement on every frame to avoid drift.
+        placement.OffsetX = Math.Clamp(placement.OffsetX + delta.X, -10000, 10000); placement.OffsetY = Math.Clamp(placement.OffsetY + delta.Y, -10000, 10000);
+        ComponentTexts.SetPlacement(c, drag.Key, placement); sceneCache = null; InvalidateVisual();
+    }
+    internal void EndPreviewMove()
+    {
+        if (before is not string snapshot) return;
+        before = null; textDrag = null; editingWire = null; originalRoute = null; Editor.InteractionInProgress = false;
+        try { Editor.Commit(snapshot); } catch { Editor.CancelPreview(snapshot); throw; } SelectionChanged?.Invoke();
+    }
     internal void MoveSelection(Point point)
     {
         if (before is null || original.Count == 0) return;
@@ -234,6 +276,7 @@ public sealed class SheetCanvas : FrameworkElement
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && BeginTextMove(pointer)) { CaptureMouse(); e.Handled = true; return; }
             if (e.ClickCount == 2 && ActivateReference(pointer)) { e.Handled = true; return; }
             if (Mode == "place" && Hit(pointer) is string existing && Editor.Sheet.Components.Any(c => c.Id == existing && CrossReferences.IsPoint(c))) { SetMode("select"); Select(existing); return; }
             var port = HitPort(pointer);
@@ -263,6 +306,7 @@ public sealed class SheetCanvas : FrameworkElement
     protected override void OnMouseMove(MouseEventArgs e)
     {
         pointer = World(e.GetPosition(this));
+        if (textDrag is not null) { MoveText(pointer); Cursor = Cursors.SizeAll; return; }
         if (marqueeStart is not null) { InvalidateVisual(); return; }
         hoveredPort = HitPort(pointer); hoveredWire = connection is not null && hoveredPort is null ? HitWire(pointer) : null;
         if (panning) { offset = panOffset + (e.GetPosition(this) - panStart); InvalidateVisual(); return; }
@@ -294,8 +338,8 @@ public sealed class SheetCanvas : FrameworkElement
             }
             if (before is not null)
             {
-                var snapshot = before; before = null; editingWire = null; originalRoute = null; Editor.InteractionInProgress = false;
-                try { Editor.Commit(snapshot); } catch { Editor.CancelPreview(snapshot); throw; } SelectionChanged?.Invoke();
+                if (textDrag is not null) MoveText(World(e.GetPosition(this)));
+                EndPreviewMove();
             }
         }
         catch (Exception ex) { CancelDrag(); Status?.Invoke(ex.Message); }
@@ -304,7 +348,7 @@ public sealed class SheetCanvas : FrameworkElement
     protected override void OnLostMouseCapture(MouseEventArgs e) { base.OnLostMouseCapture(e); if (before is not null || connectionPressed || marqueeStart is not null) CancelDrag(); panning = false; }
     public void CancelDrag()
     {
-        var snapshot = before; before = null; marqueeStart = null; originalRoute = null; editingWire = null; connection = null; hoveredWire = null; connectionPressed = false; connectionMoved = false; waypoints.Clear(); panning = false; Editor.InteractionInProgress = false;
+        var snapshot = before; before = null; textDrag = null; marqueeStart = null; originalRoute = null; editingWire = null; connection = null; hoveredWire = null; connectionPressed = false; connectionMoved = false; waypoints.Clear(); panning = false; Editor.InteractionInProgress = false;
         ReleaseMouseCapture(); if (snapshot is not null) Editor.CancelPreview(snapshot); InvalidateVisual();
     }
     protected override void OnMouseWheel(MouseWheelEventArgs e)

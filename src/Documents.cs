@@ -71,10 +71,10 @@ public static class DocumentModel
     public static List<Ink> Scene(Project p,Sheet s,TitleBlockTemplate? template=null)
     {
         var t=template??Template(p,s); List<Ink> result=[]; if(t is null) return result;
-        double width=s.Width-60, top=s.Height-30-t.Height; var values=Values(p,s);
+        double width=s.Width-40, top=s.Height-30-t.Height; var values=Values(p,s);
         foreach(var cell in t.Cells)
         {
-            double x=30+width*cell.X/100,y=top+t.Height*cell.Y/100,w=width*cell.Width/100,h=t.Height*cell.Height/100;
+            double x=10+width*cell.X/100,y=top+t.Height*cell.Y/100,w=width*cell.Width/100,h=t.Height*cell.Height/100;
             if(cell.Border) result.Add(new("rect",x,y,w,h));
             if(cell.ImageId.Length>0 && p.Images.TryGetValue(cell.ImageId,out var data))
             {

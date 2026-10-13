@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -25,10 +25,13 @@ public sealed class Project
     public List<TitleBlockTemplate> TitleBlocks { get; set; } = TitleBlocksDefaults.Create();
     public Dictionary<string, string> Images { get; set; } = [];
     public BomOptions BomOptions { get; set; } = new();
+    public int ZoneColumns { get; set; } = 20;
+    public int ZoneRows { get; set; } = 10;
     public List<Sheet> Sheets { get; set; } = [new()];
 }
 public sealed class Sheet
 {
+    public bool UseProjectZones { get; set; } = true;
     public int ZoneColumns { get; set; } = 20;
     public int ZoneRows { get; set; } = 10;
     public BomPage? BomPage { get; set; }
@@ -225,7 +228,13 @@ public static class ProjectStore
         var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("format", out var format) || format.ValueKind != JsonValueKind.String || format.GetString() != "GeMMeElec" || !root.TryGetProperty("version", out var version) || version.ValueKind != JsonValueKind.Number || !root.TryGetProperty("sheets", out var sheets) || sheets.ValueKind != JsonValueKind.Array) throw new InvalidDataException("En-tête de projet absent ou invalide.");
         var project = JsonSerializer.Deserialize<Project>(json, Json) ?? throw new InvalidDataException("Projet vide.");
-        if (project.Version == 1) project.Version = Project.CurrentVersion;
+        if (project.Version is 1 or 2)
+        {
+            var first = project.Sheets?.FirstOrDefault(s => s is not null && s.BomPage is null);
+            project.ZoneColumns = first?.ZoneColumns ?? 20; project.ZoneRows = first?.ZoneRows ?? 10;
+            foreach (var sheet in project.Sheets ?? []) if (sheet is not null) sheet.UseProjectZones = sheet.ZoneColumns == project.ZoneColumns && sheet.ZoneRows == project.ZoneRows;
+            project.Version = Project.CurrentVersion;
+        }
         ValidateStructure(project);
         return project;
     }
@@ -234,6 +243,7 @@ public static class ProjectStore
         if (p.Format != "GeMMeElec" || p.Version != Project.CurrentVersion) throw new InvalidDataException("Format ou version de projet non pris en charge.");
         void Text(string? value) { if (value is null || value.Length > 2000) throw new InvalidDataException("Champ texte absent ou trop long."); }
         Text(p.Title); Text(p.Author); Text(p.Revision);
+        if (p.ZoneColumns is < 1 or > 40 || p.ZoneRows is < 1 or > 26) throw new InvalidDataException("Repérage du projet : 1 à 40 colonnes et 1 à 26 lignes.");
         CustomSymbols.Validate(p);
         DocumentModel.Validate(p);
         if (p.Sheets is null || p.Sheets.Count is < 1 or > Project.MaxSheets) throw new InvalidDataException($"Le projet doit contenir entre 1 et {Project.MaxSheets} folios.");
@@ -367,7 +377,8 @@ public sealed partial class Editor
     public void Reconnect(string wireId, bool from, Endpoint endpoint)
     {
         var wire = Sheet.Wires.Single(w => w.Id == wireId);
-        Change(() => { if (from) wire.From = endpoint; else wire.To = endpoint; });
+        var number = new ConductorNetworks(Project).ExistingNumber(endpoint, from ? wire.To : wire.From, wire.Id) ?? wire.Number;
+        Change(() => { if (from) wire.From = endpoint; else wire.To = endpoint; SynchronizeWireNumbers(wire, number); });
     }
     public void Undo()
     {
@@ -414,8 +425,8 @@ public sealed partial class Editor
     {
         if (from == to) throw new ArgumentException("Choisir deux bornes distinctes.");
         if (Sheet.Wires.Any(w => (w.From == from && w.To == to) || (w.To == from && w.From == to))) throw new ArgumentException("Ces bornes sont déjà reliées.");
-        var w = new Wire { From = from, To = to, Waypoints = points?.ToList() ?? [], Number = number.Length > 0 ? number : $"W{NextWireNumber()}", Color = color ?? CurrentWireColor };
-        Change(() => Sheet.Wires.Add(w)); return w;
+        var w = new Wire { From = from, To = to, Waypoints = points?.ToList() ?? [], Number = number.Length > 0 ? number : NumberForConnection(from, to), Color = color ?? CurrentWireColor };
+        Change(() => { Sheet.Wires.Add(w); SynchronizeWireNumbers(w, w.Number); }); return w;
     }
     private int NextWireNumber() { var used = Project.Sheets.SelectMany(s => s.Wires).Select(w => w.Number).ToHashSet(); int i = 1; while (used.Contains($"W{i}")) i++; return i; }
     public void Delete(IEnumerable<string> selected)

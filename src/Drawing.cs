@@ -24,7 +24,7 @@ public static class Drawing
     public static List<Ink> Scene(Project project, Sheet sheet)
     {
         if (sheet.BomPage is not null) return BomFolios.Scene(project, sheet);
-        List<Ink> result = [new("rect", 30, 30, sheet.Width - 60, sheet.Height - 60, Color: "#53677B")];
+        List<Ink> result = [new("rect", 10, 10, sheet.Width - 40, sheet.Height - 40, Color: "#53677B")];
         result.AddRange(DocumentModel.Scene(project,sheet));
         result.AddRange(SheetZones.Frame(project, sheet));
         var references = new CrossReferences(project);

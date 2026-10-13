@@ -31,13 +31,20 @@ internal static class EditorBenchmark
                 clock.Restart(); e.Undo(); clock.Stop(); double undoMs = clock.Elapsed.TotalMilliseconds;
                 clock.Restart(); e.Redo(); clock.Stop(); double redoMs = clock.Elapsed.TotalMilliseconds;
                 clock.Restart(); e.Change(() => { e.Sheet.Components[0].X += 10; e.Sheet.Components[0].Rotation = 90; }); clock.Stop(); double moveRotateMs = clock.Elapsed.TotalMilliseconds;
+                var textComponent = e.Sheet.Components[40]; window.Canvas.Select(textComponent.Id);
+                var textBounds = Drawing.TextBounds(ComponentTexts.Ink(e.Project, textComponent, new(e.Project), "tag")!); var textPoint = textBounds.TopLeft + new Vector(2, 2);
+                clock.Restart(); if (!window.Canvas.BeginTextMove(textPoint)) throw new InvalidOperationException("Texte de charge inaccessible."); clock.Stop(); double textDragBeginMs = clock.Elapsed.TotalMilliseconds;
+                string snapshot = e.ExportSnapshot; clock.Restart(); for (int i = 0; i < 120; i++) window.Canvas.MoveText(textPoint + new Vector(40 + i / 120d, 20)); clock.Stop(); double textDrag120MovesMs = clock.Elapsed.TotalMilliseconds;
+                if (e.ExportSnapshot != snapshot) throw new InvalidOperationException("Sérialisation pendant l’aperçu.");
+                clock.Restart(); window.Canvas.EndPreviewMove(); clock.Stop(); double textDragCommitMs = clock.Elapsed.TotalMilliseconds;
+                clock.Restart(); e.SetWireNumber(e.Sheet.Wires[30].Id, "CONTINUITE"); clock.Stop(); double conductorRenumberMs = clock.Elapsed.TotalMilliseconds;
                 clock.Restart(); var scene = Drawing.Scene(e.Project, e.Sheet); clock.Stop(); double sceneMs = clock.Elapsed.TotalMilliseconds;
                 clock.Restart(); root.UpdateLayout(); var image = new RenderTargetBitmap(1440, 900, 96, 96, PixelFormats.Pbgra32); image.Render(root); clock.Stop(); double offscreenRasterMs = clock.Elapsed.TotalMilliseconds;
                 GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); long memoryAfterEdits = Process.GetCurrentProcess().PrivateMemorySize64;
                 clock.Restart(); Export.Pdf(e.Project, Path.Combine(dir, $"benchmark-{count}.pdf")); clock.Stop(); double pdfMs = clock.Elapsed.TotalMilliseconds;
-                samples.Add(new { folios = count, components = count * 50, conductors = count * 49, annotations = count, associatedContacts = count * 20, projectBytes = new FileInfo(path).Length, saveMs, openMs, propertyEditMs = editMs, undoMs, redoMs, moveRotateMs, sceneMs, offscreenRasterMs, pdfMs, privateMemoryBeforeBytes = memoryBefore, privateMemoryAfterOpenBytes = memoryAfterOpen, privateMemoryAfterEditsBytes = memoryAfterEdits, privateMemoryAfterPdfBytes = Process.GetCurrentProcess().PrivateMemorySize64, workingSetBytes = Process.GetCurrentProcess().WorkingSet64, primitivesOnActiveSheet = scene.Count });
+                samples.Add(new { folios = count, components = count * 50, conductors = count * 49, annotations = count, associatedContacts = count * 20, projectBytes = new FileInfo(path).Length, saveMs, openMs, propertyEditMs = editMs, undoMs, redoMs, moveRotateMs, textDragBeginMs, textDrag120MovesMs, textDragCommitMs, conductorRenumberMs, sceneMs, offscreenRasterMs, pdfMs, privateMemoryBeforeBytes = memoryBefore, privateMemoryAfterOpenBytes = memoryAfterOpen, privateMemoryAfterEditsBytes = memoryAfterEdits, privateMemoryAfterPdfBytes = Process.GetCurrentProcess().PrivateMemorySize64, workingSetBytes = Process.GetCurrentProcess().WorkingSet64, primitivesOnActiveSheet = scene.Count });
             }
-            File.WriteAllText(Path.Combine(dir, folios.HasValue ? $"benchmark-{folios}.json" : "benchmark.json"), JsonSerializer.Serialize(new { passed = true, version = "0.13", logicalProcessors = Environment.ProcessorCount, renderer = "WPF hors écran, logiciel", samples }, ProjectStore.Json)); return 0;
+            File.WriteAllText(Path.Combine(dir, folios.HasValue ? $"benchmark-{folios}.json" : "benchmark.json"), JsonSerializer.Serialize(new { passed = true, version = "0.14", logicalProcessors = Environment.ProcessorCount, renderer = "WPF hors écran, logiciel", samples }, ProjectStore.Json)); return 0;
         }
         catch (Exception ex) { File.WriteAllText(Path.Combine(dir, "benchmark.json"), JsonSerializer.Serialize(new { passed = false, error = ex.ToString(), samples }, ProjectStore.Json)); return 1; }
         finally { window.DisposeTestBridge(); }

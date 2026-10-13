@@ -1,6 +1,6 @@
 # GeMMeElec — résumé du travail réalisé
 
-État au **13 octobre 2026**, version publiée **0.13.0.0**.
+État au **13 octobre 2026**, version publiée **0.14.0.0**.
 
 Ce document résume les réalisations présentes dans le dépôt et la dernière livraison vérifiée. L’objectif initial reste un outil de conception de schémas électriques industriels pour la Belgique et l’Europe, avec une richesse fonctionnelle inspirée d’EPLAN P8. La version actuelle constitue une base fonctionnelle ; l’équivalence complète avec EPLAN n’est pas réalisée.
 
@@ -13,9 +13,17 @@ Ce document résume les réalisations présentes dans le dépôt et la dernière
 - Dépôt de travail : `C:\dev\QElectroTech_GeMMe`.
 - Exécutable autonome : `C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`.
 - Une seule version de l’exécutable est conservée à ce chemin ; le runtime et les bibliothèques nécessaires y sont embarqués.
-- Les projets utilisent le format JSON **`.gemelec` version 2**, avec migration en mémoire des fichiers version 1, sauvegarde atomique, contrôle de structure et historique compressé d’annulation/rétablissement. L’ouverture ne réécrit pas le fichier source. Limites : 200 folios, 64 Mo à la lecture et à l’enregistrement.
+- Les projets utilisent le format JSON **`.gemelec` version 3**, avec migration en mémoire des fichiers versions 1 et 2, sauvegarde atomique, contrôle de structure et historique compressé d’annulation/rétablissement. L’ouverture ne réécrit pas le fichier source. Limites : 200 folios, 64 Mo à la lecture et à l’enregistrement.
 
 Le travail reste dans le dépôt de l’utilisateur ; le dépôt public de QElectroTech n’est pas modifié. Le projet utilisateur `C:\Users\pravi\Documents\LaserSieve_GH.gemelec`, travaillé lors d’une étape précédente à partir du schéma LaserSieve, est laissé intact pendant les évolutions actuelles du logiciel.
+
+## Ajustements 0.14 validés avec l’utilisateur
+
+- Cartouche étendu jusqu’au bord gauche extérieur du cadre : la dernière case de lettre touche son bord supérieur. Aperçu validé dans la conversation.
+- Repérage projet (1–40 colonnes / 1–26 lettres), exception par folio par case à cocher et héritage pour les nouveaux folios. Migration v1/v2 préservant les nombres des anciens folios.
+- Numérotation commune aux fils partageant la même borne, aux dérivations et aux bornes de passage/PE. Les bornes distinctes d’un équipement restent distinctes ; précision confirmée par l’utilisateur. Les copies de bornes conservent leur continuité déclarée.
+- Maj + clic gauche puis glisser un texte sur le schéma : aperçu immédiat, symbole et conducteurs conservés, une seule annulation, Échap pour abandonner. Les destinations calculées peuvent être déplacées.
+- Mode d’emploi : `REPERAGE_CONDUCTEURS_TEXTES.md`. Mesures du glissement et du renommage sur 100/5 000 et 200/10 000 dans `VALIDATION.md`.
 
 ## 2. Éditeur de schémas
 
@@ -148,13 +156,13 @@ Le serveur a été testé directement par son transport MCP. Une configuration f
 
 Les améliorations comprennent le cache de la scène et de la grille, l’indexation des composants et renvois, des caches bornés pour les textes/images, la virtualisation des tableaux, les imports en arrière-plan et la pagination BOM à la demande. L’aperçu des textes travaille sur le composant sélectionné et le panneau de propriétés n’est pas reconstruit à chaque caractère.
 
-Dernière livraison vérifiée : **0.13.0.0**, le 13 octobre 2026.
+Dernière livraison vérifiée : **0.14.0.0**, le 13 octobre 2026.
 
-- **91 scénarios applicatifs réussis** via `Build.ps1 -Test`, sans erreur ni avertissement.
-- **78 vérifications MCP réussies** via `Test-Mcp.ps1 -Headless` ; 47 outils, avec les 45 anciens conservés.
+- **99 scénarios applicatifs réussis** via `Build.ps1 -Test`, sans erreur ni avertissement.
+- **90 vérifications MCP réussies** via `Test-Mcp.ps1 -Headless` ; 47 outils, avec les 45 anciens conservés.
 - Quatre combinaisons Compacte/Ruban × Clair/Sombre, commandes communes activables, conservation des panneaux, rendu à 1440 × 900 et disposition à 1000 × 600. Le compact libère 68 unités verticales de plus que le ruban.
 - Propriétés immédiates, erreurs en ligne, curseur conservé pendant la saisie, connexion suivant les coordonnées/rotations, historique cohérent ; propriétés documentaires et textes immédiats.
-- Associations bobines/contacts complètes : persistance, migration v1 → v2, repère partagé, navigation, réorganisation des folios, duplication, détachement et suppression/annulation sans perte de conducteurs ; déclaration des symboles personnels et contrôles de bornes.
+- Associations bobines/contacts complètes : persistance, migration v1/v2 → v3, repère partagé, navigation, réorganisation des folios, duplication, détachement et suppression/annulation sans perte de conducteurs ; déclaration des symboles personnels et contrôles de bornes.
 - Historique compressé et budget de 64 Mo ; huit opérations successives sur 5 000 composants annulées/rétablies exactement, avec connexions et associations conservées.
 - PDF multipage en arrière-plan sur un instantané, depuis l’interface et le MCP. Les caches WPF sont propres au fil de rendu. Test d’édition/rendu concurrent avec image officielle : résultat identique octet pour octet à l’export de référence, indépendant des modifications suivantes. L’application attend la fin de l’export avant de fermer.
 - PDF invariant entre thèmes/dispositions, y compris avec les nouvelles références. Exports A3 de deux folios et PDF de charge de 200 pages contrôlés avec Poppler ; interface et fenêtres documentaires/texte inspectées hors écran. Aucune manipulation souris/clavier d’un projet utilisateur.
@@ -163,7 +171,7 @@ Dernière livraison vérifiée : **0.13.0.0**, le 13 octobre 2026.
 
 Les préférences et panneaux des tests utilisent des fichiers séparés. Le budget de fichier est contrôlé des deux côtés pour éviter une sauvegarde impossible à rouvrir. JSON compact et snapshots compressés réduisent les volumes sans modifier les données. La validation de structure reste exigée pour les transactions ; la seconde validation n’est exécutée après nettoyage des jonctions que si ce nettoyage a modifié le modèle.
 
-Reprise : modifications 0.11 vérifiées et préservées dans `306a101be`, puis refonte 0.12 dans `358d4f13e`, tous deux poussés sur `origin/GeMMeElec`. La 0.13 poursuit cette base. Aucune ancienne branche n’a été réécrite ; `upstream` et les documents utilisateur restent intacts.
+Reprise : modifications 0.11 vérifiées et préservées dans `306a101be`, puis refonte 0.12 dans `358d4f13e`, tous deux poussés sur `origin/GeMMeElec`. Les 0.13 et 0.14 poursuivent cette base. Aucune ancienne branche n’a été réécrite ; `upstream` et les documents utilisateur restent intacts.
 
 ## 11. Limites restantes et règles de poursuite
 

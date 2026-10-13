@@ -9,11 +9,16 @@ public sealed partial class MainWindow
     private void ZonesDialog()
     {
         Canvas.CancelDrag(); if (Editor.Sheet.BomPage is not null) throw new ArgumentException("Le repérage s’applique aux folios de schéma.");
-        var dialog = DocumentWindow("Repérage du folio · lignes et colonnes", 520, 430); var panel = new StackPanel { Margin = new(22) }; dialog.Content = panel;
+        var dialog = DocumentWindow("Repérage du projet · exception du folio", 560, 640); var panel = UiTheme.Bind(new StackPanel { Margin = new(22) }, Panel.BackgroundProperty, "Ui.Surface"); dialog.Content = UiTheme.Bind(new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, Control.BackgroundProperty, "Ui.Surface");
         panel.Children.Add(Hint("Les chiffres en haut et les lettres à gauche permettent de retrouver les composants. Ce cadre est conservé dans le PDF ; il est indépendant de la grille de placement."));
-        var columns = DocField(panel, "Colonnes (1 à 40)", Editor.Sheet.ZoneColumns.ToString()); var rows = DocField(panel, "Lignes (1 à 26, A à Z)", Editor.Sheet.ZoneRows.ToString());
-        var all = new CheckBox { Content = "Appliquer à tous les folios de schéma", Margin = new(0, 12, 0, 12) }; panel.Children.Add(all);
-        panel.Children.Add(DocButton("Enregistrer", dialog, () => { if (!int.TryParse(columns.Text, out var x) || !int.TryParse(rows.Text, out var y)) throw new ArgumentException("Saisir des nombres entiers."); Editor.Change(() => { foreach (var s in Editor.Project.Sheets.Where(s => s.BomPage is null && (all.IsChecked == true || s.Id == Editor.Sheet.Id))) { s.ZoneColumns = x; s.ZoneRows = y; } }); dialog.Close(); }));
+        var columns = DocField(panel, "Projet · colonnes (1 à 40)", Editor.Project.ZoneColumns.ToString()); var rows = DocField(panel, "Projet · lettres (1 à 26, A à Z)", Editor.Project.ZoneRows.ToString());
+        var except = new CheckBox { Name = "ZoneException", Content = "Ce folio utilise une configuration différente du projet", IsChecked = !Editor.Sheet.UseProjectZones, Margin = new(0, 12, 0, 12) }; panel.Children.Add(except);
+        var localColumns = DocField(panel, "Ce folio · colonnes", SheetZones.Columns(Editor.Project, Editor.Sheet).ToString()); var localRows = DocField(panel, "Ce folio · lettres", SheetZones.Rows(Editor.Project, Editor.Sheet).ToString());
+        void Enable() { localColumns.IsEnabled = localRows.IsEnabled = except.IsChecked == true; } except.Checked += (_, _) => Enable(); except.Unchecked += (_, _) => Enable(); Enable();
+        panel.Children.Add(Hint("Les réglages du projet s’appliquent aussi aux nouveaux folios. Les folios cochés conservent leurs propres nombres."));
+        panel.Children.Add(DocButton("Enregistrer", dialog, () => {
+            if (!int.TryParse(columns.Text, out var x) || !int.TryParse(rows.Text, out var y) || except.IsChecked == true && (!int.TryParse(localColumns.Text, out _) || !int.TryParse(localRows.Text, out _))) throw new ArgumentException("Saisir des nombres entiers.");
+            Editor.Change(() => { Editor.Project.ZoneColumns = x; Editor.Project.ZoneRows = y; var s = Editor.Sheet; s.UseProjectZones = except.IsChecked != true; if (!s.UseProjectZones) { s.ZoneColumns = int.Parse(localColumns.Text); s.ZoneRows = int.Parse(localRows.Text); } }); dialog.Close(); }));
         panel.Children.Add(DocButton("Annuler", dialog, dialog.Close)); ShowDocumentDialog(dialog);
     }
     private void ReferenceInspector(Component c)

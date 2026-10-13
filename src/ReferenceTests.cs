@@ -19,7 +19,7 @@ public static class ReferenceTests
             assert(SheetZones.Zone(p, s, 30, 30) == "A1" && SheetZones.Zone(p, s, a.Right, a.Bottom) == "J20", "Angles du cadre");
             assert(SheetZones.Zone(p, s, 29, 30) == "hors cadre" && SheetZones.Zone(p, s, 100, a.Bottom + 1) == "hors cadre", "Pas de fausse zone hors dessin");
             var c = new Component { X = 200, Y = 200 }; s.Number = "01-A"; assert(SheetZones.Address(p, s, c) == "01-A / B3", "Numéro libre et position");
-            s.ZoneRows = 26; s.ZoneColumns = 40; assert(SheetZones.Zone(p, s, a.Right, a.Bottom) == "Z40", "Configuration maximale");
+            s.UseProjectZones = false; s.ZoneRows = 26; s.ZoneColumns = 40; assert(SheetZones.Zone(p, s, a.Right, a.Bottom) == "Z40", "Configuration maximale");
             s.ZoneColumns = 0; reject(() => ProjectStore.ValidateStructure(p));
         });
         test("BOM : association exacte repère / folio / zone, regroupement et déplacement", () =>
@@ -94,7 +94,7 @@ public static class ReferenceTests
                     window.DocumentTestProbe = dialog =>
                     {
                         var content = (FrameworkElement)dialog.Content; double w = dialog.Width - 16, h = dialog.Height - 40; content.Measure(new(w, h)); content.Arrange(new(0, 0, w, h)); content.UpdateLayout(); SavePng(content, Path.Combine(dir, "ui-" + kind + ".png"), (int)w, (int)h);
-                        if (kind == "zones") { var boxes = Descendants(content).OfType<TextBox>().ToArray(); boxes[0].Text = "16"; boxes[1].Text = "8"; Descendants(content).OfType<Button>().Single(b => b.Content is string text && text == "Enregistrer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); assert(window.Editor.Sheet.ZoneColumns == 16, "Configuration par dialogue"); }
+                        if (kind == "zones") { var boxes = Descendants(content).OfType<TextBox>().ToArray(); boxes[0].Text = "16"; boxes[1].Text = "8"; Descendants(content).OfType<Button>().Single(b => b.Content is string text && text == "Enregistrer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); assert(SheetZones.Columns(window.Editor.Project, window.Editor.Sheet) == 16, "Configuration par dialogue"); }
                         else { var grid = Descendants(content).OfType<DataGrid>().Single(); grid.SelectedIndex = 1; Descendants(content).OfType<Button>().Single(b => b.Content is string text && text == "Aller au symbole").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); assert(window.Editor.Sheet.Number == "CMD-02", "Navigation au folio cible"); }
                     };
                     window.TestDocumentDialog(kind);

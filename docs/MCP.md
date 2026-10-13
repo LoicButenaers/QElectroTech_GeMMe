@@ -58,7 +58,7 @@ Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `li
 
 `tools/list` fournit les paramètres, types et champs requis. L’export PDF travaille en arrière-plan sur un instantané et répond après écriture du fichier, avec le retour `{path}` habituel ; l’interface peut rester active. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.13 propose 47 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
+La version 0.14 propose 47 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
 
 ## Bobines et contacts (0.13)
 
@@ -67,7 +67,7 @@ La version 0.13 propose 47 outils. `component_text_update` prend `id`, `target` 
 - `component_update` accepte `relayFunction` (`coil`, `no`, `nc`, `changeover`, `power`, ou vide) pour une déclaration explicite. Changer le rôle d’une bobine détache ses contacts si elle n’est plus une bobine ; l’opération est annulable.
 - `component_update` et `component_text_update` sur le repère d’une fonction associée renomme tout l’appareil. Le contenu de `coilReferences` reste calculé ; sa position et son style restent modifiables.
 
-Les fichiers sont en version 2, avec migration des fichiers version 1 en mémoire. [Parcours et limites](BOBINES_CONTACTS.md).
+Les fichiers sont en version 3, avec migration des fichiers versions 1 et 2 en mémoire. [Parcours et limites](BOBINES_CONTACTS.md).
 
 ## Textes individuels et alignement (0.11)
 
@@ -163,3 +163,11 @@ Les versions négociées sont `2024-11-05`, `2025-03-26`, `2025-06-18` et `2025-
 - « Le fichier existe déjà » : choisir un autre chemin ou autoriser explicitement l’écrasement.
 
 `Test-Mcp.ps1 -Headless` utilise le vrai transport stdio et une instance WPF invisible, séparée de la session utilisateur. Le mode de test a son propre fichier de session et s’arrête après les essais (au plus trois minutes). Aucun contrôle souris/clavier. Sans `-Headless`, le test utilise la fenêtre réelle et protège le projet courant.
+
+## Repérage et numéros de conducteurs (0.14)
+
+`project_update` accepte `zoneColumns` (1..40) et `zoneRows` (1..26). Les folios avec `useProjectZones: true` héritent de ces valeurs, y compris les nouveaux folios. `page_update` accepte `useProjectZones` et les nombres locaux ; fournir un nombre local active l’exception sauf si `useProjectZones: true` est fourni explicitement dans le même appel. Les nombres locaux sont conservés au retour à l’héritage.
+
+`wire_add` sans numéro reprend celui du réseau raccordé, en priorité du départ ; un numéro explicite s’applique à toute cette continuité. Une dérivation reprend le numéro du fil cible. `wire_update` avec `number` renomme la continuité complète en une transaction annulable. Une reconnexion adopte le numéro déjà présent sur la continuité de destination ; s’il n’y en a pas, elle conserve son numéro. Les couleurs et les tracés restent propres à chaque conducteur.
+
+`connection_trace` traverse désormais les continuités permanentes déclarées (`internalConnections` : liste de paires `{from,to}` dans une définition de symbole). Les bornes de passage et PE génériques déclarent 1↔2 ; leurs copies conservent cette déclaration. Aucun lien interne n’est déduit pour les appareils, contacts ou images importées. Une association bobine/contact reste indépendante des connexions électriques.
