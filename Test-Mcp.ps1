@@ -1,4 +1,4 @@
-﻿param([switch]$Headless, [string]$AssemblyPath = '')
+param([switch]$Headless, [string]$AssemblyPath = '')
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $stem = if ($Headless) { 'MCP-headless-demo' } else { 'MCP-demo' }
@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 45) '45 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 47) '47 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -303,6 +303,41 @@ try {
     $shape = (Call 'component_text_list' @{id=$a.id}) | Where-Object key -like 'shape:*' | Select-Object -Last 1
     $null = Call 'component_text_update' @{id=$a.id;target=$shape.key;text='Texte personnalisé';color='#AABBCC'}
     Assert (((Call 'component_text_list' @{id=$a.id}) | Where-Object key -eq $shape.key).text -eq 'Texte personnalisé') 'Texte interne modifié sur une instance du symbole'
+    $null = Call 'project_new' @{title='Bobines et contacts';discardUnsaved=$true}
+    $coil = Call 'component_add' @{symbol='coil';x=300;y=300}
+    $coilPage = (Call 'project_get').currentSheetId
+    $null = Call 'page_add' @{title='Contacts'}
+    $no = Call 'component_add' @{symbol='contact_no';x=350;y=300}
+    $nc = Call 'component_add' @{symbol='contact_nc';x=650;y=300}
+    $wire = Call 'wire_add' @{fromComponent=$no.id;fromPort='14';toComponent=$nc.id;toPort='21'}
+    $null = Call 'coil_contact_assign' @{contactId=$no.id;coilId=$coil.id}
+    $null = Call 'coil_contact_assign' @{contactId=$nc.id;coilId=$coil.id}
+    $functions = Call 'coil_contacts_list'
+    Assert ($functions.Count -eq 3 -and ($functions | Where-Object id -eq $coil.id).references -like '*NO*13*14*') 'Associations interfolios et références réciproques MCP'
+    $null = Call 'component_update' @{id=$no.id;tag='KM7'}
+    $functions = Call 'coil_contacts_list'
+    Assert (($functions | Where-Object tag -eq 'KM7').Count -eq 3) 'Repère commun propagé depuis le contact via MCP'
+    $errorText = Call 'coil_contact_assign' @{contactId=$coil.id;coilId=$no.id} -ExpectError
+    Assert ($errorText.Length -gt 0) 'Association inverse invalide refusée'
+    $texts = Call 'component_text_list' @{id=$no.id}
+    Assert (($texts | Where-Object key -eq 'coilReferences').readOnly -and ($texts | Where-Object key -eq 'coilReferences').text -like '*1 /*') 'Référence calculée accessible dans les textes MCP'
+    $errorText = Call 'component_text_update' @{id=$no.id;target='coilReferences';text='Inventé'} -ExpectError
+    Assert ($errorText.Length -gt 0) 'Référence calculée non remplaçable par un texte libre'
+    $null = Call 'component_text_update' @{id=$no.id;target='coilReferences';fontSize=14;color='#112233'}
+    $contactPath = Join-Path $root "build/$stem-coil-contacts.gemelec"
+    $null = Call 'project_save' @{path=$contactPath;overwrite=$true}
+    $null = Call 'project_open' @{path=$contactPath}
+    Assert ((Call 'coil_contacts_list' | Where-Object coilId -eq $coil.id).Count -eq 2) 'Associations bobine/contacts persistantes après réouverture MCP'
+    $null = Call 'page_select' @{id=$coilPage}
+    $null = Call 'component_delete' @{id=$coil.id}
+    $state = Call 'project_get'
+    Assert ($state.project.sheets[1].wires.Count -eq 1 -and ($state.project.sheets[1].components | Where-Object coilId -eq '').Count -eq 2) 'Suppression de bobine préservant contacts et fil via MCP'
+    $null = Call 'history_undo' @{}
+    Assert ((Call 'coil_contacts_list' | Where-Object coilId -eq $coil.id).Count -eq 2) 'Annulation restaurant les associations via MCP'
+    $null = Call 'component_update' @{id=$coil.id;relayFunction=''}
+    Assert ((Call 'coil_contacts_list' | Where-Object coilId -eq $coil.id).Count -eq 2) 'Réinitialiser le rôle générique préserve les associations via MCP'
+    $errorText = Call 'component_update' @{id=$coil.id;relayFunction='unknown'} -ExpectError
+    Assert ($errorText.Length -gt 0 -and (Call 'coil_contacts_list' | Where-Object coilId -eq $coil.id).Count -eq 2) 'Rôle invalide refusé sans perdre les associations MCP'
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

@@ -24,10 +24,12 @@ internal static class WorkspaceUiTests
             var e = window.Editor; Examples.Motor(e); window.Canvas.Select(e.Sheet.Components.Last(c => c.Symbol == "coil").Id);
             var initial = ProjectStore.Serialize(e.Project); string pdf = Path.Combine(dir, "self-test-interface.pdf"); Export.Pdf(e.Project, pdf); var bytes = File.ReadAllBytes(pdf);
             var compactWire = window.WorkspaceCommandForTest("wire"); var compactUndo = window.WorkspaceCommandForTest("undo");
+            var heights = new Dictionary<string, double>();
             foreach (string layout in new[] { "compact", "ribbon" }) foreach (string theme in new[] { "light", "dark" })
             {
                 window.SetInterface(layout, theme, false); var content = (FrameworkElement)window.Content; Arrange(content, 1440, 900); window.Canvas.Fit(); content.UpdateLayout();
                 assert(window.Canvas.ActualWidth >= 650 && window.Canvas.ActualHeight >= 600, "Zone de dessin trop réduite");
+                heights[layout] = window.Canvas.ActualHeight;
                 assert(ReferenceEquals(compactWire, window.WorkspaceCommandForTest("wire")) && ReferenceEquals(compactUndo, window.WorkspaceCommandForTest("undo")), "Commandes dupliquées entre dispositions");
                 var buttons = Descendants(content).OfType<Button>().Where(b => Equals(b.Tag, "command:wire")).ToList(); assert(buttons.Count > 0 && buttons.All(b => ReferenceEquals(b.Command, compactWire)), "Boutons non reliés à la commande commune");
                 assert(buttons.All(b => b.IsEnabled), "Commande Conducteur désactivée");
@@ -36,6 +38,7 @@ internal static class WorkspaceUiTests
                 Export.Pdf(e.Project, pdf); assert(bytes.SequenceEqual(File.ReadAllBytes(pdf)) && ProjectStore.Serialize(e.Project) == initial, "Le thème ou la disposition modifie le document/PDF");
                 compactWire.Execute(null, window); assert(window.Canvas.Mode == "wire", "Commande non exécutée"); window.WorkspaceCommandForTest("select").Execute(null, window);
             }
+            assert(heights["compact"] >= heights["ribbon"] + 50, "La disposition compacte conserve l’espace réservé au ruban");
             var panels = Descendants((FrameworkElement)window.Content).OfType<WorkspacePanels>().Single(); panels.SetState("pages", "auto"); panels.SetState("properties", "closed");
             string states = File.ReadAllText(WorkspacePanels.SettingsPath); window.SetInterface("compact", "light", false); window.SetInterface("ribbon", "dark", false); assert(states == File.ReadAllText(WorkspacePanels.SettingsPath), "Changer de disposition réinitialise les panneaux"); panels.Reset();
             reject(() => window.SetInterface("invalid", "light", false));
@@ -99,9 +102,10 @@ internal static class WorkspaceUiTests
         var app = Application.Current ?? new Application(); var window = new MainWindow();
         try { action(window); } finally { window.DisposeTestBridge(); Environment.SetEnvironmentVariable("GEMMEELEC_TEST_SESSION", old); }
     }
-    private static void Arrange(FrameworkElement content, int w, int h) { content.Measure(new(w, h)); content.Arrange(new(0, 0, w, h)); content.UpdateLayout(); System.Windows.Input.CommandManager.InvalidateRequerySuggested(); content.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); }
+    private static void Arrange(FrameworkElement content, int w, int h) { System.Windows.Input.CommandManager.InvalidateRequerySuggested(); content.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); content.InvalidateMeasure(); content.InvalidateArrange(); content.Measure(new(w, h)); content.Arrange(new(0, 0, w, h)); content.UpdateLayout(); }
     private static void Save(Visual visual, Brush background, string path, int w, int h)
     {
+        if (visual is FrameworkElement content) content.UpdateLayout();
         var image = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32); var fill = new DrawingVisual(); using (var dc = fill.RenderOpen()) dc.DrawRectangle(background, null, new(0, 0, w, h)); image.Render(fill); image.Render(visual); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image)); using var file = File.Create(path); encoder.Save(file);
     }
     private static IEnumerable<DependencyObject> Descendants(DependencyObject parent) { yield return parent; for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++) foreach (var c in Descendants(VisualTreeHelper.GetChild(parent, i))) yield return c; }

@@ -120,8 +120,10 @@ public static class DocumentModel
 public static class ImageAssets
 {
     // Bounded caches; encoded assets are deduplicated within a project and decoded only once.
-    private static readonly Dictionary<string,BitmapSource> Cache=[];
-    private static readonly HashSet<string> Validated=[];
+    [ThreadStatic] private static Dictionary<string,BitmapSource>? cache;
+    [ThreadStatic] private static HashSet<string>? validated;
+    private static Dictionary<string,BitmapSource> Cache => cache ??= [];
+    private static HashSet<string> Validated => validated ??= [];
     public static BitmapSource Decode(string data)
     {
         if(Cache.TryGetValue(data,out var cached)) return cached;

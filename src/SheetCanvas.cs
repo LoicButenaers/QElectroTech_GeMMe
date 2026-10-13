@@ -49,6 +49,7 @@ public sealed class SheetCanvas : FrameworkElement
     {
         var refs = new CrossReferences(Editor.Project);
         var c = Editor.Sheet.Components.LastOrDefault(c => CrossReferences.IsPoint(c) && ReferenceDisplay.HitBounds(Editor.Project, c, refs).Contains(point));
+        c ??= Editor.Sheet.Components.LastOrDefault(c => (CoilContacts.IsCoil(c) || CoilContacts.IsContact(c)) && ComponentTexts.Ink(Editor.Project, c, refs, "coilReferences") is Ink ink && Drawing.TextBounds(ink).Contains(point));
         if (c is null) return false;
         SetMode("select"); Select(c.Id); ReferenceRequested?.Invoke(c.Id); return true;
     }

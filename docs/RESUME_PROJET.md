@@ -1,6 +1,6 @@
 # GeMMeElec — résumé du travail réalisé
 
-État au **13 octobre 2026**, version publiée **0.12.0.0**.
+État au **13 octobre 2026**, version publiée **0.13.0.0**.
 
 Ce document résume les réalisations présentes dans le dépôt et la dernière livraison vérifiée. L’objectif initial reste un outil de conception de schémas électriques industriels pour la Belgique et l’Europe, avec une richesse fonctionnelle inspirée d’EPLAN P8. La version actuelle constitue une base fonctionnelle ; l’équivalence complète avec EPLAN n’est pas réalisée.
 
@@ -13,7 +13,7 @@ Ce document résume les réalisations présentes dans le dépôt et la dernière
 - Dépôt de travail : `C:\dev\QElectroTech_GeMMe`.
 - Exécutable autonome : `C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`.
 - Une seule version de l’exécutable est conservée à ce chemin ; le runtime et les bibliothèques nécessaires y sont embarqués.
-- Les projets utilisent le format JSON **`.gemelec`**, avec sauvegarde atomique, contrôle de structure et historique d’annulation/rétablissement.
+- Les projets utilisent le format JSON **`.gemelec` version 2**, avec migration en mémoire des fichiers version 1, sauvegarde atomique, contrôle de structure et historique compressé d’annulation/rétablissement. L’ouverture ne réécrit pas le fichier source. Limites : 200 folios, 64 Mo à la lecture et à l’enregistrement.
 
 Le travail reste dans le dépôt de l’utilisateur ; le dépôt public de QElectroTech n’est pas modifié. Le projet utilisateur `C:\Users\pravi\Documents\LaserSieve_GH.gemelec`, travaillé lors d’une étape précédente à partir du schéma LaserSieve, est laissé intact pendant les évolutions actuelles du logiciel.
 
@@ -68,6 +68,16 @@ Le routage ne contourne pas automatiquement tous les obstacles du schéma.
 
 La fenêtre Position des textes applique désormais les modifications valides immédiatement au schéma ; **Fermer** les conserve. **Ctrl+Z / Ctrl+Y** agit sur l’historique du projet et remet à jour les champs. Un glissement est publié au plus toutes les 120 ms et à son terme ; l’aperçu suit directement le geste. Les propriétés du projet et du folio sont également immédiates, avec **Fermer** et sans enregistrement disque implicite. Les textes incorporés dans une image fabricant ne deviennent pas éditables individuellement. L’enregistrement sur disque reste une action distincte, avec Ctrl+S.
 
+### Références bobines/contacts (0.13)
+
+- Association explicite par ID stable entre une bobine et plusieurs fonctions contact, sur tous les folios. Repère partagé et propagation du renommage depuis chaque fonction.
+- Fonctions NO, NF, inverseur, temporisé et puissance génériques ; bobines simples, temporisées et bistables. Les copies conservent le rôle ; les anciens symboles personnels peuvent recevoir une déclaration explicite dans leurs propriétés.
+- Adresses réciproques et libellés de bornes dans le dessin, recalculés après déplacement/réorganisation ; navigation par inspecteur, référence calculée ou navigateur des fonctions.
+- Contenu calculé en lecture seule, avec position/style propres dans Position des textes. Aucune liaison électrique entre bobine et contacts n’est ajoutée à la connectivité.
+- Détachement, changement de bobine, suppression de composant/folio et duplication cohérents et annulables. Contrôle des fonctions sans bobine et des répétitions de bornes.
+- La BOM compte l’article de la bobine une seule fois par défaut, avec toutes les localisations ; le filtre par folio retrouve l’article depuis ses contacts. Les fonctions restent consultables via l’option auxiliaire.
+- [Parcours, format et limites](BOBINES_CONTACTS.md). Pas de simulation ni de déduction de contacts disponibles ou de caractéristiques fabricant.
+
 ## 6. Folios, cartouches et nomenclature
 
 ### Folios et cartouches
@@ -116,7 +126,7 @@ Un atelier interactif permet de créer un symbole vide ou une copie : lignes, re
 | Symboles `.dxf` | Import de géométrie, blocs et textes ; réglage d’échelle et ajout manuel des bornes électriques |
 | Folios EPLAN / CAO exportés en `.dxf` | Récupération graphique multipage ; aucune reconstruction automatique des appareils, réseaux ou articles BOM |
 | EPLAN `.elk`, `.zw1`, `.epj` | Import non implémenté |
-| PDF | Export vectoriel multipage du projet, avec cartouches, repérage et folios BOM |
+| PDF | Export vectoriel multipage du projet, avec cartouches, repérage, références bobines/contacts et folios BOM ; génération en arrière-plan sur un instantané |
 | SVG | Export du folio avec les styles et positions des textes |
 | CSV / HTML | Exports de nomenclature configurables |
 
@@ -125,7 +135,7 @@ La conversion QET comporte des simplifications : cartouches remplacés, certaine
 ## 9. MCP intégré
 
 - Le même exécutable, lancé avec **`--mcp`**, sert de passerelle vers l’application ouverte.
-- **45 outils** couvrent projets, folios, composants, conducteurs, reports, textes, symboles, imports, cartouches, nomenclature, exports et historique.
+- **47 outils** couvrent projets, folios, composants, conducteurs, reports, textes, symboles, imports, cartouches, nomenclature, exports et historique.
 - La passerelle utilise le modèle de l’application : les modifications sont visibles et annulables dans le logiciel.
 - Les nouvelles commandes permettent de lister les textes, en ajouter, les modifier individuellement, les supprimer et les aligner.
 - Transport JSON-RPC sur stdin/stdout, avec communication locale vers la fenêtre par un canal Windows limité au compte utilisateur.
@@ -138,25 +148,26 @@ Le serveur a été testé directement par son transport MCP. Une configuration f
 
 Les améliorations comprennent le cache de la scène et de la grille, l’indexation des composants et renvois, des caches bornés pour les textes/images, la virtualisation des tableaux, les imports en arrière-plan et la pagination BOM à la demande. L’aperçu des textes travaille sur le composant sélectionné et le panneau de propriétés n’est pas reconstruit à chaque caractère.
 
-Dernière livraison vérifiée : **0.12.0.0**, le 13 octobre 2026.
+Dernière livraison vérifiée : **0.13.0.0**, le 13 octobre 2026.
 
-- **82 scénarios applicatifs réussis** via `Build.ps1 -Test`, sans erreur ni avertissement.
-- **68 vérifications MCP réussies** via `Test-Mcp.ps1 -Headless` ; les 45 outils restent compatibles.
-- Quatre combinaisons Compacte/Ruban × Clair/Sombre : commandes communes, actions activables, conservation des panneaux, rendu à 1440 × 900 et disposition à 1000 × 600.
-- Inspecteur regroupé et adapté au composant, au report, au conducteur, à l’annotation ou à la sélection multiple ; erreurs visibles sous les champs, saisie conservée, coordonnées/rotation immédiates et conducteurs suivant les bornes.
-- Propriétés documentaires et textes immédiats, historique regroupé, rejet des valeurs invalides et maintien de la dernière valeur valide.
-- Lecture/enregistrement/relecture d’une **copie** de `LaserSieve_GH.gemelec`, sans modification de l’original. Son SHA-256 avant reprise est `E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C`.
-- PDF identique octet pour octet pour les quatre réglages de l’interface. Export A3 vectoriel rendu avec Poppler et inspecté ; exports multipages couverts par la suite existante.
-- Inspection visuelle des quatre rendus de l’interface, des erreurs en ligne, des paramètres et des fenêtres documentaires/texte hors écran. Aucune manipulation souris/clavier d’un projet utilisateur.
-- Mesure synthétique sur ce PC : **100 folios, 5 000 composants, 4 900 conducteurs, 100 annotations**. Dernier passage : sauvegarde 90 ms, ouverture avec mise à jour WPF 285 ms, cinq modifications de propriété 121 à 138 ms, construction de la scène du folio actif 3,25 ms. La mémoire privée relevée (735 Mo) est celle du processus ayant exécuté toute la suite ; ce n’est pas une mesure de mémoire d’une session utilisateur isolée. Rapport `build/interface-performance.json`. Ces valeurs ne prouvent pas une cadence d’affichage ou un temps garanti.
+- **91 scénarios applicatifs réussis** via `Build.ps1 -Test`, sans erreur ni avertissement.
+- **78 vérifications MCP réussies** via `Test-Mcp.ps1 -Headless` ; 47 outils, avec les 45 anciens conservés.
+- Quatre combinaisons Compacte/Ruban × Clair/Sombre, commandes communes activables, conservation des panneaux, rendu à 1440 × 900 et disposition à 1000 × 600. Le compact libère 68 unités verticales de plus que le ruban.
+- Propriétés immédiates, erreurs en ligne, curseur conservé pendant la saisie, connexion suivant les coordonnées/rotations, historique cohérent ; propriétés documentaires et textes immédiats.
+- Associations bobines/contacts complètes : persistance, migration v1 → v2, repère partagé, navigation, réorganisation des folios, duplication, détachement et suppression/annulation sans perte de conducteurs ; déclaration des symboles personnels et contrôles de bornes.
+- Historique compressé et budget de 64 Mo ; huit opérations successives sur 5 000 composants annulées/rétablies exactement, avec connexions et associations conservées.
+- PDF multipage en arrière-plan sur un instantané, depuis l’interface et le MCP. Les caches WPF sont propres au fil de rendu. Test d’édition/rendu concurrent avec image officielle : résultat identique octet pour octet à l’export de référence, indépendant des modifications suivantes. L’application attend la fin de l’export avant de fermer.
+- PDF invariant entre thèmes/dispositions, y compris avec les nouvelles références. Exports A3 de deux folios et PDF de charge de 200 pages contrôlés avec Poppler ; interface et fenêtres documentaires/texte inspectées hors écran. Aucune manipulation souris/clavier d’un projet utilisateur.
+- Lecture/enregistrement/relecture d’une **copie** de `LaserSieve_GH.gemelec`, original intact : SHA-256 `E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C`. Échec d’enregistrement préservant le modèle, son état modifié et l’absence de fichier temporaire.
+- Mesures représentatives dans **un processus dédié par taille** : 100/5 000 et 200/10 000, avec conducteurs, textes et contacts associés. Détails et limites dans `VALIDATION.md` et `build/benchmark.json`. Les gros projets restent coûteux en propriétés/historique ; ces mesures ne garantissent pas une cadence de souris ou GPU.
 
-Les réglages des panneaux et préférences des tests utilisent désormais des fichiers `.test-*` séparés. Le coût des propriétés a été réduit en réutilisant l’état sérialisé pour l’indicateur de modifications ; la validation et l’historique restent transactionnels. Le test à 200 folios / 10 000 composants reste à livrer : la limite historique de lecture est encore de 100 folios dans cette étape.
+Les préférences et panneaux des tests utilisent des fichiers séparés. Le budget de fichier est contrôlé des deux côtés pour éviter une sauvegarde impossible à rouvrir. JSON compact et snapshots compressés réduisent les volumes sans modifier les données. La validation de structure reste exigée pour les transactions ; la seconde validation n’est exécutée après nettoyage des jonctions que si ce nettoyage a modifié le modèle.
 
-La reprise a préservé puis vérifié les modifications 0.11 trouvées non commitées, avant leur commit distinct `306a101be` et leur push sur `origin/GeMMeElec`. La refonte 0.12 constitue la livraison suivante ; aucune ancienne branche n’a été réécrite et `upstream` n’a pas été modifié.
+Reprise : modifications 0.11 vérifiées et préservées dans `306a101be`, puis refonte 0.12 dans `358d4f13e`, tous deux poussés sur `origin/GeMMeElec`. La 0.13 poursuit cette base. Aucune ancienne branche n’a été réécrite ; `upstream` et les documents utilisateur restent intacts.
 
 ## 11. Limites restantes et règles de poursuite
 
-Restent notamment à développer : bibliothèque exhaustive, import EPLAN natif, références croisées bobines/contacts, gestion de câbles multicœurs, borniers automatiques, implantation d’armoires, dimensionnement et simulation électriques. Aucune équivalence complète à EPLAN P8 ni certification IEC/RGIE n’est annoncée.
+Restent notamment à développer : bibliothèque exhaustive, import EPLAN natif, automates et entrées/sorties structurés, gestion de câbles multicœurs, borniers automatiques, implantation d’armoires, dimensionnement et simulation électriques. Aucune équivalence complète à EPLAN P8 ni certification IEC/RGIE n’est annoncée.
 
 Le nettoyage du dépôt a été étudié et les sources actives réorganisées, mais la suppression de certains anciens outils/caches QElectroTech/Qt/MSYS2 avait été bloquée lors d’une étape précédente. Le nettoyage intégral de ces fichiers locaux ne doit donc pas être considéré comme terminé.
 
@@ -165,6 +176,7 @@ Pour poursuivre : travailler sur `GeMMeElec`, préserver les anciennes branches 
 ## 12. Documents et commandes utiles
 
 - [Feuille de route et périmètres des prochains lots](FEUILLE_DE_ROUTE.md)
+- [Références bobines/contacts](BOBINES_CONTACTS.md)
 
 - [Guide d’utilisation et structure du dépôt](../README.md)
 - [Configuration et outils MCP](MCP.md)
@@ -178,6 +190,7 @@ Depuis `C:\dev\QElectroTech_GeMMe`, sous PowerShell, après fermeture de l’app
 ```powershell
 ./Build.ps1 -Test
 ./Test-Mcp.ps1 -Headless
+./Benchmark.ps1
 ```
 
 Les rapports sont enregistrés dans `build/self-test.json` et `build/mcp-test.json`. Les outils de compilation, dépendances et caches restent sous `build/`, hors du suivi Git.

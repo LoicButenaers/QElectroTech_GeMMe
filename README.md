@@ -8,13 +8,14 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.12)
+## Fonctionnalités (version 0.13)
 
-- Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
+- Projets JSON `.gemelec` version 2, migration des fichiers version 1 sans écriture implicite, sauvegarde atomique et contrôle de structure. Jusqu’à 200 folios ; taille de fichier limitée à 64 Mo avec contrôle identique à la lecture et à l’enregistrement.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
 - 92 symboles génériques GeMMeElec ; deux bibliothèques documentées distinctes : 3 dessins fabricants raccordables (Schneider LC1D09BD, ABB AF09-30-01-13, Eaton 276705) et 4 aperçus officiels EPLAN en consultation. Les 75 anciennes associations de gammes ont été retirées du catalogue.
 - Cadre de repérage avec colonnes numérotées et lignes lettrées, configurable par folio ; localisation des composants dans la BOM, par exemple `K1 : 3 / C7`.
 - Renvois interfolios départ/arrivée liés par nom, modes chaîne et étoile, références réciproques, navigation et continuité des connexions.
+- Associations bobines/contacts explicites et persistantes : repère partagé, références réciproques folio/zone, navigation, fonctions génériques et déclaration des symboles personnels. Aucune liaison électrique ajoutée par l’association.
 - Reports noirs avec triangle évidé : départ raccordé à gauche, arrivée à droite. Liaison guidée par choix de la contrepartie ; double-clic sur le symbole ou son nom pour naviguer, dans tous les modes.
 - Jonctions calculées à partir des fils partageant une borne : point au départ commun ou à la divergence, suppression automatique quand il ne reste qu’un fil. Les nœuds de dérivation suivent le déplacement des segments.
 - Atelier interactif de symboles : création vide ou copie, dessin à la souris (ligne, rectangle, cercle, texte), bornes, poignées, coordonnées précises, zoom, grille et historique local. Bibliothèque personnelle embarquée et échange `.gemsymbol`.
@@ -35,10 +36,10 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Folios BOM intégrés au projet et au PDF, pagination automatique, en-têtes répétés, longues lignes poursuivies sur la page suivante, sans cartouche.
 - Repères et propriétés des appareils, référence commerciale libre, caractéristiques, libellés de bornes, documentation fabricant.
 - Annotations, zoom à la molette, déplacement de la vue, ajustement du folio.
-- Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec un budget mémoire de 64 Mo pour les projets contenant des images.
+- Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec snapshots compressés et budget mémoire de 64 Mo, y compris pour les projets contenant des images.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
-- Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
-- Serveur MCP local avec 45 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Export du folio en SVG, du projet multipage en PDF vectoriel A3 en arrière-plan sur un instantané, nomenclature CSV UTF-8. Le dessin peut continuer pendant l’export ; le PDF reflète l’état au lancement.
+- Serveur MCP local avec 47 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Interface
 
@@ -89,7 +90,7 @@ Les valeurs de l’inspecteur sont appliquées en temps réel au schéma, sans b
 
 Les trois dessins fabricants proviennent de documents officiels conservés dans le dépôt. Les images sont intégrées sans redessin ; leurs bornes ont été relevées sur ces documents. La fiche de provenance précise la référence, l’édition historique, la méthode et les empreintes SHA-256. Les aperçus EPLAN ne fournissent pas de définition électrique native : ils restent non raccordables. Cette sélection ne couvre pas toutes les familles ni tous les fabricants. Les 92 symboles génériques restent distincts et ne revendiquent aucune identité avec EPLAN ou un fabricant. Voir [le catalogue documenté](docs/CATALOGUE.md).
 
-Cette base ne comprend pas encore le dimensionnement électrique, la simulation, les références croisées entre bobines et contacts d’un appareil, les borniers automatiques, l’import des formats EPLAN natifs `.elk`, `.zw1` et `.epj`, la gestion de câbles multicœurs, les implantations d’armoires, ni les catalogues complets des fabricants. Elle ne revendique pas une certification IEC/RGIE ou une équivalence à EPLAN. Le DXF EPLAN récupère le dessin, sans reconstruire les appareils ni les réseaux électriques.
+Cette base ne comprend pas encore le dimensionnement électrique, la simulation, les borniers automatiques, l’import des formats EPLAN natifs `.elk`, `.zw1` et `.epj`, la gestion de câbles multicœurs, les implantations d’armoires, ni les catalogues complets des fabricants. Elle ne revendique pas une certification IEC/RGIE ou une équivalence à EPLAN. Le DXF EPLAN récupère le dessin, sans reconstruire les appareils ni les réseaux électriques.
 
 ## Symboles personnels et conversion
 
@@ -107,6 +108,10 @@ Les jonctions de borne commune sont calculées sans ajouter un composant. Une d�
 
 Dans **Symboles industriels → 10 · Renvois interfolios**, placer **Folio suivant · départ** puis **Folio précédent · arrivée** sur le folio destinataire et raccorder leurs bornes aux fils. Sélectionner chaque flèche, saisir le même **Nom commun de la liaison** ; le changement est immédiat. Le mode chaîne relie les points deux par deux ; le mode étoile relie une source à plusieurs arrivées. Le libellé indique automatiquement le folio et la zone de la contrepartie. Double-cliquer une flèche pour la rejoindre ; **Projet → Navigateur des renvois…** affiche toutes les liaisons. Voir [le fonctionnement et les sources EPLAN](docs/RENVOIS.md).
 
+## Bobines et contacts
+
+Placer une bobine et des contacts, puis sélectionner chaque contact : **Propriétés → Bobine et contacts → choisir la bobine**. Le repère est partagé et les références de folio/zone se recalculent automatiquement. Les boutons de l’inspecteur, le double-clic sur la référence calculée et **Projet → Bobines et contacts…** permettent de naviguer. Le rôle d’un symbole personnel se déclare dans **Définition du symbole**. Les libellés de bornes restent propres à chaque fonction ; les conducteurs sont conservés. La nomenclature compte l’article de la bobine une seule fois par défaut et retrouve ses représentations avec le filtre par folio. Voir [le parcours, la migration et les limites](docs/BOBINES_CONTACTS.md).
+
 ## Cartouches, folios et nomenclature
 
 **Folio → Propriétés du folio** renseigne immédiatement les données de la page et son cartouche. **Fermer** conserve les changements ; **Ctrl+Z** annule et **Ctrl+S** enregistre le fichier. Un numéro vide suit automatiquement l’ordre des folios ; un numéro libre comme `01-A` reste inchangé lors d’un déplacement. L’auteur, la date et la révision vides héritent du projet. **Fichier → Informations du projet** renseigne les valeurs communes, le client et le numéro du document. Les champs personnalisés se saisissent sous la forme `nom=valeur`, un par ligne.
@@ -117,7 +122,7 @@ Insérer des champs comme `{project.title}`, `{sheet.title}`, `{sheet.number}`, 
 
 **Projet → Nomenclature configurable** permet de cocher, renommer et réordonner les colonnes, choisir un folio ou fabricant, regrouper les articles identiques et inclure les symboles auxiliaires. Cliquer **Actualiser l’aperçu** après modification et **Mémoriser ces options** pour les sauvegarder dans le projet. Les articles ne sont regroupés que si symbole, fabricant, gamme, référence, description, caractéristiques, image, ID catalogue et source concordent. Les appareils sans référence exacte restent donc des articles à compléter.
 
-**Ajouter / actualiser les folios BOM** crée les pages nécessaires en fin de projet, sans cartouche. Les colonnes choisies, photos ou symboles, en-têtes répétés et numéros de page sont inclus dans le PDF. Les longues lignes continuent sur les pages suivantes. Cette commande remplace les précédents folios BOM en une seule opération annulable ; ils constituent un instantané enregistré. Après modification du schéma, relancer la commande pour actualiser les quantités et références de folio. Ces pages ne reçoivent pas de composants de schéma. La limite totale reste de 100 folios ; un dépassement annule entièrement la génération.
+**Ajouter / actualiser les folios BOM** crée les pages nécessaires en fin de projet, sans cartouche. Les colonnes choisies, photos ou symboles, en-têtes répétés et numéros de page sont inclus dans le PDF. Les longues lignes continuent sur les pages suivantes. Cette commande remplace les précédents folios BOM en une seule opération annulable ; ils constituent un instantané enregistré. Après modification du schéma, relancer la commande pour actualiser les quantités et références de folio. Ces pages ne reçoivent pas de composants de schéma. La limite totale est de 200 folios ; un dépassement annule entièrement la génération.
 
 **Propriétés du composant → Ajouter une image BOM** intègre une photo PNG/JPEG/BMP ; sinon la BOM affiche le symbole fonctionnel. Les images sont ramenées à 512 pixels et conservées dans le projet, une seule fois par contenu. Le HTML contient les images, fonctionne hors ligne et peut être imprimé depuis le navigateur. Le CSV contient les données et une indication textuelle de l’image ; il n’embarque pas de photo. L’export XLSX natif n’est pas encore proposé.
 
@@ -142,6 +147,14 @@ Les tests intégrés écrivent `build/self-test.json`. Pour le test d’intégra
 ```
 
 Le mode `-Headless` crée une instance invisible et une session MCP séparée : aucune manipulation du PC, aucun projet utilisateur remplacé. Il écrit `build/mcp-test.json` et `build/MCP-headless-demo.*`. Sans ce commutateur, le test utilise la fenêtre ouverte et refuse de remplacer un autre projet non vide ou non enregistré. Les tests intégrés produisent aussi des aperçus hors écran des fenêtres documentaires et `build/document-performance.json`.
+
+Pour mesurer les cibles sur le PC dans deux processus invisibles séparés :
+
+```powershell
+./Benchmark.ps1
+```
+
+Les jeux contiennent 100 folios / 5 000 composants ou 200 folios / 10 000 composants, avec 4 900 / 9 800 conducteurs, des annotations et 2 000 / 4 000 contacts associés. Le rapport `build/benchmark.json` distingue sauvegarde, ouverture, propriétés, historique, scène, rendu WPF logiciel, export PDF et mémoire privée. Il ne mesure pas une cadence GPU ni un usage à la souris. Les temps et limites réels sont consignés dans `docs/VALIDATION.md` ; les grandes opérations demandent encore une optimisation.
 
 ## Structure
 

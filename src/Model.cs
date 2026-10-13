@@ -8,9 +8,12 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
+    public const int CurrentVersion = 2;
+    public const int MaxSheets = 200;
+    public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
     public string Format { get; set; } = "GeMMeElec";
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Title { get; set; } = "Nouveau projet";
     public string Author { get; set; } = "";
@@ -50,6 +53,9 @@ public sealed class Sheet
 }
 public sealed class Component
 {
+    public string CoilId { get; set; } = "";
+    public string RelayFunction { get; set; } = "";
+    public LabelPlacement CoilReferencePlacement { get; set; } = new() { Side = "right", Horizontal = "left", Vertical = "top", Gap = 20, OffsetY = 35, FontSize = 11, Color = "#087344" };
     public List<ComponentText> AdditionalTexts { get; set; } = [];
     public Dictionary<string, ComponentText> TextOverrides { get; set; } = [];
     public bool AutoJunction { get; set; }
@@ -211,24 +217,26 @@ public sealed record Finding(string Level, string SheetId, string ComponentId, s
 public static class ProjectStore
 {
     public static readonly JsonSerializerOptions Json = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
-    public static string Serialize(Project project) => JsonSerializer.Serialize(project, Json);
+    private static readonly JsonSerializerOptions ProjectJson = new(Json) { WriteIndented = false };
+    public static string Serialize(Project project) => JsonSerializer.Serialize(project, ProjectJson);
     public static Project Deserialize(string json)
     {
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("format", out var format) || format.ValueKind != JsonValueKind.String || format.GetString() != "GeMMeElec" || !root.TryGetProperty("version", out var version) || version.ValueKind != JsonValueKind.Number || !root.TryGetProperty("sheets", out var sheets) || sheets.ValueKind != JsonValueKind.Array) throw new InvalidDataException("En-tête de projet absent ou invalide.");
         var project = JsonSerializer.Deserialize<Project>(json, Json) ?? throw new InvalidDataException("Projet vide.");
+        if (project.Version == 1) project.Version = Project.CurrentVersion;
         ValidateStructure(project);
         return project;
     }
     public static void ValidateStructure(Project p)
     {
-        if (p.Format != "GeMMeElec" || p.Version != 1) throw new InvalidDataException("Format ou version de projet non pris en charge.");
+        if (p.Format != "GeMMeElec" || p.Version != Project.CurrentVersion) throw new InvalidDataException("Format ou version de projet non pris en charge.");
         void Text(string? value) { if (value is null || value.Length > 2000) throw new InvalidDataException("Champ texte absent ou trop long."); }
         Text(p.Title); Text(p.Author); Text(p.Revision);
         CustomSymbols.Validate(p);
         DocumentModel.Validate(p);
-        if (p.Sheets is null || p.Sheets.Count is < 1 or > 100) throw new InvalidDataException("Le projet doit contenir entre 1 et 100 folios.");
+        if (p.Sheets is null || p.Sheets.Count is < 1 or > Project.MaxSheets) throw new InvalidDataException($"Le projet doit contenir entre 1 et {Project.MaxSheets} folios.");
         var ids = new HashSet<string>();
         void Id(string id) { if (string.IsNullOrWhiteSpace(id) || !ids.Add(id)) throw new InvalidDataException("Identifiant absent ou dupliqué."); }
         foreach (var s in p.Sheets)
@@ -275,17 +283,20 @@ public static class ProjectStore
             foreach (var w in s.Wires) { var ends = new[] { w.From.ComponentId + ":" + w.From.PortId, w.To.ComponentId + ":" + w.To.PortId }.Order(StringComparer.Ordinal); if (!pairs.Add(string.Join("|", ends))) throw new InvalidDataException("Ces bornes sont déjà reliées."); }
             foreach (var n in s.Notes) { if (n is null) throw new InvalidDataException("Annotation vide."); Id(n.Id); if (!double.IsFinite(n.X) || !double.IsFinite(n.Y) || n.X < 0 || n.X > s.Width || n.Y < 0 || n.Y > s.Height || n.Text is null || n.Text.Length > 2000) throw new InvalidDataException("Annotation invalide."); }
         }
+        CoilContacts.Validate(p);
     }
     public static Project Load(string path)
     {
-        if (new FileInfo(path).Length > 20_000_000) throw new InvalidDataException("Le fichier dépasse 20 Mo.");
+        if (new FileInfo(path).Length > Project.MaxFileBytes) throw new InvalidDataException("Le fichier dépasse 64 Mo.");
         return Deserialize(File.ReadAllText(path));
     }
     public static void Save(Project p, string path)
     {
         ValidateStructure(p);
         if (!path.EndsWith(".gemelec", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Utiliser l’extension .gemelec.");
-        AtomicWrite(path, Serialize(p));
+        var json = Serialize(p);
+        if (System.Text.Encoding.UTF8.GetByteCount(json) > Project.MaxFileBytes) throw new InvalidDataException("Le projet dépasse 64 Mo ; réduire les images avant d’enregistrer.");
+        AtomicWrite(path, json);
     }
     public static void AtomicWrite(string path, string data)
     {
@@ -303,8 +314,8 @@ public sealed partial class Editor
     public string? FilePath { get; private set; }
     public bool InteractionInProgress { get; set; }
     public event Action? Changed;
-    private readonly List<string> undo = [];
-    private readonly List<string> redo = [];
+    private readonly List<HistorySnapshot> undo = [];
+    private readonly List<HistorySnapshot> redo = [];
     private string saved;
     private string currentState;
     public Editor() { CurrentSheetId = Project.Sheets[0].Id; currentState = saved = ProjectStore.Serialize(Project); }
@@ -312,6 +323,7 @@ public sealed partial class Editor
     public bool Dirty => saved != currentState;
     public bool CanUndo => undo.Count > 0;
     public bool CanRedo => redo.Count > 0;
+    internal string ExportSnapshot => currentState;
     public void Notify() => Notify(ProjectStore.Serialize(Project));
     private void Notify(string state) { currentState = state; Changed?.Invoke(); }
     public void SelectSheet(string id)
@@ -336,18 +348,17 @@ public sealed partial class Editor
     public void Change(Action action, string? historyKey = null)
     {
         if (InteractionInProgress) throw new InvalidOperationException("Terminer le déplacement en cours.");
-        var before = ProjectStore.Serialize(Project);
+        var before = historyKey is not null && historyKey == propertyHistoryKey ? currentState : ProjectStore.Serialize(Project);
         try { action(); Commit(before, historyKey); }
         catch { Project = ProjectStore.Deserialize(before); Notify(before); throw; }
     }
     public void Commit(string before, string? historyKey = null)
     {
         ProjectStore.ValidateStructure(Project);
-        Junctions.Cleanup(Project);
-        ProjectStore.ValidateStructure(Project);
+        if (Junctions.Cleanup(Project)) ProjectStore.ValidateStructure(Project);
         var after = ProjectStore.Serialize(Project);
         if (before != after) {
-            if (historyKey is null || propertyHistoryKey != historyKey || undo.Count == 0 || DateTime.UtcNow - propertyHistoryTime > TimeSpan.FromSeconds(2)) undo.Add(before);
+            if (historyKey is null || propertyHistoryKey != historyKey || undo.Count == 0 || DateTime.UtcNow - propertyHistoryTime > TimeSpan.FromSeconds(2)) undo.Add(HistorySnapshot.Capture(before));
             redo.Clear(); TrimHistory(); propertyHistoryKey = historyKey; propertyHistoryTime = DateTime.UtcNow;
         } else if (historyKey is null) EndPropertyEdit();
         Notify(after);
@@ -361,19 +372,21 @@ public sealed partial class Editor
     public void Undo()
     {
         EndPropertyEdit(); if (!CanUndo || InteractionInProgress) return;
-        redo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(undo[^1]); undo.RemoveAt(undo.Count - 1); TrimHistory(); RepairSelection(); Notify();
+        var state = undo[^1].Restore(); var restored = ProjectStore.Deserialize(state); var outgoing = HistorySnapshot.Capture(ProjectStore.Serialize(Project));
+        redo.Add(outgoing); Project = restored; undo.RemoveAt(undo.Count - 1); TrimHistory(); RepairSelection(); Notify(state);
     }
     public void Redo()
     {
         EndPropertyEdit(); if (!CanRedo || InteractionInProgress) return;
-        undo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(redo[^1]); redo.RemoveAt(redo.Count - 1); TrimHistory(); RepairSelection(); Notify();
+        var state = redo[^1].Restore(); var restored = ProjectStore.Deserialize(state); var outgoing = HistorySnapshot.Capture(ProjectStore.Serialize(Project));
+        undo.Add(outgoing); Project = restored; redo.RemoveAt(redo.Count - 1); TrimHistory(); RepairSelection(); Notify(state);
     }
     private void TrimHistory()
     {
         // Large embedded images must not multiply indefinitely through undo snapshots.
         while(undo.Count>100)undo.RemoveAt(0);while(redo.Count>100)redo.RemoveAt(0);
-        long bytes=undo.Concat(redo).Sum(s=>(long)s.Length*2);
-        while(bytes>64_000_000 && undo.Count+redo.Count>1){var list=undo.Count>1?undo:redo.Count>1?redo:undo.Count>0?undo:redo;bytes-=(long)list[0].Length*2;list.RemoveAt(0);}
+        long bytes=undo.Concat(redo).Sum(s=>s.MemoryBytes);
+        while(bytes>64_000_000 && undo.Count+redo.Count>1){var list=undo.Count>1?undo:redo.Count>1?redo:undo.Count>0?undo:redo;bytes-=list[0].MemoryBytes;list.RemoveAt(0);}
     }
     private void RepairSelection() { if (!Project.Sheets.Any(s => s.Id == CurrentSheetId)) CurrentSheetId = Project.Sheets[0].Id; }
     public Sheet AddSheet(string title)
@@ -393,6 +406,7 @@ public sealed partial class Editor
         if (entry is not null && entry.Symbol != symbol) throw new ArgumentException("Le symbole ne correspond pas à la gamme.");
         var c = new Component { Symbol = symbol, ResolvedDefinition = d, X = Snap(x), Y = Snap(y), Tag = NextTag(d.Prefix), Description = d.Name,
             CatalogId = entry?.Id ?? "", Brand = entry?.Brand ?? "", Range = entry?.Range ?? "", Reference = entry?.Reference ?? "", Source = entry?.Source ?? "", ShowPortLabels = !d.PrintedTerminals };
+        c.RelayFunction = CoilContacts.Role(c);
         if (CrossReferences.IsPoint(c)) { c.TagPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; c.DetailPlacement = new() { Side = "right", Horizontal = "left", Vertical = "center", Gap = 4 }; }
         Change(() => Sheet.Components.Add(c)); return c;
     }
@@ -407,13 +421,13 @@ public sealed partial class Editor
     public void Delete(IEnumerable<string> selected)
     {
         var ids = selected.ToHashSet();
-        Change(() => { Sheet.Wires.RemoveAll(w => ids.Contains(w.Id) || ids.Contains(w.From.ComponentId) || ids.Contains(w.To.ComponentId)); Sheet.Components.RemoveAll(c => ids.Contains(c.Id)); Sheet.Notes.RemoveAll(n => ids.Contains(n.Id)); });
+        Change(() => { foreach (var c in Project.Sheets.SelectMany(s => s.Components).Where(c => ids.Contains(c.CoilId))) c.CoilId = ""; Sheet.Wires.RemoveAll(w => ids.Contains(w.Id) || ids.Contains(w.From.ComponentId) || ids.Contains(w.To.ComponentId)); Sheet.Components.RemoveAll(c => ids.Contains(c.Id)); Sheet.Notes.RemoveAll(n => ids.Contains(n.Id)); });
     }
     public static double Snap(double value) => Math.Round(value / 10) * 10;
     public List<Finding> Validate()
     {
         List<Finding> list = [];
-        var tags = Project.Sheets.SelectMany(s => s.Components).Where(c => !string.IsNullOrWhiteSpace(c.Tag)).GroupBy(c => c.Tag, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var tags = Project.Sheets.SelectMany(s => s.Components).Where(c => !string.IsNullOrWhiteSpace(c.Tag)).GroupBy(c => c.Tag, StringComparer.OrdinalIgnoreCase).Where(g => g.Select(c => c.CoilId.Length > 0 ? c.CoilId : c.Id).Distinct().Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var s in Project.Sheets) foreach (var c in s.Components)
         {
             if (string.IsNullOrWhiteSpace(c.Tag)) list.Add(new("Attention", s.Id, c.Id, "Repère manquant"));
@@ -424,6 +438,7 @@ public sealed partial class Editor
             var bounds = c.Bounds(); if (bounds.Left < 30 || bounds.Top < 40 || bounds.Right > s.Width - 30 || bounds.Bottom > DocumentModel.DrawingBottom(Project,s)) list.Add(new("Mise en page", s.Id, c.Id, $"{c.Tag} : symbole hors de la zone de dessin"));
         }
         list.AddRange(CrossReferences.Findings(Project));
+        list.AddRange(CoilContacts.Findings(Project));
         return list;
     }
 }

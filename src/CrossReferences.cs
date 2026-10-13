@@ -38,11 +38,13 @@ public static class SheetZones
 public sealed record ReferencePoint(Sheet Sheet, Component Component);
 public sealed class CrossReferences
 {
+    public CoilContacts Coils { get; }
     private readonly Dictionary<string, List<ReferencePoint>> targets = [];
     public static bool IsPoint(Component c) => c.Symbol is "folio_next" or "folio_previous";
     public static IEnumerable<ReferencePoint> Points(Project p) => p.Sheets.SelectMany(s => s.Components.Where(IsPoint).Select(c => new ReferencePoint(s, c)));
     public CrossReferences(Project p)
     {
+        Coils = new(p);
         var order = p.Sheets.Select((s, i) => (s.Id, i)).ToDictionary(x => x.Id, x => x.i);
         foreach (var group in Points(p).Where(x => x.Component.LinkName.Trim().Length > 0).GroupBy(x => x.Component.LinkName.Trim(), StringComparer.OrdinalIgnoreCase))
         {

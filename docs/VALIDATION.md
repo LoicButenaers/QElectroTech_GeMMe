@@ -1,5 +1,45 @@
 # Vérifications de livraison
 
+## Version 0.13 — 13 octobre 2026
+
+Exécutable autonome Windows x64 au chemin habituel, version fichier 0.13.0.0. **91 scénarios applicatifs et 78 vérifications MCP réussis**, compilation sans erreur ni avertissement. 47 outils MCP ; les 45 précédents restent disponibles.
+
+- Références bobines/contacts : association explicite interfolios, repère partagé, NO/NF/inverseur/temporisé/puissance, déclaration des symboles personnels, adresses recalculées, navigation, suppression de bobine/folio sans perte des contacts ou conducteurs, détachement, duplication et annulation/rétablissement. Pas d’arête électrique ajoutée par une association.
+- Nomenclature : un article par bobine avec fonctions associées par défaut ; localisations de toutes les représentations et filtre par folio retrouvant le parent même depuis un folio de contacts. Les doublons de bornes de même fonction sont signalés.
+- Format JSON version 2, migration version 1 en mémoire sans écriture du fichier source, sauvegarde/relecture et refus des versions inconnues. Limites harmonisées : 200 folios, 64 Mo. JSON compact ; les données et couleurs sont conservées.
+- Historique compressé dans le budget de 64 Mo : huit changements successifs sur 5 000 composants restaurés exactement, avec connexions et références. La profondeur reste plafonnée à 100 et peut baisser selon les images et le volume des snapshots.
+- Échec d’enregistrement : modèle, état modifié et fichier courant préservés ; aucun temporaire restant. La fermeture/remplacement ne poursuit pas si l’enregistrement demandé échoue.
+- Export PDF en arrière-plan sur un instantané depuis l’interface et le MCP, caches de rendu séparés par fil. Test de rendu/édition concurrent avec dessin officiel et PDF de deux pages : résultat identique octet pour octet au PDF de référence malgré les modifications suivantes. Le retour MCP reste {path} après achèvement. La fermeture attend la fin d’un export.
+- Quatre combinaisons de dispositions/thèmes, changement de disposition libérant réellement l’espace du ruban, propriétés immédiates, couleurs/PDF inchangés même avec références liées ; contrôles de connexions, ports, textes, images, cartouches, BOM, imports et MCP de la suite complète.
+- Original utilisateur inchangé : SHA-256 de `LaserSieve_GH.gemelec` `E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C`. Travail de persistance uniquement sur une copie.
+
+### Mesures de dimensionnement sur le PC
+
+`Benchmark.ps1` lance **un processus caché neuf par taille**. Par folio : 50 composants (bobines, contacts NO/NF, bornes, disjoncteurs), 49 conducteurs et une annotation. Au total : 2 000 / 4 000 contacts associés. Rendu du folio actif de 50 composants, 725 primitives, dans une interface 1440 × 900. Résultats du dernier passage dans `build/benchmark.json` :
+
+| Opération | 100 folios / 5 000 composants | 200 folios / 10 000 composants |
+| --- | --- | --- |
+| Fichier JSON | 7.47 Mo | 14.95 Mo |
+| Sauvegarde | 275 ms | 392 ms |
+| Ouverture avec mise à jour WPF | 730 ms | 1307 ms |
+| Propriété, cinq modifications | 120–286 ms | 218–512 ms |
+| Annulation / rétablissement | 604 ms / 619 ms | 863 ms / 785 ms |
+| Déplacement et rotation | 263 ms | 552 ms |
+| Construction de la scène active | 6.41 ms | 21.67 ms |
+| Rendu WPF logiciel hors écran | 156 ms | 172 ms |
+| Génération du PDF complet | 2.89 s | 6.63 s |
+| Mémoire privée après ouverture (collecte effectuée) | 229 Mo | 369 Mo |
+| Mémoire privée après édition/historique/rendu (collecte effectuée) | 400 Mo | 625 Mo |
+| Mémoire privée relevée après PDF (sans collecte finale) | 465 Mo | 746 Mo |
+
+Ces jeux démarrent à froid ; les durées varient entre passages. Le temps PDF ci-dessus mesure la génération ; l’interface lance maintenant cette opération en arrière-plan. La mémoire est celle du processus dédié complet, pas seulement celle des objets du modèle. Les grandes opérations de propriétés/historique restent visibles et demandent une optimisation ciblée ; le dimensionnement est **mesuré**, sans prétendre que toute interaction est fluide à 10 000 composants. La cadence GPU, les mouvements réels à la souris et les différents réglages DPI n’ont pas été mesurés.
+
+### Contrôle visuel et rapports
+
+PDF A3 de deux folios avec références réciproques et PDF de charge de 200 pages contrôlés par Poppler ; pages de références, première/dernière page de charge et rendu avec image officielle inspectés. Captures hors écran de l’interface et fenêtres, dans les deux dispositions et thèmes. Aucune manipulation d’un projet utilisateur ni essai manuel à la souris n’est annoncé.
+
+Rapports : `build/self-test.json`, `build/mcp-test.json`, `build/benchmark.json`. Principaux artefacts : `build/ui-coil-contacts.png`, `self-test-coil-contacts.gemelec`, `self-test-coil-contacts.pdf`, `self-test-pdf-background.pdf`, `benchmark-100.gemelec`, `benchmark-200.gemelec` et leurs PDF. Le résumé et la feuille de route décrivent le lot suivant : automates/I/O et correction de la latence des transactions sur les grands projets.
+
 ## Version 0.12 — 13 octobre 2026
 
 Exécutable autonome Windows x64 publié au chemin habituel. **82 scénarios intégrés et 68 vérifications MCP réussis**, compilation sans avertissement. La reprise 0.11 a d’abord été vérifiée séparément (75/68), sauvegardée en copie locale et commitée/poussée dans `306a101be`.

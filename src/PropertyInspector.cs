@@ -45,7 +45,7 @@ public sealed partial class MainWindow
     }
     private void Inspect()
     {
-        Editor.EndPropertyEdit(); properties.Children.Clear(); fields.Clear(); propertyFeedback.Clear(); propertyGroupBody = null;
+        Editor.EndPropertyEdit(); properties.Children.Clear(); fields.Clear(); propertyFeedback.Clear(); propertyGroupBody = null; updateCoilInspector = null;
         var c = Editor.Sheet.Components.FirstOrDefault(c => Canvas.Selected.Contains(c.Id));
         var wire = Editor.Sheet.Wires.FirstOrDefault(w => Canvas.Selected.Contains(w.Id));
         var note = Editor.Sheet.Notes.FirstOrDefault(n => Canvas.Selected.Contains(n.Id));
@@ -66,9 +66,11 @@ public sealed partial class MainWindow
                 Field("description", "Description / fonction", c.Description);
                 Field("rating", "Caractéristiques affichées", c.Rating, "Texte libre avec unités : par exemple 24 V DC ou 16 A. Aucune valeur électrique n’est déduite.");
             });
+            CoilInspector(c);
             PropertyGroup("Position sur le folio", () => ComponentPositionFields(c), false);
             PropertyGroup("Textes du symbole", () => TextPositionEditor(c));
             PropertyGroup("Article et nomenclature", () => {
+                if (CoilContacts.IsContact(c)) PropertyContents.Children.Add(Hint("Si cette fonction est associée, l’article de nomenclature est porté par la bobine. Les fonctions associées sont exclues de la BOM par défaut."));
                 Field("brand", "Fabricant", c.Brand); Field("range", "Gamme / série", c.Range);
                 Field("reference", "Référence commandable", c.Reference, "Référence exacte du fabricant ; à vérifier dans sa documentation.");
                 propertiesForArticle(c);
@@ -77,7 +79,7 @@ public sealed partial class MainWindow
                 PropertyContents.Children.Add(Hint("Libellés affichés sur le dessin. Vérifier le bornage de la référence retenue."));
                 foreach (var p in c.Definition.Ports) Field("port:" + p.Id, "Libellé de la borne " + p.Id, c.PortLabels.GetValueOrDefault(p.Id, p.Id));
             }, false);
-            PropertyGroup("Définition du symbole", () => { if (c.Symbol != "junction") PropertyContents.Children.Add(Button("Modifier le symbole en copie…", SymbolEditor)); var official = Catalog.Entries.FirstOrDefault(e => e.CanPlace && e.Symbol == c.Symbol); if (official is not null) PropertyContents.Children.Add(Button("Dessin original et provenance…", () => OfficialLibraryDetails(official))); }, false);
+            PropertyGroup("Définition du symbole", () => { DeclareRelayFunction(c); if (c.Symbol != "junction") PropertyContents.Children.Add(Button("Modifier le symbole en copie…", SymbolEditor)); var official = Catalog.Entries.FirstOrDefault(e => e.CanPlace && e.Symbol == c.Symbol); if (official is not null) PropertyContents.Children.Add(Button("Dessin original et provenance…", () => OfficialLibraryDetails(official))); }, false);
             BindComponentProperties(c.Id);
         }
         else if (wire is not null)

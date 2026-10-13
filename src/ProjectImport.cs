@@ -117,7 +117,7 @@ public static class ProjectImport
         var p=new Project{Title="Projet importé DXF",Sheets=[]};List<string>warnings=["Import graphique : les dessins sont conservés comme éléments vectoriels éditables, sans déduire les appareils, réseaux, références croisées ou articles de BOM. Les formats EPLAN natifs .elk, .zw1 et .epj ne sont pas pris en charge."];
         foreach(var path in paths)
         {
-            if(p.Sheets.Count>=100)throw new InvalidDataException("Maximum 100 folios.");var result=DxfImport.Read(path);var d=result.Symbol;
+            if(p.Sheets.Count>=Project.MaxSheets)throw new InvalidDataException("Maximum 200 folios.");var result=DxfImport.Read(path);var d=result.Symbol;
             double scale=Math.Min(1,Math.Min(1260/d.Width,800/d.Height));d=DxfImport.Scale(d,scale);CustomSymbols.Validate(d);p.CustomSymbols.Add(d.Id,d);
             var s=new Sheet{Title=Path.GetFileNameWithoutExtension(path),TitleBlockId=""};s.Components.Add(new(){Symbol=d.Id,ResolvedDefinition=d,X=700,Y=450,Tag="DXF"+(p.Sheets.Count+1),TagPlacement=new(){Visible=false},DetailPlacement=new(){Visible=false}});p.Sheets.Add(s);
             warnings.Add(Path.GetFileName(path)+" : échelle "+scale.ToString("0.###",CultureInfo.InvariantCulture)+", unités "+result.Units);warnings.AddRange(result.Warnings);

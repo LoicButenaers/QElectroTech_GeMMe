@@ -64,7 +64,7 @@ public static class WorkflowTests
             assert(fragments.Length > 1 && fragments.Skip(1).All(r => r.Continuation), "Une ligne longue continue sur plusieurs pages");
             int tagColumn = pages[0].BomPage!.Columns.FindIndex(c => c.Key == "tags"); var text = string.Concat(fragments.SelectMany(r => r.Cells[tagColumn]));
             assert(text == BomReport.Rows(e.Project, o)[0].Values["tags"], "Texte conservé intégralement");
-            var before = ProjectStore.Serialize(e.Project); o.GroupArticles = false; reject(() => e.GenerateBom(o)); assert(ProjectStore.Serialize(e.Project) == before, "Limite 100 pages sans perte de l’existant");
+            var before = ProjectStore.Serialize(e.Project); o.GroupArticles = false; reject(() => e.GenerateBom(o)); assert(ProjectStore.Serialize(e.Project) == before, "Limite 200 pages sans perte de l’existant");
         });
         test("Préférences : grille et palette persistantes, couleur des nouveaux fils", () =>
         {

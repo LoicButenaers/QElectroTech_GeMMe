@@ -6,19 +6,27 @@ Demandes métier du 13 octobre 2026. Dépôt `C:\dev\QElectroTech_GeMMe`, branch
 
 Base 0.11 préservée et vérifiée, puis refonte sur cette base : inspecteur regroupé et immédiat, erreurs locales, propriétés projet/folio/textes immédiates, Compacte/Ruban, Clair/Sombre, commandes communes, panneaux et préférences persistants. Compatibilité des projets, PDF multipage et MCP maintenue. 82 scénarios intégrés et 68 vérifications MCP. Voir `VALIDATION.md` pour les limites de la mesure 100/5 000.
 
-## Prochain lot : références bobines/contacts
+## Livré : références bobines/contacts 0.13
 
 Périmètre : une bobine de relais/contacteur pilote plusieurs fonctions contact, réparties sur les folios. Association explicite par identifiant stable, indépendante de la position, du nom du folio et d’une coïncidence de repères. Les contacts conservent leurs bornes et fils ; cette association ne crée aucune continuité électrique entre bobine et contacts. NO/NF sont des fonctions génériques, sans caractéristiques fabricant déduites.
 
 Parcours : placer une bobine et des contacts génériques → sélectionner un contact → choisir la bobine dans les propriétés → repère commun et adresse de la bobine sous le contact → liste des contacts, bornes et adresses sous la bobine → cliquer une destination dans l’inspecteur pour y naviguer. Renommer le repère commun, déplacer/rotater, changer l’association ou la supprimer ; enregistrement, réouverture et annulation doivent conserver la relation. Supprimer la bobine doit détacher les contacts et signaler la situation, sans supprimer leurs fils.
 
-Vérifications : deux folios et plusieurs contacts NO/NF, références recalculées après réorganisation des folios, bornages génériques conservés, changement de bobine, navigation, suppression/annulation, duplication, cohérence du repère, contrôles d’orphelins, PDF multipage, migration versionnée des fichiers et MCP. Étendre en parallèle la limite historique de 100 folios, puis mesurer 100/5 000 et 200/10 000 dans une instance dédiée.
+Livré et vérifié : références, bornages et conducteurs conservés, repère partagé, navigation, détachement, duplication, suppression/annulation de bobine et folio, rôles des symboles personnels, contenu calculé et style éditable, BOM sans double compte et filtre par folio. Format v2 avec migration v1 sans écriture implicite ; 200 folios et 64 Mo, tests 100/5 000 et 200/10 000 dans des processus dédiés. 91 scénarios applicatifs et 78 vérifications MCP sur 47 outils. Historique compressé ; PDF en arrière-plan compatible avec l’édition. Voir `BOBINES_CONTACTS.md` et `VALIDATION.md`.
+
+## Prochain lot : automates et entrées/sorties
+
+Périmètre initial : stations locales et modules génériques, canaux DI/DO/AI/AO avec identifiants stables, adresse explicitement saisie, nom de signal et commentaire. Les caractéristiques et bornages proviennent d’une saisie explicite ou d’une future fiche fabricant sourcée, jamais d’une supposition.
+
+Parcours prévu : Projet → Automates/I/O → créer station et module → définir canaux et adresses → placer une représentation de canal sur un folio → raccorder ses bornes → naviguer entre tableau et dessin → éditer le nom/adresse avec propagation → enregistrer/réouvrir → vérifier doublons d’adresse et canaux non représentés. Inclure suppression/annulation, échanges MCP et PDF. Les symboles PLC/I/O existants restent utilisables sans être reclassés automatiquement.
+
+Traiter avec ce lot la latence des propriétés/historiques sur les grands projets : les mesures de 0.13 mettent en évidence des temps visibles au dimensionnement cible. Conserver les validations atomiques ; envisager des transactions ciblées et une ouverture en arrière-plan plutôt qu’une baisse de validation.
 
 ## Ordre métier à respecter
 
 | Ordre | Fonction | Périmètre et parcours à préciser avant le lot |
 | --- | --- | --- |
-| 1 | Références bobines/contacts | Parcours défini ci-dessus ; première famille générique extensible. |
+| 1 | Références bobines/contacts | Livré en 0.13 ; première famille générique extensible et rôles personnels explicites. |
 | 2 | Automates et I/O | Créer station/module → configurer canaux DI/DO/AI/AO et adresses explicites → placer/raccorder les représentations → table des I/O et navigation → contrôle des doublons et canaux manquants. Aucun bornage constructeur déduit. |
 | 3 | Borniers et raccordement | Créer bornier → affecter bornes numérotées et niveaux → raccordements internes/externes → générer un plan actualisable → vérifier numéros et extrémités. |
 | 4 | Câbles multiconducteurs | Définir câble et conducteurs → affecter chaque conducteur à des extrémités → éditer couleurs/repères → plan et contrôles d’affectation. |
@@ -34,4 +42,4 @@ Vérifications : deux folios et plusieurs contacts NO/NF, références recalcul�
 - Utiliser des copies pour les essais ; tester le format et sa migration lorsque nécessaire.
 - Compiler/tester le lot, inspecter les rendus, publier au chemin habituel, commit descriptif et push sans force sur `origin/GeMMeElec`.
 - Mesurer les opérations coûteuses sur le PC, avec folios, composants, fils et textes représentatifs. Les mesures hors écran ne prouvent pas une cadence d’affichage.
-- La fluidité reste à améliorer : validation et snapshots de l’ensemble du projet dans les modifications de propriété. Étudier une transaction ciblée seulement avec des tests couvrant rollback, connexions et historique.
+- La fluidité reste à améliorer : validation et sérialisation de l’ensemble du projet dans les modifications de propriété, malgré la compression de l’historique. Étudier une transaction ciblée seulement avec des tests couvrant rollback, connexions et historique.

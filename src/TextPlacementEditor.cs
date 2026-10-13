@@ -46,7 +46,7 @@ public sealed class TextPlacementPreview : FrameworkElement
     {
         var ink = ComponentTexts.Ink(project, Draft, references, TextKey); return ink is null ? Rect.Empty : Drawing.TextBounds(ink);
     }
-    public string ContentText => Items[Target].ReadOnly ? references.Label(project, Draft) : Items[Target].Text;
+    public string ContentText => TextKey == "coilReferences" ? references.Coils.Label(Draft) : Items[Target].ReadOnly ? references.Label(project, Draft) : Items[Target].Text;
     public void SetContent(string text) { ComponentTexts.SetText(Draft, TextKey, text); InvalidateVisual(); }
     public void AddText() { EndDrag(); string key = ComponentTexts.Add(Draft, "Nouveau texte"); Target = Items.FindIndex(t => t.Key == key); Edited?.Invoke(); Fit(); }
     public void RemoveText() { if (!TextKey.StartsWith("extra:")) return; string key = TextKey; Draft.AdditionalTexts.RemoveAll(t => "extra:" + t.Id == key); Target = 0; Edited?.Invoke(); Fit(); }
@@ -210,8 +210,9 @@ public sealed partial class MainWindow
                 Editor.Change(() => {
                     var c = Editor.Sheet.Components.Single(c => c.Id == id);
                     c.TagPlacement = DocumentModel.Copy(preview.Draft.TagPlacement); c.DetailPlacement = DocumentModel.Copy(preview.Draft.DetailPlacement); c.DescriptionPlacement = DocumentModel.Copy(preview.Draft.DescriptionPlacement); c.ReferenceDestinationInline = preview.Draft.ReferenceDestinationInline;
+                    c.CoilReferencePlacement = DocumentModel.Copy(preview.Draft.CoilReferencePlacement);
                     c.AdditionalTexts = DocumentModel.Copy(preview.Draft.AdditionalTexts); c.TextOverrides = DocumentModel.Copy(preview.Draft.TextOverrides); c.PortLabels = DocumentModel.Copy(preview.Draft.PortLabels); c.ShowPortLabels = preview.Draft.ShowPortLabels;
-                    c.Tag = preview.Draft.Tag; c.Rating = preview.Draft.Rating; c.Reference = preview.Draft.Reference; c.Range = preview.Draft.Range; c.Description = preview.Draft.Description;
+                    Editor.SetApparatusTag(c, preview.Draft.Tag); c.Rating = preview.Draft.Rating; c.Reference = preview.Draft.Reference; c.Range = preview.Draft.Range; c.Description = preview.Draft.Description;
                     if (report && c.ReferenceName != preview.Draft.ReferenceName) Editor.SetReferenceName(c, preview.Draft.ReferenceName);
                 }, sessionKey);
                 publishedDraft = draftState; feedback.Text = "Modifications immédiates · Ctrl+Z pour annuler.";

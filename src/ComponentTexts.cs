@@ -32,6 +32,7 @@ public static class ComponentTexts
             result.Add(new(key, "Texte du symbole " + (i + 1), value?.Text ?? shape.Text, placement, shape.A, "#203348"));
         }
         result.AddRange(c.AdditionalTexts.Select((t, i) => new ComponentTextTarget("extra:" + t.Id, "Texte ajouté " + (i + 1), t.Text, t.Placement, 12, "#203348")));
+        if (CoilContacts.IsCoil(c) || CoilContacts.IsContact(c)) result.Add(new("coilReferences", "Références bobine / contacts", "", c.CoilReferencePlacement, 11, "#087344", true));
         return result;
     }
     private static LabelPlacement Free(Component c, Point topLeft) => new() { Side = "custom", Horizontal = "left", Vertical = "top", OffsetX = topLeft.X - c.X, OffsetY = topLeft.Y - c.Y };
@@ -47,6 +48,7 @@ public static class ComponentTexts
         if (key == "tag") c.TagPlacement = placement;
         else if (key == "detail") c.DetailPlacement = placement;
         else if (key == "description") c.DescriptionPlacement = placement;
+        else if (key == "coilReferences") c.CoilReferencePlacement = placement;
         else if (key.StartsWith("extra:")) c.AdditionalTexts.Single(t => "extra:" + t.Id == key).Placement = placement;
         else { var t = Get(c, key); c.TextOverrides[key] = new() { Id = t.Key, Text = t.Text, Placement = placement }; }
     }
@@ -73,11 +75,11 @@ public static class ComponentTexts
             var labels = ReferenceDisplay.Scene(project, c, refs).Where(i => i.Kind == "text").ToList();
             return key == "tag" ? c.TagPlacement.Visible ? labels.FirstOrDefault() : null : c.DetailPlacement.Visible ? labels.LastOrDefault() : null;
         }
-        var t = Get(c, key); return Drawing.Label(c, t.Placement, t.Text, t.Size, t.Color);
+        var t = Get(c, key); return Drawing.Label(c, t.Placement, key == "coilReferences" ? refs.Coils.Label(c) : t.Text, t.Size, t.Color);
     }
     public static IEnumerable<Ink> Scene(Project p, Component c, CrossReferences refs)
     {
-        foreach (var t in List(c)) if (!(CrossReferences.IsPoint(c) && t.Key is "tag" or "detail") && Drawing.Label(c, t.Placement, t.Text, t.Size, t.Color) is Ink ink) yield return ink;
+        foreach (var t in List(c)) if (!(CrossReferences.IsPoint(c) && t.Key is "tag" or "detail") && Drawing.Label(c, t.Placement, t.Key == "coilReferences" ? refs.Coils.Label(c) : t.Text, t.Size, t.Color) is Ink ink) yield return ink;
     }
     public static void Validate(Component c)
     {

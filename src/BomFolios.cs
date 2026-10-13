@@ -52,7 +52,7 @@ public static class BomFolios
         List<Sheet> pages = [];
         Sheet NewPage()
         {
-            if (pages.Count + project.Sheets.Count >= 100) throw new InvalidDataException("La nomenclature dépasserait la limite de 100 folios ; réduire les colonnes ou filtrer les articles.");
+            if (pages.Count + project.Sheets.Count >= Project.MaxSheets) throw new InvalidDataException("La nomenclature dépasserait la limite de 200 folios ; réduire les colonnes ou filtrer les articles.");
             var s = new Sheet { Title = $"Nomenclature · {pages.Count + 1}", TitleBlockId = "", BomPage = new() { Columns = DocumentModel.Copy(cols) } };
             pages.Add(s); y = top; return s;
         }

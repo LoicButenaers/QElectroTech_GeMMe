@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
@@ -42,8 +42,10 @@ public static class McpTools
         new("bom_configure","Configurer la BOM : columns (key,label,enabled), groupArticles, includeAuxiliary, sheetId et brand. Remplace les options fournies.",new(){["options"]=new JsonObject{["type"]="object"}},["options"]),
         new("export_bom_html","Exporter une BOM HTML autonome avec images, selon les options enregistrées.",new(){["path"]=S("Chemin absolu .html"),["overwrite"]=B("Autoriser remplacement")},["path"]),
         new("component_add", "Placer un symbole sur le folio actif. Coordonnées logiques 0..1400, 0..990 ; grille 10. Fournir symbol ou catalogId.", new() { ["symbol"] = S("ID de symbole"), ["catalogId"] = S("ID de référence raccordable obtenu par library_search"), ["x"] = N("Centre X"), ["y"] = N("Centre Y") }, ["x", "y"]),
-        new("component_update", "Modifier un composant du folio actif. Les fils suivent sa position et sa rotation.", new() { ["id"] = S("ID du composant"), ["x"] = N("Centre X"), ["y"] = N("Centre Y"), ["rotation"] = N("Rotation multiple de 90 degrés"), ["tag"] = S("Repère"), ["description"] = S("Description"), ["brand"] = S("Fabricant"), ["range"] = S("Gamme"), ["reference"] = S("Référence exacte"), ["rating"] = S("Caractéristiques vérifiées"), ["portLabels"] = new JsonObject { ["type"] = "object", ["additionalProperties"] = new JsonObject { ["type"] = "string" }, ["description"] = "Libellés des bornes, clés = IDs fixes des ports" } }, ["id"]),
+        new("component_update", "Modifier un composant du folio actif. Les fils suivent sa position et sa rotation.", new() { ["id"] = S("ID du composant"), ["x"] = N("Centre X"), ["y"] = N("Centre Y"), ["rotation"] = N("Rotation multiple de 90 degrés"), ["tag"] = S("Repère"), ["description"] = S("Description"), ["brand"] = S("Fabricant"), ["range"] = S("Gamme"), ["reference"] = S("Référence exacte"), ["rating"] = S("Caractéristiques vérifiées"), ["relayFunction"] = S("Fonction déclarée : coil, no, nc, changeover, power ou vide"), ["portLabels"] = new JsonObject { ["type"] = "object", ["additionalProperties"] = new JsonObject { ["type"] = "string" }, ["description"] = "Libellés des bornes, clés = IDs fixes des ports" } }, ["id"]),
         new("component_delete", "Supprimer un composant et ses connexions ; annulable.", new() { ["id"] = S("ID") }, ["id"]),
+        new("coil_contact_assign", "Associer une fonction contact à une bobine, avec repère partagé ; coilId vide détache la fonction. Ne crée aucune liaison électrique.", new() { ["contactId"] = S("ID du contact"), ["coilId"] = S("ID de bobine, vide pour détacher") }, ["contactId", "coilId"]),
+        new("coil_contacts_list", "Lister les fonctions bobines/contacts, leurs associations, bornes et références de folio/zone recalculées.", new(), [], true),
         new("component_text_list", "Lister tous les textes du composant, leurs clés, contenu et style, y compris bornes et textes ajoutés.", new() { ["id"] = S("ID composant") }, ["id"], true),
         new("component_text_add", "Ajouter un texte attaché au composant. Retourne sa clé extra:… ; modifier ensuite sa position avec component_text_update.", new() { ["id"] = S("ID composant"), ["text"] = S("Contenu") }, ["id", "text"]),
         new("component_text_delete", "Supprimer un texte ajouté (clé extra:…). Pour masquer un texte existant, utiliser visible=false.", new() { ["id"] = S("ID composant"), ["target"] = S("Clé extra:…") }, ["id", "target"]),
@@ -134,11 +136,13 @@ public static class McpTools
                 var added = e.AddComponent(symbol, Num("x"), Num("y"), catalogId.Length == 0 ? null : catalogId); window.Canvas.Select(added.Id); result = added; break;
             case "component_update":
                 var c = e.Sheet.Components.SingleOrDefault(c => c.Id == Str("id")) ?? throw new ArgumentException("Composant absent du folio actif.");
-                e.Change(() => { if (a.TryGetProperty("x", out var x)) c.X = Editor.Snap(x.GetDouble()); if (a.TryGetProperty("y", out var y)) c.Y = Editor.Snap(y.GetDouble()); if (a.TryGetProperty("rotation", out var r)) c.Rotation = r.GetInt32(); c.Tag = Str("tag", c.Tag); c.Description = Str("description", c.Description); c.Brand = Str("brand", c.Brand); c.Range = Str("range", c.Range); c.Reference = Str("reference", c.Reference); c.Rating = Str("rating", c.Rating); if (a.TryGetProperty("portLabels", out var labels)) foreach (var label in labels.EnumerateObject()) { if (!c.Definition.Ports.Any(p => p.Id == label.Name) || label.Value.ValueKind != JsonValueKind.String) throw new ArgumentException("Borne ou libellé inconnu."); c.PortLabels[label.Name] = label.Value.GetString()!; } }); result = c; break;
+                e.Change(() => { if (a.TryGetProperty("relayFunction", out var role)) e.SetRelayFunction(c, role.GetString()!); if (a.TryGetProperty("x", out var x)) c.X = Editor.Snap(x.GetDouble()); if (a.TryGetProperty("y", out var y)) c.Y = Editor.Snap(y.GetDouble()); if (a.TryGetProperty("rotation", out var r)) c.Rotation = r.GetInt32(); e.SetApparatusTag(c, Str("tag", c.Tag)); c.Description = Str("description", c.Description); c.Brand = Str("brand", c.Brand); c.Range = Str("range", c.Range); c.Reference = Str("reference", c.Reference); c.Rating = Str("rating", c.Rating); if (a.TryGetProperty("portLabels", out var labels)) foreach (var label in labels.EnumerateObject()) { if (!c.Definition.Ports.Any(p => p.Id == label.Name) || label.Value.ValueKind != JsonValueKind.String) throw new ArgumentException("Borne ou libellé inconnu."); c.PortLabels[label.Name] = label.Value.GetString()!; } }); result = c; break;
             case "component_delete": if (!e.Sheet.Components.Any(c => c.Id == Str("id"))) throw new ArgumentException("Composant introuvable."); e.Delete([Str("id")]); result = new { deleted = Str("id") }; break;
+            case "coil_contact_assign": e.AssociateContact(Str("contactId"), Str("coilId")); result = e.Project.Sheets.SelectMany(s => s.Components).Single(c => c.Id == Str("contactId")); break;
+            case "coil_contacts_list": var coilRefs = new CoilContacts(e.Project); result = e.Project.Sheets.SelectMany(s => s.Components.Where(c => CoilContacts.IsCoil(c) || CoilContacts.IsContact(c)).Select(c => new { id = c.Id, c.Tag, role = CoilContacts.Role(c), c.CoilId, sheetId = s.Id, address = SheetZones.Address(e.Project, s, c), terminals = CoilContacts.Terminals(c), references = coilRefs.Label(c) })).ToArray(); break;
             case "component_text_list":
                 var listedComponent = e.Sheet.Components.Single(c => c.Id == Str("id")); var textRefs = new CrossReferences(e.Project);
-                result = ComponentTexts.List(listedComponent).Select(t => new { key = t.Key, name = t.Name, text = t.ReadOnly ? textRefs.Label(e.Project, listedComponent) : t.Text, placement = t.Placement, readOnly = t.ReadOnly }).ToArray(); break;
+                result = ComponentTexts.List(listedComponent).Select(t => new { key = t.Key, name = t.Name, text = t.Key == "coilReferences" ? textRefs.Coils.Label(listedComponent) : t.ReadOnly ? textRefs.Label(e.Project, listedComponent) : t.Text, placement = t.Placement, readOnly = t.ReadOnly }).ToArray(); break;
             case "component_text_add":
                 var addTextComponent = e.Sheet.Components.Single(c => c.Id == Str("id")); string newTextKey = "";
                 e.Change(() => newTextKey = ComponentTexts.Add(addTextComponent, Str("text"))); result = new { key = newTextKey }; break;
@@ -153,7 +157,7 @@ public static class McpTools
                 var textComponent = e.Sheet.Components.SingleOrDefault(c => c.Id == Str("id")) ?? throw new ArgumentException("Composant absent du folio actif.");
                 var target = Str("target"); var textTarget = ComponentTexts.Get(textComponent, target); LabelPlacement placement = DocumentModel.Copy(textTarget.Placement);
                 e.Change(() => { if (target.StartsWith("port:")) ComponentTexts.Materialize(textComponent); ComponentTexts.SetPlacement(textComponent, target, placement);
-                    if (a.TryGetProperty("text", out var contentValue)) { if (target == "tag" && CrossReferences.IsPoint(textComponent)) e.SetReferenceName(textComponent, contentValue.GetString()!); else ComponentTexts.SetText(textComponent, target, contentValue.GetString()!); }
+                    if (a.TryGetProperty("text", out var contentValue)) { if (target == "tag" && CrossReferences.IsPoint(textComponent)) e.SetReferenceName(textComponent, contentValue.GetString()!); else if (target == "tag") e.SetApparatusTag(textComponent, contentValue.GetString()!); else ComponentTexts.SetText(textComponent, target, contentValue.GetString()!); }
                     if (a.TryGetProperty("destinationInline", out var inlineValue)) { if (!CrossReferences.IsPoint(textComponent)) throw new ArgumentException("destinationInline concerne uniquement les reports."); textComponent.ReferenceDestinationInline = inlineValue.GetBoolean(); } else if (CrossReferences.IsPoint(textComponent) && target == "detail" && new[] { "side", "horizontal", "vertical", "gap", "offsetX", "offsetY" }.Any(key => a.TryGetProperty(key, out _))) textComponent.ReferenceDestinationInline = false; placement.Side = Str("side", placement.Side); placement.Horizontal = Str("horizontal", placement.Horizontal); placement.Vertical = Str("vertical", placement.Vertical); if (a.TryGetProperty("gap", out var gap)) placement.Gap = gap.GetDouble(); if (a.TryGetProperty("offsetX", out var ox)) placement.OffsetX = ox.GetDouble(); if (a.TryGetProperty("offsetY", out var oy)) placement.OffsetY = oy.GetDouble(); if (a.TryGetProperty("visible", out var visible)) placement.Visible = visible.GetBoolean(); if (a.TryGetProperty("fontSize", out var fontSizeValue)) placement.FontSize = fontSizeValue.GetDouble(); placement.Color = Str("color", placement.Color); if (a.TryGetProperty("rotation", out var textRotationValue)) placement.Rotation = textRotationValue.GetDouble(); }); result = placement; break;
             case "wire_update":
                 var editedWire = e.Sheet.Wires.SingleOrDefault(w => w.Id == Str("id")) ?? throw new ArgumentException("Conducteur absent du folio actif.");
@@ -163,7 +167,7 @@ public static class McpTools
             case "note_add": var note = new Annotation { X = Editor.Snap(Num("x")), Y = Editor.Snap(Num("y")), Text = Str("text") }; e.Change(() => e.Sheet.Notes.Add(note)); result = note; break;
             case "project_validate": result = new { findings = e.Validate() }; break;
             case "export_svg": var svg = PathFor(".svg", true); Export.Svg(e.Project, e.Sheet, svg); result = new { path = svg }; break;
-            case "export_pdf": var pdf = PathFor(".pdf", true); Export.Pdf(e.Project, pdf); result = new { path = pdf }; break;
+            case "export_pdf": var pdf = PathFor(".pdf", true); result = window.ExportPdfAsync(pdf); break;
             case "export_bom": var csv = PathFor(".csv", true); Export.Csv(e.Project, csv); result = new { path = csv }; break;
             case "history_undo": e.Undo(); result = Snapshot(); break;
             case "history_redo": e.Redo(); result = Snapshot(); break;
@@ -203,7 +207,11 @@ public sealed class LocalBridge : IDisposable
                         string name = request.GetProperty("name").GetString()!; var args = request.GetProperty("arguments").Clone();
                         // Materialize the response while still on the UI thread: the
                         // user may resume editing as soon as this dispatcher call ends.
-                        var result = await window.Dispatcher.InvokeAsync(() => JsonSerializer.SerializeToElement(McpTools.Execute(window, name, args), McpServer.Compact));
+                        var pending = await window.Dispatcher.InvokeAsync(() => {
+                            var value = McpTools.Execute(window, name, args);
+                            return value is Task<object> work ? (object)work : JsonSerializer.SerializeToElement(value, McpServer.Compact);
+                        });
+                        var result = pending is Task<object> export ? JsonSerializer.SerializeToElement(await export, McpServer.Compact) : (JsonElement)pending;
                         response = new { ok = true, result };
                     }
                     catch (Exception ex) { response = new { ok = false, error = ex.GetBaseException().Message }; }

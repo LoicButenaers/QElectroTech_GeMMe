@@ -5,8 +5,9 @@ namespace GeMMeElec;
 public static class Junctions
 {
     public static bool Automatic(Component c) => c.Symbol == "junction" && (c.AutoJunction || !c.TagPlacement.Visible && !c.DetailPlacement.Visible && !c.DescriptionPlacement.Visible);
-    public static void Cleanup(Project p)
+    public static bool Cleanup(Project p)
     {
+        bool changed = false;
         foreach (var s in p.Sheets)
         {
             var nodes = s.Components.Where(Automatic).ToList();
@@ -15,15 +16,16 @@ public static class Junctions
             foreach (var c in nodes)
             {
                 var edges = s.Wires.Where(w => w.From.ComponentId == c.Id || w.To.ComponentId == c.Id).ToList();
-                if (edges.Count == 0) { s.Components.Remove(c); continue; }
+                if (edges.Count == 0) { s.Components.Remove(c); changed = true; continue; }
                 if (edges.Count != 2 || edges[0].Number != edges[1].Number || edges[0].Color != edges[1].Color) continue;
                 var a = edges[0]; var b = edges[1]; var start = a.From.ComponentId == c.Id ? a.To : a.From; var end = b.From.ComponentId == c.Id ? b.To : b.From;
                 if (start == end || s.Wires.Except(edges).Any(w => w.From == start && w.To == end || w.From == end && w.To == start)) continue;
                 var ra = a.Route(s); if (a.From.ComponentId == c.Id) ra.Reverse(); var rb = b.Route(s); if (b.To.ComponentId == c.Id) rb.Reverse();
                 var route = WireRouting.Simplify(ra.Concat(rb)); if (route.Count > 102) continue;
-                a.From = start; a.To = end; a.Waypoints = route.Skip(1).Take(route.Count - 2).Select(x => new Position(x.X, x.Y)).ToList(); s.Wires.Remove(b); s.Components.Remove(c);
+                a.From = start; a.To = end; a.Waypoints = route.Skip(1).Take(route.Count - 2).Select(x => new Position(x.X, x.Y)).ToList(); s.Wires.Remove(b); s.Components.Remove(c); changed = true;
             }
         }
+        return changed;
     }
     public static List<(Point Point, string Color)> Dots(Sheet s, Dictionary<string, List<Point>> routes)
     {

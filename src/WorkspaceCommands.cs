@@ -56,7 +56,8 @@ public sealed partial class MainWindow
         Add("validate", "Vérifier les connexions et les repères", "check", Validate);
         Add("bom", "Nomenclature configurable…", "library", Bom);
         Add("references", "Navigateur des renvois…", "wire", ReferenceNavigator);
-        Add("pdf", "Tous les folios en PDF…", "page", () => ExportFile("pdf"));
+        Add("coilContacts", "Bobines et contacts…", "wire", CoilNavigator);
+        Add("pdf", "Tous les folios en PDF…", "page", () => ExportFile("pdf"), enabled: () => !exportInProgress);
         Add("svg", "Folio courant en SVG…", "page", () => ExportFile("svg"));
         Add("csv", "Nomenclature CSV…", "library", () => ExportFile("csv"));
         Add("fit", "Ajuster le folio", "fit", Canvas.Fit, "F");
@@ -94,7 +95,7 @@ public sealed partial class MainWindow
         Menu("_Folio", "pageAdd", "sheetInfo", "titleblocks", "zones", "pageUp", "pageDown", "pageRename", "pageDelete");
         Menu("_Insérer", "wire", "text", "select", "newSymbol", "editSymbol", "importSymbol");
         Menu("I_mporter", "importQet", "importDxf");
-        Menu("_Projet", "validate", "titleblocks", "bom", "references");
+        Menu("_Projet", "validate", "titleblocks", "bom", "references", "coilContacts");
         Menu("E_xporter", "pdf", "svg", "csv");
         Menu("_Affichage", "fit", "grid", "palette", "library", "properties", "pages", "resetPanels", "settings");
         Menu("_Aide", "help", "mcpHelp", "license");
@@ -144,10 +145,12 @@ public sealed partial class MainWindow
         ribbon = null;
         if (preferences.InterfaceLayout == "compact")
         {
+            commandHost.Height = 44;
             var bar = new WrapPanel { Margin = new(7, 2, 7, 2) };
             foreach (var id in new[] { "new", "open", "save", "undo", "redo", "select", "wire", "text", "rotate", "fit", "pdf" }) bar.Children.Add(CommandButton(id, id is "select" or "wire" or "text" ? null : ""));
             commandHost.Child = bar; return;
         }
+        commandHost.Height = 112;
         ribbon = new TabControl { BorderThickness = new(0), Padding = new(0), Margin = new(8, 1, 8, 0) };
         void Tab(string name, params (string Title, (string Id, string Label)[] Commands)[] groups)
         {
@@ -163,7 +166,7 @@ public sealed partial class MainWindow
         }
         Tab("Accueil", ("Projet", [("new", "Nouveau"), ("open", "Ouvrir"), ("save", "Enregistrer"), ("pdf", "PDF")]), ("Historique", [("undo", "Annuler"), ("redo", "Rétablir")]), ("Édition", [("select", "Sélection"), ("wire", "Conducteur"), ("text", "Texte"), ("rotate", "Rotation"), ("duplicate", "Dupliquer"), ("delete", "Supprimer")]));
         Tab("Dessiner", ("Symboles", [("newSymbol", "Créer"), ("editSymbol", "Copie"), ("importSymbol", "Importer")]), ("Dessin", [("select", "Sélection"), ("wire", "Conducteur"), ("text", "Texte")]), ("Folios", [("pageAdd", "Ajouter"), ("sheetInfo", "Propriétés"), ("titleblocks", "Cartouches"), ("zones", "Repérage")]));
-        Tab("Projet", ("Données", [("projectInfo", "Informations"), ("bom", "Nomenclature"), ("references", "Renvois"), ("validate", "Vérifier")]), ("Importer", [("importQet", "QElectroTech"), ("importDxf", "DXF")]), ("Exporter", [("pdf", "PDF"), ("svg", "SVG"), ("csv", "CSV")]));
+        Tab("Projet", ("Données", [("projectInfo", "Informations"), ("bom", "Nomenclature"), ("references", "Renvois"), ("coilContacts", "Bobines / contacts"), ("validate", "Vérifier")]), ("Importer", [("importQet", "QElectroTech"), ("importDxf", "DXF")]), ("Exporter", [("pdf", "PDF"), ("svg", "SVG"), ("csv", "CSV")]));
         Tab("Affichage", ("Vue", [("fit", "Ajuster"), ("grid", "Grille"), ("palette", "Palette")]), ("Panneaux", [("library", "Bibliothèque"), ("pages", "Folios"), ("properties", "Propriétés"), ("resetPanels", "Rétablir")]), ("Interface", [("settings", "Paramètres")]));
         commandHost.Child = ribbon;
     }
@@ -175,7 +178,7 @@ public sealed partial class MainWindow
         var draft = DocumentModel.Copy(preferences); draft.InterfaceLayout = layout; draft.InterfaceTheme = theme;
         if (persist) draft.Save();
         preferences.InterfaceLayout = layout; preferences.InterfaceTheme = theme;
-        Editor.EndPropertyEdit(); UiTheme.Apply(this, theme); if (changedLayout) RebuildCommandHost();
+        Editor.EndPropertyEdit(); UiTheme.Apply(this, theme); if (changedLayout) { RebuildCommandHost(); if (Content is FrameworkElement root) { root.InvalidateMeasure(); root.InvalidateArrange(); } }
     }
 
     private void InterfaceSettingsDialog()

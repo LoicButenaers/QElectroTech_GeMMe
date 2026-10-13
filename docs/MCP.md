@@ -45,6 +45,7 @@ Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `li
 | Projet | `project_new`, `project_open`, `project_save`, `project_update` |
 | Folios | `page_add`, `page_select`, `page_update` |
 | Composants | `component_add`, `component_update`, `component_text_update`, `component_delete` |
+| Bobines / contacts (0.13) | `coil_contact_assign`, `coil_contacts_list` |
 | Textes (0.11) | `component_text_list`, `component_text_add`, `component_text_delete`, `component_text_align` |
 | Conducteurs | `wire_add`, `wire_update`, `wire_delete` |
 | Annotation | `note_add` |
@@ -55,9 +56,18 @@ Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `li
 | Renvois (0.5) | `reference_list`, `reference_update`, `connection_trace` |
 | Symboles, import et routage (0.6) | `symbol_get`, `symbol_copy`, `symbol_import`, `symbol_export`, `project_import`, `wire_segment_move` |
 
-`tools/list` fournit les paramètres, types et champs requis. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
+`tools/list` fournit les paramètres, types et champs requis. L’export PDF travaille en arrière-plan sur un instantané et répond après écriture du fichier, avec le retour `{path}` habituel ; l’interface peut rester active. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.11 propose 45 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
+La version 0.13 propose 47 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
+
+## Bobines et contacts (0.13)
+
+- `coil_contact_assign` reçoit `contactId` et `coilId` sur les folios du projet. Un `coilId` vide détache la fonction. Les repères sont partagés et aucune connexion électrique n’est ajoutée.
+- `coil_contacts_list` retourne `id`, `tag`, `role`, `coilId`, `sheetId`, `address`, `terminals`, `references` pour les fonctions du projet.
+- `component_update` accepte `relayFunction` (`coil`, `no`, `nc`, `changeover`, `power`, ou vide) pour une déclaration explicite. Changer le rôle d’une bobine détache ses contacts si elle n’est plus une bobine ; l’opération est annulable.
+- `component_update` et `component_text_update` sur le repère d’une fonction associée renomme tout l’appareil. Le contenu de `coilReferences` reste calculé ; sa position et son style restent modifiables.
+
+Les fichiers sont en version 2, avec migration des fichiers version 1 en mémoire. [Parcours et limites](BOBINES_CONTACTS.md).
 
 ## Textes individuels et alignement (0.11)
 
@@ -98,7 +108,7 @@ Les coordonnées affichées se recalculent après déplacement, changement de nu
 
 `wire_branch` reçoit `fromComponent`, `fromPort`, `targetWire`, `x`, `y` sur le folio actif. Le point est projeté sur le segment le plus proche et aligné le long de ce segment. Une position à plus de 100 unités est refusée. Le fil cible est divisé sans perte de son tracé, numéro ou couleur ; la nouvelle branche arrive perpendiculairement à une jonction commune. Si le point est déjà une extrémité, celle-ci est réutilisée. L’ensemble est annulable en une action.
 
-`bom_generate` n’a pas de paramètres : il utilise `project.bomOptions`, remplace les folios BOM existants et sélectionne le premier nouveau folio. Les folios sont enregistrés dans `sheet.bomPage`, sans cartouche, et inclus dans `export_pdf`. Ils sont des instantanés : relancer après modification du schéma. Les composants et annotations y sont interdits. La limite de 100 folios s’applique avec rejet atomique en cas de dépassement.
+`bom_generate` n’a pas de paramètres : il utilise `project.bomOptions`, remplace les folios BOM existants et sélectionne le premier nouveau folio. Les folios sont enregistrés dans `sheet.bomPage`, sans cartouche, et inclus dans `export_pdf`. Ils sont des instantanés : relancer après modification du schéma. Les composants et annotations y sont interdits. La limite de 200 folios s’applique avec rejet atomique en cas de dépassement.
 
 `wire_update` prend `id` et les champs facultatifs `number`, `color`, `fromComponent`, `fromPort`, `toComponent`, `toPort`, `waypoints` (tableau de `{ "x": 320, "y": 250 }`). Un tableau vide rétablit le tracé automatique. Les mises à jour de texte et de conducteur sont atomiques, validées et annulables ; un raccordement dupliqué est refusé.
 

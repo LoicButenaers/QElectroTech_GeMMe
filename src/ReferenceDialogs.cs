@@ -63,6 +63,9 @@ public sealed partial class MainWindow
     private void GoToReference(ReferencePoint point) { Canvas.CancelDrag(); Editor.SelectSheet(point.Sheet.Id); Canvas.Select(point.Component.Id); Canvas.CenterOn(point.Component.X, point.Component.Y); }
     private void FollowReference(string id)
     {
+        var functions = new CoilContacts(Editor.Project); var component = Editor.Sheet.Components.Single(c => c.Id == id);
+        if (CoilContacts.IsContact(component)) { if (functions.Coil(component) is ReferencePoint coil) GoToReference(coil); return; }
+        if (CoilContacts.IsCoil(component)) { var contacts = functions.Contacts(id); if (contacts.Count == 1) GoToReference(contacts[0]); else CoilNavigator(); return; }
         var targets = new CrossReferences(Editor.Project).Targets(id);
         if (targets.Count == 1) GoToReference(targets[0]); else if (targets.Count > 1) ReferenceNavigator(); else LinkReferenceDialog(id);
     }

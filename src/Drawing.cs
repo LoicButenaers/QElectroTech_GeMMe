@@ -106,9 +106,12 @@ public static class Drawing
     }
     public static Rect TextBounds(Ink ink) => new RotateTransform(ink.Rotation, ink.X, ink.Y).TransformBounds(new Rect(new Point(ink.X, ink.Y), Measure(ink.Text, ink.Size)));
     private static void AddLabel(List<Ink> scene, Component c, LabelPlacement p, string text, double size, string color) { var label = Label(c, p, text, size, color); if (label is not null) scene.Add(label); }
-    private static readonly Dictionary<string,Brush> BrushesCache = [];
-    private static readonly Dictionary<(string,double,string),FormattedText> TextCache = [];
-    private static readonly Typeface TextFace = new("Segoe UI");
+    [ThreadStatic] private static Dictionary<string,Brush>? brushesCache;
+    [ThreadStatic] private static Dictionary<(string,double,string),FormattedText>? textCache;
+    [ThreadStatic] private static Typeface? textFace;
+    private static Dictionary<string,Brush> BrushesCache => brushesCache ??= [];
+    private static Dictionary<(string,double,string),FormattedText> TextCache => textCache ??= [];
+    private static Typeface TextFace => textFace ??= new("Segoe UI");
     private static readonly CultureInfo TextCulture = CultureInfo.GetCultureInfo("fr-BE");
     public static Brush Brush(string color) { if(BrushesCache.TryGetValue(color,out var cached))return cached;try{var brush=new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));brush.Freeze();if(BrushesCache.Count>=256)BrushesCache.Clear();return BrushesCache[color]=brush;}catch{return Brushes.DarkSlateGray;} }
     private static FormattedText Text(string text,double size,string color) { var key=(text,Math.Max(.5,size),color);if(TextCache.TryGetValue(key,out var cached))return cached;if(TextCache.Count>=4096)TextCache.Clear();return TextCache[key]=new FormattedText(text,TextCulture,FlowDirection.LeftToRight,TextFace,key.Item2,Brush(color),1); }

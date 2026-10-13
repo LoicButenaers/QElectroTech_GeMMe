@@ -34,9 +34,17 @@ public static class BomReport
     {
         options.Validate();
         if(options.SheetId.Length>0&&!p.Sheets.Any(s=>s.Id==options.SheetId)) throw new InvalidDataException("Folio de nomenclature introuvable ; choisir Tous les folios.");
-        var items=p.Sheets.Where(s=>s.BomPage is null&&(options.SheetId.Length==0||s.Id==options.SheetId)).SelectMany(s=>s.Components.Where(c=>!CrossReferences.IsPoint(c)&&!Junctions.Automatic(c)&&c.Definition.Ports.Count>0&&(options.IncludeAuxiliary||c.Symbol is not("junction" or "earth" or "source"))&&(options.Brand.Length==0||c.Brand.Equals(options.Brand,StringComparison.OrdinalIgnoreCase))).Select(c=>(s,c)));
+        var refs = new CoilContacts(p);
+        var items=p.Sheets.Where(s=>s.BomPage is null&&(options.SheetId.Length==0||s.Id==options.SheetId)).SelectMany(s=>s.Components.Where(c=>!CrossReferences.IsPoint(c)&&!Junctions.Automatic(c)&&c.Definition.Ports.Count>0&&(options.IncludeAuxiliary||c.Symbol is not("junction" or "earth" or "source"))).Select(c=>(s,c)))
+            .Select(x => !options.IncludeAuxiliary && refs.Coil(x.c) is ReferencePoint parent ? (s: parent.Sheet, c: parent.Component) : x)
+            .DistinctBy(x => x.c.Id).Where(x => options.Brand.Length == 0 || x.c.Brand.Equals(options.Brand, StringComparison.OrdinalIgnoreCase));
+        IEnumerable<(Sheet s, Component c)> Locations((Sheet s, Component c) item)
+        {
+            var points = new[] { new ReferencePoint(item.s, item.c) }.Concat(!options.IncludeAuxiliary && CoilContacts.IsCoil(item.c) ? refs.Contacts(item.c.Id) : []);
+            return points.Where(x => options.SheetId.Length == 0 || x.Sheet.Id == options.SheetId).Select(x => (x.Sheet, x.Component));
+        }
         var groups=items.GroupBy(x=>new { Identity=options.GroupArticles?"":x.c.Id, x.c.Symbol,x.c.Brand,x.c.Range,x.c.Reference,x.c.Description,x.c.Rating,x.c.ImageId,x.c.CatalogId,x.c.Source });
-        return groups.Select(g=>new BomRow(new() { ["quantity"]=g.Count().ToString(CultureInfo.InvariantCulture),["tags"]=string.Join(", ",g.Select(x=>x.c.Tag)),["pages"]=string.Join(", ",g.Select(x=>x.c.Tag+" : "+SheetZones.Address(p,x.s,x.c))),["description"]=g.Key.Description,["brand"]=g.Key.Brand,["range"]=g.Key.Range,["reference"]=g.Key.Reference,["rating"]=g.Key.Rating,["symbol"]=g.Key.Symbol,["catalog"]=g.Key.CatalogId,["source"]=g.Key.Source,["image"]=g.Key.ImageId.Length>0?"Image intégrée "+g.Key.ImageId:"Symbole : "+g.Key.Symbol },g.Key.ImageId,g.Key.Symbol)).ToList();
+        return groups.Select(g=>new BomRow(new() { ["quantity"]=g.Count().ToString(CultureInfo.InvariantCulture),["tags"]=string.Join(", ",g.Select(x=>x.c.Tag)),["pages"]=string.Join(", ",g.SelectMany(Locations).Select(x=>x.c.Tag+" : "+SheetZones.Address(p,x.s,x.c))),["description"]=g.Key.Description,["brand"]=g.Key.Brand,["range"]=g.Key.Range,["reference"]=g.Key.Reference,["rating"]=g.Key.Rating,["symbol"]=g.Key.Symbol,["catalog"]=g.Key.CatalogId,["source"]=g.Key.Source,["image"]=g.Key.ImageId.Length>0?"Image intégrée "+g.Key.ImageId:"Symbole : "+g.Key.Symbol },g.Key.ImageId,g.Key.Symbol)).ToList();
     }
     public static string Csv(Project p,BomOptions o)
     {

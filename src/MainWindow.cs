@@ -32,7 +32,7 @@ public sealed partial class MainWindow : Window
         Icon = new BitmapImage(new Uri("pack://application:,,,/assets/logo.png"));
         Canvas = new(Editor) { GridVisible = preferences.GridVisible, GridIntensity = preferences.GridIntensity }; Editor.CurrentWireColor = preferences.WireColor;
         UiTheme.Bind(Canvas, SheetCanvas.WorkspaceBackgroundProperty, "Ui.Background");
-        var root = new DockPanel(); Content = root;
+        var root = UiTheme.Bind(new DockPanel(), Panel.BackgroundProperty, "Ui.Background"); Content = root;
         BuildShell(root);
         var left = UiTheme.Bind(new DockPanel(), Panel.BackgroundProperty, "Ui.Surface");
         var leftTop = new StackPanel { Margin = new(14, 4, 14, 8) };
@@ -50,7 +50,7 @@ public sealed partial class MainWindow : Window
         Canvas.ContextRequested += ShowSchematicMenu;
         Canvas.ReferenceRequested += FollowReference; Canvas.Status += text => status.Text = text; Canvas.SelectionChanged += Inspect; Canvas.TextRequested += p => { var text = Prompt("Texte du schéma", "Texte", "Texte"); if (text is not null) Editor.Change(() => Editor.Sheet.Notes.Add(new() { X = Editor.Snap(p.X), Y = Editor.Snap(p.Y), Text = text })); };
         Editor.Changed += Refresh; PreviewKeyDown += Keys;
-        Closing += (_, e) => { Canvas.CancelDrag(); if (!CanReplace()) e.Cancel = true; }; Closed += (_, _) => bridge?.Dispose();
+        Closing += (_, e) => { if (exportInProgress) { e.Cancel = true; status.Text = "Export PDF en cours · fermer après sa fin."; return; } Canvas.CancelDrag(); if (!CanReplace()) e.Cancel = true; }; Closed += (_, _) => bridge?.Dispose();
         bridge = new LocalBridge(this); Filter(); Refresh(); Canvas.SetMode("select");
         if (file is not null) Run(() => Editor.Open(file));
     }
@@ -119,7 +119,9 @@ public sealed partial class MainWindow : Window
     {
         if (!Editor.Dirty) return true;
         var result = MessageBox.Show(this, "Enregistrer les modifications du projet ?", "GeMMeElec", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
-        if (result == MessageBoxResult.Cancel) return false; if (result == MessageBoxResult.Yes) return Save(false); return true;
+        if (result == MessageBoxResult.Cancel) return false;
+        if (result == MessageBoxResult.Yes) { try { return Save(false); } catch (Exception ex) { MessageBox.Show(this, "Enregistrement échoué. Le projet reste ouvert et ses modifications sont conservées.\n\n" + ex.Message, "GeMMeElec", MessageBoxButton.OK, MessageBoxImage.Error); return false; } }
+        return true;
     }
     private void NewProject() { Canvas.CancelDrag(); if (!CanReplace()) return; var title = Prompt("Nouveau projet", "Nom du projet", "Nouveau projet"); if (title is not null) Editor.New(title); }
     private void Open() { Canvas.CancelDrag(); if (!CanReplace()) return; var dialog = new OpenFileDialog { Filter = "Projet GeMMeElec|*.gemelec" }; if (dialog.ShowDialog(this) == true) Editor.Open(dialog.FileName); }
@@ -132,7 +134,7 @@ public sealed partial class MainWindow : Window
     private void ProjectInfo() => MetadataDialog(false);
     private void AddPage() { var title = Prompt("Ajouter un folio", "Titre", $"Folio {Editor.Project.Sheets.Count + 1}"); if (title is not null) Editor.AddSheet(title); }
     private void RenamePage() { var name = Prompt("Renommer le folio", "Titre", Editor.Sheet.Title); if (name is not null) Editor.Change(() => Editor.Sheet.Title = name); }
-    private void DeletePage() { if (Editor.Project.Sheets.Count == 1) throw new InvalidOperationException("Conserver au moins un folio."); if (MessageBox.Show(this, "Supprimer ce folio et son contenu ? Cette opération peut être annulée.", "Folio", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { var id = Editor.Sheet.Id; Editor.Change(() => Editor.Project.Sheets.RemoveAll(s => s.Id == id)); Editor.SelectSheet(Editor.Project.Sheets[0].Id); } }
+    private void DeletePage() { if (Editor.Project.Sheets.Count == 1) throw new InvalidOperationException("Conserver au moins un folio."); if (MessageBox.Show(this, "Supprimer ce folio et son contenu ? Cette opération peut être annulée.", "Folio", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { Editor.DeleteSheet(Editor.Sheet.Id); } }
     private void Delete() { Editor.Delete(Canvas.Selected); Canvas.Selected.Clear(); Inspect(); }
     private void Rotate() => Editor.Change(() => { foreach (var c in Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id))) c.Rotation = (c.Rotation + 90) % 360; });
     private void Duplicate()
@@ -150,6 +152,7 @@ public sealed partial class MainWindow : Window
         Editor.Change(() =>
         {
             foreach (var c in originals) { var copy = Copy(c); copy.Id = map[c.Id]; copy.X += dx; copy.Y += dy; copy.ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, copy.Symbol); copy.Tag = Editor.NextTag(copy.Definition.Prefix); if (CrossReferences.IsPoint(copy)) { copy.LinkName = ""; copy.LinkSource = false; } Editor.Sheet.Components.Add(copy); ids.Add(copy.Id); }
+            foreach (var part in Editor.Sheet.Components.Where(c => ids.Contains(c.Id) && c.CoilId.Length > 0)) { part.CoilId = map.GetValueOrDefault(part.CoilId, part.CoilId); part.Tag = Editor.Project.Sheets.SelectMany(s => s.Components).Single(c => c.Id == part.CoilId).Tag; }
             foreach (var n in notes) { var copy = Copy(n); copy.Id = Guid.NewGuid().ToString("N"); copy.X += dx; copy.Y += dy; Editor.Sheet.Notes.Add(copy); ids.Add(copy.Id); }
             foreach (var w in wires) { var copy = Copy(w); copy.Id = Guid.NewGuid().ToString("N"); copy.From = new(map[w.From.ComponentId], w.From.PortId); copy.To = new(map[w.To.ComponentId], w.To.PortId); copy.Waypoints = w.Waypoints.Select(p => new Position(p.X + dx, p.Y + dy)).ToList(); Editor.Sheet.Wires.Add(copy); ids.Add(copy.Id); }
         });
@@ -170,10 +173,13 @@ public sealed partial class MainWindow : Window
         var dialog = new Window { Owner = this, Title = "Vérification du schéma · double-clic pour localiser", Width = 760, Height = 460, Content = list, WindowStartupLocation = WindowStartupLocation.CenterOwner }; list.MouseDoubleClick += (_, _) => { if (list.SelectedItem is ListBoxItem i && i.Tag is Finding f) { Editor.SelectSheet(f.SheetId); Canvas.Select(f.ComponentId); dialog.Close(); } }; dialog.ShowDialog();
     }
     private void Bom() => BomDialog();
-    private void ExportFile(string format)
+    private async void ExportFile(string format)
     {
-        var dialog = new SaveFileDialog { Filter = $"{format.ToUpperInvariant()}|*.{format}", FileName = "Schema." + format }; if (dialog.ShowDialog(this) != true) return;
-        if (format == "pdf") Export.Pdf(Editor.Project, dialog.FileName); else if (format == "svg") Export.Svg(Editor.Project, Editor.Sheet, dialog.FileName); else Export.Csv(Editor.Project, dialog.FileName); status.Text = "Export créé · " + dialog.FileName;
+        try {
+            var dialog = new SaveFileDialog { Filter = $"{format.ToUpperInvariant()}|*.{format}", FileName = "Schema." + format }; if (dialog.ShowDialog(this) != true) return;
+            if (format == "pdf") await ExportPdfAsync(dialog.FileName);
+            else { Canvas.CancelDrag(); if (format == "svg") Export.Svg(Editor.Project, Editor.Sheet, dialog.FileName); else Export.Csv(Editor.Project, dialog.FileName); status.Text = "Export créé · " + dialog.FileName; }
+        } catch (Exception ex) { status.Text = "Export échoué · " + ex.Message; MessageBox.Show(this, ex.Message, "Export GeMMeElec", MessageBoxButton.OK, MessageBoxImage.Information); }
     }
     private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nGlisser dans le vide : sélection par rectangle · Ctrl : ajouter\nClic droit : commandes rapides · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour glisser les textes dans l’aperçu, choisir un côté ou une icône d’alignement et saisir des coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Pour une dérivation, tirez une borne sur le trajet d’un fil : un point de jonction est créé. Les simples croisements restent sans connexion.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
     private void McpHelp() => MessageBox.Show(this, "Le serveur MCP fait partie du même exécutable.\n\nCommande :\n" + Environment.ProcessPath + " --mcp\n\nTransport stdio. Gardez l’application ouverte. Le serveur rejoint cette fenêtre par un canal Windows limité à votre compte. Les modifications sont annulables avec Ctrl+Z.\n\nVoir docs/MCP.md dans le dépôt pour la configuration du client.", "MCP GeMMeElec");
