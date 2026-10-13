@@ -13,8 +13,8 @@ public sealed partial class MainWindow
     {
         if (updatingPropertyControls) return;
         editingProperty = true;
-        try { change(); control.ClearValue(Control.BorderBrushProperty); control.ToolTip = null; status.Text = "Propriété mise à jour · Ctrl+Z pour annuler"; }
-        catch (Exception ex) { control.BorderBrush = Brushes.Firebrick; control.ToolTip = ex.Message; status.Text = ex.Message; }
+        try { change(); SetPropertyFeedback(control, null); status.Text = "Propriété mise à jour · Ctrl+Z pour annuler · Ctrl+S pour enregistrer"; }
+        catch (Exception ex) { SetPropertyFeedback(control, ex.Message); status.Text = ex.Message; }
         finally { editingProperty = false; }
     }
     private void LiveText(TextBox box, Action<string> change)
@@ -29,7 +29,11 @@ public sealed partial class MainWindow
             LiveText(box, value => Editor.Change(() => {
                 var c = Editor.Sheet.Components.Single(c => c.Id == id);
                 if (key.StartsWith("port:")) c.PortLabels[key[5..]] = value;
-                else switch (key) { case "tag": c.Tag = value; break; case "description": c.Description = value; break; case "brand": c.Brand = value; break; case "range": c.Range = value; break; case "reference": c.Reference = value; break; case "rating": c.Rating = value; break; }
+                else switch (key) {
+                    case "tag": c.Tag = value; break; case "description": c.Description = value; break; case "brand": c.Brand = value; break; case "range": c.Range = value; break; case "reference": c.Reference = value; break; case "rating": c.Rating = value; break;
+                    case "X": c.X = ReadCoordinate(value, "X"); break; case "Y": c.Y = ReadCoordinate(value, "Y"); break;
+                    case "rotation": if (!int.TryParse(value, out var angle) || angle % 90 != 0 || angle < -360 || angle > 360) throw new ArgumentException("Saisir un multiple de 90° entre −360 et 360."); c.Rotation = angle; break;
+                }
             }, id + ":" + key));
         }
     }

@@ -65,13 +65,13 @@ public static class TextInteractionTests
                     var x = Descendants(content).OfType<TextBox>().Single(t => t.Name == "TextOffsetX"); x.Text = "12,75"; assert(preview.Placement.OffsetX == 12.75, "Champ précis mis à jour immédiatement");
                     var alignment = buttons.Single(b => (string?)b.Tag == "horizontal:right"); assert(alignment.Content is Image && !string.IsNullOrEmpty(System.Windows.Automation.AutomationProperties.GetName(alignment)), "Icône accessible"); alignment.RaiseEvent(new(ButtonBase.ClickEvent));
                     var target = Descendants(content).OfType<ComboBox>().Single(); target.SelectedIndex = 1; buttons.Single(b => (string?)b.Tag == "side:bottom").RaiseEvent(new(ButtonBase.ClickEvent)); assert(preview.Draft.TagPlacement.OffsetX == 12.75, "Changer de texte conserve le brouillon");
-                    assert(ProjectStore.Serialize(e.Project) == before, "Pas de mutation avant validation");
+                    assert(ProjectStore.Serialize(e.Project) != before, "Modification immédiate sur le schéma");
                     content.UpdateLayout(); var image = new RenderTargetBitmap(1010, 680, 96, 96, PixelFormats.Pbgra32); image.Render(content); SaveImage(image, Path.Combine(dir, "self-test-text-dialog.png"));
-                    Descendants(content).OfType<Button>().Single(b => b.Content as string == "Valider").RaiseEvent(new(ButtonBase.ClickEvent));
+                    Descendants(content).OfType<Button>().Single(b => b.Content as string == "Fermer").RaiseEvent(new(ButtonBase.ClickEvent));
                 };
                 window.TextPositionDialog(c.Id); assert(e.Sheet.Components[0].TagPlacement.OffsetX == 12.75 && e.Sheet.Components[0].DetailPlacement.Side == "bottom", "Tous les textes validés"); e.Undo(); assert(ProjectStore.Serialize(e.Project) == before, "Une seule annulation restaure les deux textes"); e.Redo(); var committed = ProjectStore.Serialize(e.Project);
-                window.DocumentTestProbe = dialog => { var content = (FrameworkElement)dialog.Content; content.Measure(new(1010, 680)); content.Arrange(new(0, 0, 1010, 680)); content.UpdateLayout(); Descendants(content).OfType<ToggleButton>().Single(b => (string?)b.Tag == "side:left").RaiseEvent(new(ButtonBase.ClickEvent)); Descendants(content).OfType<Button>().Single(b => b.Content as string == "Annuler").RaiseEvent(new(ButtonBase.ClickEvent)); };
-                window.TextPositionDialog(c.Id); assert(ProjectStore.Serialize(e.Project) == committed, "Annuler laisse le projet intact");
+                window.DocumentTestProbe = dialog => { var content = (FrameworkElement)dialog.Content; content.Measure(new(1010, 680)); content.Arrange(new(0, 0, 1010, 680)); content.UpdateLayout(); Descendants(content).OfType<ToggleButton>().Single(b => (string?)b.Tag == "side:left").RaiseEvent(new(ButtonBase.ClickEvent)); Descendants(content).OfType<Button>().Single(b => b.Content as string == "Fermer").RaiseEvent(new(ButtonBase.ClickEvent)); };
+                window.TextPositionDialog(c.Id); assert(ProjectStore.Serialize(e.Project) != committed, "Fermer conserve les modifications immédiates"); e.Undo(); assert(ProjectStore.Serialize(e.Project) == committed, "Ctrl+Z restaure l’état à l’ouverture");
             }
             finally { window.DisposeTestBridge(); Environment.SetEnvironmentVariable("GEMMEELEC_TEST_SESSION", old); }
         });
@@ -143,8 +143,8 @@ public static class TextInteractionTests
                         Descendants(content).OfType<Button>().Single(b => b.Name == "SmartText_" + side).RaiseEvent(new(ButtonBase.ClickEvent));
                         assert(preview.Placement.Side == side, "Bouton directionnel " + side);
                     }
-                    assert(ProjectStore.Serialize(e.Project) == before, "Aperçu uniquement"); content.UpdateLayout(); var image = new RenderTargetBitmap(1010, 680, 96, 96, PixelFormats.Pbgra32); image.Render(content); SaveImage(image, Path.Combine(dir, "self-test-smart-text.png"));
-                    Descendants(content).OfType<Button>().Single(b => b.Content as string == "Valider").RaiseEvent(new(ButtonBase.ClickEvent));
+                    assert(ProjectStore.Serialize(e.Project) != before, "Ajustement immédiat"); content.UpdateLayout(); var image = new RenderTargetBitmap(1010, 680, 96, 96, PixelFormats.Pbgra32); image.Render(content); SaveImage(image, Path.Combine(dir, "self-test-smart-text.png"));
+                    Descendants(content).OfType<Button>().Single(b => b.Content as string == "Fermer").RaiseEvent(new(ButtonBase.ClickEvent));
                 };
                 window.TextPositionDialog(c.Id); var after = ProjectStore.Serialize(e.Project); assert(after != before, "Validation effective");
                 e.Undo(); assert(ProjectStore.Serialize(e.Project) == before, "Une annulation restaure la position"); e.Redo(); assert(ProjectStore.Serialize(e.Project) == after, "Rétablissement");
@@ -205,9 +205,9 @@ public static class TextInteractionTests
                     TextBox Field(string name) => Descendants(content).OfType<TextBox>().Single(t => t.Name == name);
                     Field("TextFontSize").Text = "26"; Field("TextColor").Text = "#C03050"; Field("TextRotation").Text = "45";
                     var text = preview.Scene().Single(i => i.Text == c.Tag); assert(text.Size == 26 && text.Color == "#C03050" && text.Rotation == 45, "Style immédiatement visible");
-                    Field("TextFontSize").Text = "-2"; Descendants(content).OfType<Button>().Single(b => b.Content as string == "Valider").RaiseEvent(new(ButtonBase.ClickEvent)); assert(ProjectStore.Serialize(e.Project) == before, "Style invalide non validé");
+                    var lastValid = ProjectStore.Serialize(e.Project); Field("TextFontSize").Text = "-2"; assert(ProjectStore.Serialize(e.Project) == lastValid, "Style invalide ne remplace pas le dernier style valide");
                     Field("TextFontSize").Text = "26"; preview.Fit(); content.UpdateLayout(); var image = new RenderTargetBitmap(1010, 680, 96, 96, PixelFormats.Pbgra32); image.Render(content); SaveImage(image, Path.Combine(dir, "self-test-text-style-dialog.png"));
-                    Descendants(content).OfType<Button>().Single(b => b.Content as string == "Valider").RaiseEvent(new(ButtonBase.ClickEvent));
+                    Descendants(content).OfType<Button>().Single(b => b.Content as string == "Fermer").RaiseEvent(new(ButtonBase.ClickEvent));
                 };
                 window.TextPositionDialog(c.Id); assert(e.Sheet.Components[0].TagPlacement.FontSize == 26 && e.Sheet.Components[0].TagPlacement.Rotation == 45, "Style validé"); e.Undo(); assert(ProjectStore.Serialize(e.Project) == before, "Style annulable");
             }

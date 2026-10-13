@@ -17,8 +17,12 @@ public sealed partial class MainWindow
     internal Action<Window>? DocumentTestProbe;
     internal void TestDocumentDialog(string kind) {if(kind=="titleblock")TitleBlockEditor();else if(kind=="bom")BomDialog();else if(kind=="zones")ZonesDialog();else if(kind=="references")ReferenceNavigator();else if(kind=="grid")GridDialog();else if(kind=="palette")PaletteDialog();else MetadataDialog(kind=="sheet");}
     private void ShowDocumentDialog(Window dialog) {if(DocumentTestProbe is null)dialog.ShowDialog();else {try{DocumentTestProbe(dialog);}finally{dialog.Close();}}}
-    private Window DocumentWindow(string title,double width=1050,double height=720) => new() { Owner=DocumentTestProbe is null?this:null,Title=title,Width=Math.Min(width,SystemParameters.WorkArea.Width*.92),Height=Math.Min(height,SystemParameters.WorkArea.Height*.9),WindowStartupLocation=WindowStartupLocation.CenterOwner,Background=Brushes.White,FontFamily=FontFamily,FontSize=13 };
-    private static TextBlock Hint(string text) => new() { Text=text,TextWrapping=TextWrapping.Wrap,Foreground=Drawing.Brush("#61758A"),Margin=new(4,8,4,8) };
+    private Window DocumentWindow(string title, double width = 1050, double height = 720)
+    {
+        var dialog = new Window { Owner = DocumentTestProbe is null ? this : null, Title = title, Width = Math.Min(width, SystemParameters.WorkArea.Width * .92), Height = Math.Min(height, SystemParameters.WorkArea.Height * .9), WindowStartupLocation = WindowStartupLocation.CenterOwner, FontFamily = FontFamily, FontSize = 13 };
+        UiTheme.Configure(dialog, preferences.InterfaceTheme); return dialog;
+    }
+    private static TextBlock Hint(string text) => UiTheme.Bind(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new(0, 6, 0, 6), FontSize = 11 }, TextBlock.ForegroundProperty, "Ui.Muted");
     private Button DocButton(string text,Window owner,Action action) {var b=new Button{Content=text,Padding=new(10,7,10,7),Margin=new(3)};b.Click+=(_,_)=>{try{action();}catch(Exception ex){if(DocumentTestProbe is not null)throw;MessageBox.Show(owner,ex.Message,"GeMMeElec",MessageBoxButton.OK,MessageBoxImage.Information);}};return b;}
     private static TextBox DocField(Panel panel,string label,string value,bool multiline=false)
     {panel.Children.Add(new TextBlock{Text=label,Margin=new(0,9,0,3)});var input=new TextBox{Text=value,Padding=new(7),AcceptsReturn=multiline,MinHeight=multiline?80:30,VerticalScrollBarVisibility=multiline?ScrollBarVisibility.Auto:ScrollBarVisibility.Disabled};panel.Children.Add(input);return input;}
@@ -39,7 +43,30 @@ public sealed partial class MainWindow
         if(sheetMode) {panel.Children.Add(Hint("Cartouche affecté à ce folio"));templates=new ComboBox{ItemsSource=new[]{new KeyValuePair<string,string>("","Sans cartouche")}.Concat(Editor.Project.TitleBlocks.Select(t=>new KeyValuePair<string,string>(t.Id,t.Name))),DisplayMemberPath="Value",SelectedValuePath="Key",SelectedValue=Editor.Sheet.TitleBlockId,Padding=new(6)};templates.IsEnabled=Editor.Sheet.BomPage is null;panel.Children.Add(templates);}
         var custom=DocField(panel,"Champs personnalisés · nom=valeur, un par ligne",string.Join("\n",(sheetMode?Editor.Sheet.CustomFields:Editor.Project.CustomFields).Select(x=>x.Key+"="+x.Value)),true);
         panel.Children.Add(Hint("Dans le cartouche : {sheet.title}, {sheet.number}, {sheet.author}, {project.title}…\nChamps personnalisés : {sheet.custom.nom} ou {project.custom.nom}. Le total des folios et leur ordre sont calculés automatiquement."));
-        bottom.Children.Add(DocButton("Enregistrer",dialog,()=>{var values=inputs.ToDictionary(x=>x.Key,x=>x.Value.Text);var extra=ParseCustom(custom.Text);var template=(string?)templates?.SelectedValue??"";Editor.Change(()=>{var live=sheetMode?(object)Editor.Sheet:Editor.Project;foreach(var pair in values)live.GetType().GetProperty(pair.Key)!.SetValue(live,pair.Value);if(sheetMode){Editor.Sheet.CustomFields=extra;Editor.Sheet.TitleBlockId=template;}else Editor.Project.CustomFields=extra;});dialog.Close();}));bottom.Children.Add(DocButton("Annuler",dialog,dialog.Close));ShowDocumentDialog(dialog);
+        var feedback = UiTheme.Bind(new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 8) }, TextBlock.ForegroundProperty, "Ui.Error"); panel.Children.Add(feedback);
+        panel.Children.Add(Hint("Modifications immédiates dans le projet. Ctrl+Z annule ; Ctrl+S enregistre le fichier."));
+        bool loading = false;
+        void ChangeField(Control control, Action action, string key)
+        {
+            if (loading) return; editingProperty = true;
+            try { Editor.Change(action, (sheetMode ? Editor.Sheet.Id : "project") + ":metadata:" + key); feedback.Text = ""; control.ClearValue(Control.BorderBrushProperty); }
+            catch (Exception ex) { feedback.Text = ex.Message; UiTheme.Bind(control, Control.BorderBrushProperty, "Ui.Error"); }
+            finally { editingProperty = false; }
+        }
+        foreach (var pair in inputs) { var input = pair.Value; input.TextChanged += (_, _) => ChangeField(input, () => { var live = sheetMode ? (object)Editor.Sheet : Editor.Project; live.GetType().GetProperty(pair.Key)!.SetValue(live, input.Text); }, pair.Key); input.LostKeyboardFocus += (_, _) => Editor.EndPropertyEdit(); }
+        custom.TextChanged += (_, _) => ChangeField(custom, () => { var extra = ParseCustom(custom.Text); if (sheetMode) Editor.Sheet.CustomFields = extra; else Editor.Project.CustomFields = extra; }, "custom"); custom.LostKeyboardFocus += (_, _) => Editor.EndPropertyEdit();
+        if (templates is not null) templates.SelectionChanged += (_, _) => ChangeField(templates, () => Editor.Sheet.TitleBlockId = (string?)templates.SelectedValue ?? "", "titleblock");
+        void Sync()
+        {
+            if (editingProperty) return; loading = true;
+            try { var live = sheetMode ? (object)Editor.Sheet : Editor.Project; foreach (var pair in inputs) pair.Value.Text = (string)live.GetType().GetProperty(pair.Key)!.GetValue(live)!; custom.Text = string.Join("\n", (sheetMode ? Editor.Sheet.CustomFields : Editor.Project.CustomFields).Select(x => x.Key + "=" + x.Value)); if (templates is not null) templates.SelectedValue = Editor.Sheet.TitleBlockId; feedback.Text = ""; }
+            finally { loading = false; }
+        }
+        Editor.Changed += Sync;
+        dialog.PreviewKeyDown += (_, e) => { if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return; if (e.Key is Key.Z or Key.Y) { e.Handled = true; if (e.Key == Key.Z) Editor.Undo(); else Editor.Redo(); } else if (e.Key == Key.S) { e.Handled = true; Run(() => Save(false)); } };
+        dialog.Closed += (_, _) => { Editor.Changed -= Sync; Editor.EndPropertyEdit(); Refresh(); };
+        bottom.Children.Add(DocButton("Fermer", dialog, dialog.Close)); ShowDocumentDialog(dialog);
+
     }
     private (string Id,string Data)? ChooseImage(Window owner)
     {var picker=new OpenFileDialog{Filter="Images|*.png;*.jpg;*.jpeg;*.bmp",Title="Image intégrée au projet (redimensionnée à 512 pixels)"};return picker.ShowDialog(owner)==true?ImageAssets.Import(picker.FileName):null;}

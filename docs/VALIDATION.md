@@ -1,4 +1,17 @@
-﻿# Vérifications de livraison
+# Vérifications de livraison
+
+## Version 0.12 — 13 octobre 2026
+
+Exécutable autonome Windows x64 publié au chemin habituel. **82 scénarios intégrés et 68 vérifications MCP réussis**, compilation sans avertissement. La reprise 0.11 a d’abord été vérifiée séparément (75/68), sauvegardée en copie locale et commitée/poussée dans `306a101be`.
+
+- Dispositions Compacte et Ruban avec commandes et raccourcis communs ; thèmes Clair et Sombre, clair par défaut. Tests des quatre combinaisons, activation des commandes, conservation des panneaux et migration des anciennes préférences.
+- Inspecteur avec groupes, aide, unités de dessin, erreurs visibles sous les champs et sélection multiple explicite. Coordonnées et rotations valides suivent les connexions ; saisie invalide préservant le document et le contrôle. Ctrl+Z/Ctrl+Y partage l’historique du schéma, y compris depuis les champs de propriétés.
+- Propriétés du projet, du folio et fenêtre Position des textes immédiates. La dernière valeur valide est conservée ; Fermer n’enregistre pas le fichier. Prévisualisation du glissement directe, publication au schéma temporisée à 120 ms, publication finale à la fin du geste. Contrôle des annulations et styles par les commandes des dialogues.
+- Copie du projet utilisateur lue/enregistrée/relue à l’identique dans le modèle. Original préservé. Aucun changement du format `.gemelec` dans ce lot.
+- PDF identique octet pour octet entre dispositions/thèmes ; export vectoriel A3 et exports multipages de la suite existante. Interface et PDF rendus hors écran puis inspectés visuellement, y compris les listes déroulantes et symboles dans le thème sombre.
+- Scénario représentatif de 100 folios / 5 000 composants / 4 900 conducteurs / 100 textes : sauvegarde 90 ms, ouverture avec rafraîchissement WPF 285 ms, modifications de propriété 121–138 ms, scène active 3,25 ms au dernier passage. Les durées varient entre passages. La mémoire du processus de toute la suite (735 Mo) ne caractérise pas une session isolée ; la cadence à la souris n’a pas été mesurée.
+
+Rapports : `build/self-test.json`, `build/mcp-test.json`, `build/interface-performance.json`. Captures : `build/ui-compact-light.png`, `ui-compact-dark.png`, `ui-ribbon-light.png`, `ui-ribbon-dark.png`, `ui-property-error.png`, `ui-interface-settings.png`, `ui-live-project.png`. La limite historique de 100 folios reste présente ; la charge 200/10 000 est le prochain volet de validation. Ateliers de cartouches et symboles : brouillons explicites conservés.
 
 ## Version 0.11 — 12 octobre 2026
 

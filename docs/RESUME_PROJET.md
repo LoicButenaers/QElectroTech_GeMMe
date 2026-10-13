@@ -1,6 +1,6 @@
 # GeMMeElec — résumé du travail réalisé
 
-État au **13 octobre 2026**, version publiée **0.11.0.0**.
+État au **13 octobre 2026**, version publiée **0.12.0.0**.
 
 Ce document résume les réalisations présentes dans le dépôt et la dernière livraison vérifiée. L’objectif initial reste un outil de conception de schémas électriques industriels pour la Belgique et l’Europe, avec une richesse fonctionnelle inspirée d’EPLAN P8. La version actuelle constitue une base fonctionnelle ; l’équivalence complète avec EPLAN n’est pas réalisée.
 
@@ -24,6 +24,7 @@ Le travail reste dans le dépôt de l’utilisateur ; le dépôt public de QElec
 - Sélection multiple par rectangle avec le clic gauche maintenu ; Ctrl permet d’ajouter à la sélection.
 - Déplacement groupé des composants avec les coudes des conducteurs internes au groupe.
 - Zoom à la molette, déplacement de la vue et ajustement du folio à l’écran.
+- Dispositions Compacte/Ruban et thèmes Clair/Sombre sélectionnables et mémorisés ; clair/compact par défaut. Commandes communes et couleurs documentaires indépendantes du thème.
 - Menus contextuels sur les composants, reports, conducteurs, fond du schéma et éléments de bibliothèque.
 - Panneaux Bibliothèque, Folios et Propriétés épinglables, fermables et masquables automatiquement ; disposition et largeur mémorisées.
 - Grille de placement dont l’affichage et l’intensité sont réglables. Elle est absente des exports PDF/SVG.
@@ -65,7 +66,7 @@ Le routage ne contourne pas automatiquement tous les obstacles du schéma.
 - Propriétés du panneau principal appliquées **en temps réel**, sans bouton Appliquer : composants, reports, fils et annotations. La saisie conserve le curseur et les valeurs invalides ne remplacent pas la dernière valeur valide.
 - Annulation des modifications ; regroupement des saisies successives d’un même champ dans l’historique.
 
-La fenêtre Position des textes conserve un brouillon avec aperçu immédiat : **Valider** applique l’ensemble en une opération annulable, **Annuler** abandonne les modifications. Les textes incorporés dans une image fabricant ne deviennent pas éditables individuellement. L’enregistrement sur disque reste une action distincte, avec Ctrl+S.
+La fenêtre Position des textes applique désormais les modifications valides immédiatement au schéma ; **Fermer** les conserve. **Ctrl+Z / Ctrl+Y** agit sur l’historique du projet et remet à jour les champs. Un glissement est publié au plus toutes les 120 ms et à son terme ; l’aperçu suit directement le geste. Les propriétés du projet et du folio sont également immédiates, avec **Fermer** et sans enregistrement disque implicite. Les textes incorporés dans une image fabricant ne deviennent pas éditables individuellement. L’enregistrement sur disque reste une action distincte, avec Ctrl+S.
 
 ## 6. Folios, cartouches et nomenclature
 
@@ -137,16 +138,21 @@ Le serveur a été testé directement par son transport MCP. Une configuration f
 
 Les améliorations comprennent le cache de la scène et de la grille, l’indexation des composants et renvois, des caches bornés pour les textes/images, la virtualisation des tableaux, les imports en arrière-plan et la pagination BOM à la demande. L’aperçu des textes travaille sur le composant sélectionné et le panneau de propriétés n’est pas reconstruit à chaque caractère.
 
-Dernière livraison vérifiée : **0.11.0.0**, le 12 octobre 2026.
+Dernière livraison vérifiée : **0.12.0.0**, le 13 octobre 2026.
 
-- **75 scénarios applicatifs réussis**.
-- **68 vérifications MCP réussies**, sur les 45 outils déclarés et les parcours couverts par la suite.
-- Compilation sans avertissement.
-- Contrôles des connexions, sauvegardes/relectures, annulations, imports, exports, reports, textes et propriétés immédiates.
-- Tests WPF hors écran et instance MCP de test isolée, sans manipulation du PC ni remplacement d’un projet utilisateur.
-- Mesure locale : dix modifications immédiates dans un projet synthétique de 1 000 composants en environ **370 ms**. Ce résultat ne constitue pas une garantie de cadence d’affichage pour tous les projets.
+- **82 scénarios applicatifs réussis** via `Build.ps1 -Test`, sans erreur ni avertissement.
+- **68 vérifications MCP réussies** via `Test-Mcp.ps1 -Headless` ; les 45 outils restent compatibles.
+- Quatre combinaisons Compacte/Ruban × Clair/Sombre : commandes communes, actions activables, conservation des panneaux, rendu à 1440 × 900 et disposition à 1000 × 600.
+- Inspecteur regroupé et adapté au composant, au report, au conducteur, à l’annotation ou à la sélection multiple ; erreurs visibles sous les champs, saisie conservée, coordonnées/rotation immédiates et conducteurs suivant les bornes.
+- Propriétés documentaires et textes immédiats, historique regroupé, rejet des valeurs invalides et maintien de la dernière valeur valide.
+- Lecture/enregistrement/relecture d’une **copie** de `LaserSieve_GH.gemelec`, sans modification de l’original. Son SHA-256 avant reprise est `E94D84AB7148318D8F627371FA7734913E0157151C4EC4886A26F5DA2088C89C`.
+- PDF identique octet pour octet pour les quatre réglages de l’interface. Export A3 vectoriel rendu avec Poppler et inspecté ; exports multipages couverts par la suite existante.
+- Inspection visuelle des quatre rendus de l’interface, des erreurs en ligne, des paramètres et des fenêtres documentaires/texte hors écran. Aucune manipulation souris/clavier d’un projet utilisateur.
+- Mesure synthétique sur ce PC : **100 folios, 5 000 composants, 4 900 conducteurs, 100 annotations**. Dernier passage : sauvegarde 90 ms, ouverture avec mise à jour WPF 285 ms, cinq modifications de propriété 121 à 138 ms, construction de la scène du folio actif 3,25 ms. La mémoire privée relevée (735 Mo) est celle du processus ayant exécuté toute la suite ; ce n’est pas une mesure de mémoire d’une session utilisateur isolée. Rapport `build/interface-performance.json`. Ces valeurs ne prouvent pas une cadence d’affichage ou un temps garanti.
 
-Ces résultats proviennent des rapports de la dernière livraison, consultés pour ce résumé. Aucune nouvelle compilation ni nouvelle exécution des tests n’a été nécessaire pour rédiger ce document.
+Les réglages des panneaux et préférences des tests utilisent désormais des fichiers `.test-*` séparés. Le coût des propriétés a été réduit en réutilisant l’état sérialisé pour l’indicateur de modifications ; la validation et l’historique restent transactionnels. Le test à 200 folios / 10 000 composants reste à livrer : la limite historique de lecture est encore de 100 folios dans cette étape.
+
+La reprise a préservé puis vérifié les modifications 0.11 trouvées non commitées, avant leur commit distinct `306a101be` et leur push sur `origin/GeMMeElec`. La refonte 0.12 constitue la livraison suivante ; aucune ancienne branche n’a été réécrite et `upstream` n’a pas été modifié.
 
 ## 11. Limites restantes et règles de poursuite
 
@@ -157,6 +163,8 @@ Le nettoyage du dépôt a été étudié et les sources actives réorganisées, 
 Pour poursuivre : travailler sur `GeMMeElec`, préserver les anciennes branches et les documents utilisateur, remplacer le même exécutable à chaque livraison, conserver la distinction entre symboles génériques et sources officielles, et vérifier la fluidité ainsi que les connexions, la persistance, l’annulation et le MCP après les changements de modèle.
 
 ## 12. Documents et commandes utiles
+
+- [Feuille de route et périmètres des prochains lots](FEUILLE_DE_ROUTE.md)
 
 - [Guide d’utilisation et structure du dépôt](../README.md)
 - [Configuration et outils MCP](MCP.md)

@@ -306,28 +306,30 @@ public sealed partial class Editor
     private readonly List<string> undo = [];
     private readonly List<string> redo = [];
     private string saved;
-    public Editor() { CurrentSheetId = Project.Sheets[0].Id; saved = ProjectStore.Serialize(Project); }
+    private string currentState;
+    public Editor() { CurrentSheetId = Project.Sheets[0].Id; currentState = saved = ProjectStore.Serialize(Project); }
     public Sheet Sheet => Project.Sheets.FirstOrDefault(s => s.Id == CurrentSheetId) ?? Project.Sheets[0];
-    public bool Dirty => saved != ProjectStore.Serialize(Project);
+    public bool Dirty => saved != currentState;
     public bool CanUndo => undo.Count > 0;
     public bool CanRedo => redo.Count > 0;
-    public void Notify() => Changed?.Invoke();
+    public void Notify() => Notify(ProjectStore.Serialize(Project));
+    private void Notify(string state) { currentState = state; Changed?.Invoke(); }
     public void SelectSheet(string id)
     {
         if (!Project.Sheets.Any(s => s.Id == id)) throw new ArgumentException("Folio introuvable.");
-        EndPropertyEdit(); CurrentSheetId = id; Notify();
+        EndPropertyEdit(); CurrentSheetId = id; Changed?.Invoke();
     }
     public void New(string title)
     {
         var created = new Project { Title = title }; ProjectStore.ValidateStructure(created);
-        Project = created; CurrentSheetId = Project.Sheets[0].Id; FilePath = null; undo.Clear(); redo.Clear(); EndPropertyEdit(); saved = ProjectStore.Serialize(Project); Notify();
+        Project = created; CurrentSheetId = Project.Sheets[0].Id; FilePath = null; undo.Clear(); redo.Clear(); EndPropertyEdit(); saved = ProjectStore.Serialize(Project); Notify(saved);
     }
     public void Open(string path)
     {
         var loaded = ProjectStore.Load(path);
-        Project = loaded; CurrentSheetId = Project.Sheets[0].Id; FilePath = Path.GetFullPath(path); undo.Clear(); redo.Clear(); EndPropertyEdit(); saved = ProjectStore.Serialize(Project); Notify();
+        Project = loaded; CurrentSheetId = Project.Sheets[0].Id; FilePath = Path.GetFullPath(path); undo.Clear(); redo.Clear(); EndPropertyEdit(); saved = ProjectStore.Serialize(Project); Notify(saved);
     }
-    public void Save(string path) { EndPropertyEdit(); ProjectStore.Save(Project, path); FilePath = Path.GetFullPath(path); saved = ProjectStore.Serialize(Project); Notify(); }
+    public void Save(string path) { EndPropertyEdit(); ProjectStore.Save(Project, path); FilePath = Path.GetFullPath(path); saved = ProjectStore.Serialize(Project); Notify(saved); }
     private string? propertyHistoryKey;
     private DateTime propertyHistoryTime;
     public void EndPropertyEdit() => propertyHistoryKey = null;
@@ -336,20 +338,21 @@ public sealed partial class Editor
         if (InteractionInProgress) throw new InvalidOperationException("Terminer le déplacement en cours.");
         var before = ProjectStore.Serialize(Project);
         try { action(); Commit(before, historyKey); }
-        catch { Project = ProjectStore.Deserialize(before); Notify(); throw; }
+        catch { Project = ProjectStore.Deserialize(before); Notify(before); throw; }
     }
     public void Commit(string before, string? historyKey = null)
     {
         ProjectStore.ValidateStructure(Project);
         Junctions.Cleanup(Project);
         ProjectStore.ValidateStructure(Project);
-        if (before != ProjectStore.Serialize(Project)) {
+        var after = ProjectStore.Serialize(Project);
+        if (before != after) {
             if (historyKey is null || propertyHistoryKey != historyKey || undo.Count == 0 || DateTime.UtcNow - propertyHistoryTime > TimeSpan.FromSeconds(2)) undo.Add(before);
             redo.Clear(); TrimHistory(); propertyHistoryKey = historyKey; propertyHistoryTime = DateTime.UtcNow;
         } else if (historyKey is null) EndPropertyEdit();
-        Notify();
+        Notify(after);
     }
-    public void CancelPreview(string before) { Project = ProjectStore.Deserialize(before); InteractionInProgress = false; RepairSelection(); Notify(); }
+    public void CancelPreview(string before) { Project = ProjectStore.Deserialize(before); InteractionInProgress = false; RepairSelection(); Notify(before); }
     public void Reconnect(string wireId, bool from, Endpoint endpoint)
     {
         var wire = Sheet.Wires.Single(w => w.Id == wireId);

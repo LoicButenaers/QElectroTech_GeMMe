@@ -32,7 +32,6 @@ public sealed partial class MainWindow
     internal void EditSymbol(SymbolDefinition source, string? replace = null, string warnings = "")
     {
         var dialog = DocumentWindow("Atelier de symboles · dessin et bornes", 1450, 900);
-        dialog.Resources.Add(typeof(Button), ButtonStyle()); dialog.Resources.Add(typeof(TextBox), TextBoxStyle());
         var draft = new SymbolDraft(source with { Name = source.Id == "draft" ? source.Name : source.Name + " · copie" });
         var canvas = new SymbolCanvas(draft); var root = new DockPanel { Margin = new(12) }; dialog.Content = root;
         var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top); root.Children.Add(top);

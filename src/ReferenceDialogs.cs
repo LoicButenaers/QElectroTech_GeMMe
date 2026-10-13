@@ -18,41 +18,47 @@ public sealed partial class MainWindow
     }
     private void ReferenceInspector(Component c)
     {
-        var displayName = Field("referenceName", "Nom affiché du report (libre)", ReferenceDisplay.Name(c));
-        var independentName = new CheckBox { Content = "Nom indépendant", IsChecked = c.ReferenceIndependentName, Margin = new(0, 6, 0, 8), ToolTip = "Coché : seul ce report est renommé. Décoché : les reports liés partagent le même nom." }; properties.Children.Add(independentName);
-        properties.Children.Add(Hint("Emplacement : " + SheetZones.Address(Editor.Project, Editor.Sheet, c)));
-        properties.Children.Add(Button("Lier à un autre report…", () => LinkReferenceDialog(c.Id)));
-        properties.Children.Add(Hint("Le nom commun relie les flèches, même sur des folios éloignés. Exemple : +24V ou COMMANDE_M1. R fait tourner le symbole."));
-        properties.Children.Add(new TextBlock { Text = "Nom de liaison", Margin = new(0, 10, 0, 4) });
-        var names = new ComboBox { IsEditable = true, ItemsSource = CrossReferences.Points(Editor.Project).Select(x => x.Component.LinkName).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToArray(), Text = c.LinkName, Padding = new(5) }; properties.Children.Add(names);
-        var mode = new ComboBox { ItemsSource = new[] { "Chaîne · paires 1–2, 3–4…", "Étoile · une source, plusieurs arrivées" }, SelectedIndex = c.LinkMode == "star" ? 1 : 0, Margin = new(0, 10, 0, 10) }; properties.Children.Add(mode);
-        var source = new CheckBox { Content = "Point source de l’étoile", IsChecked = c.LinkSource, IsEnabled = mode.SelectedIndex == 1, Margin = new(0, 4, 0, 8) }; mode.SelectionChanged += (_, _) => source.IsEnabled = mode.SelectedIndex == 1; properties.Children.Add(source);
-        var order = Field("linkOrder", "Ordre (0 = tri par folio et position)", c.LinkOrder.ToString());
-        Component Current() => Editor.Sheet.Components.Single(x => x.Id == c.Id);
+        TextBox displayName = null!, order = null!; CheckBox independentName = null!, source = null!; ComboBox names = null!, mode = null!;
+        var destinations = new StackPanel();
+        void Targets()
+        {
+            destinations.Children.Clear(); var targets = new CrossReferences(Editor.Project).Targets(c.Id);
+            if (targets.Count == 0) destinations.Children.Add(Hint("Aucune destination : lier ce report à une contrepartie."));
+            foreach (var t in targets) destinations.Children.Add(Button("Aller à " + SheetZones.Address(Editor.Project, t.Sheet, t.Component), () => GoToReference(t)));
+        }
+        PropertyGroup("Nom affiché", () => {
+            displayName = Field("referenceName", "Nom du report", ReferenceDisplay.Name(c), "Nom affiché sur le schéma ; partagé avec les reports liés sauf si Nom indépendant est coché.");
+            independentName = new CheckBox { Content = "Nom indépendant", IsChecked = c.ReferenceIndependentName, Margin = new(0, 6, 0, 8), ToolTip = "Coché : seul ce report est renommé. Décoché : le nom partagé est repris." }; PropertyContents.Children.Add(independentName); RegisterPropertyControl(independentName);
+            PropertyContents.Children.Add(Hint("Emplacement : " + SheetZones.Address(Editor.Project, Editor.Sheet, c)));
+        });
+        PropertyGroup("Liaison électrique", () => {
+            PropertyContents.Children.Add(Button("Lier à un autre report…", () => LinkReferenceDialog(c.Id)));
+            PropertyContents.Children.Add(Hint("Même nom de liaison = continuité électrique entre les folios. Exemple : +24V."));
+            PropertyContents.Children.Add(new TextBlock { Text = "Nom commun de la liaison", Margin = new(0, 8, 0, 4) });
+            names = new ComboBox { IsEditable = true, ItemsSource = CrossReferences.Points(Editor.Project).Select(x => x.Component.LinkName).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToArray(), Text = c.LinkName }; PropertyContents.Children.Add(names); RegisterPropertyControl(names);
+            PropertyContents.Children.Add(new TextBlock { Text = "Organisation des reports", Margin = new(0, 8, 0, 4) });
+            mode = new ComboBox { ItemsSource = new[] { "Chaîne · paires successives", "Étoile · une source, plusieurs arrivées" }, SelectedIndex = c.LinkMode == "star" ? 1 : 0 }; PropertyContents.Children.Add(mode); RegisterPropertyControl(mode);
+            source = new CheckBox { Content = "Report source de l’étoile", IsChecked = c.LinkSource, IsEnabled = mode.SelectedIndex == 1, Margin = new(0, 8, 0, 4) }; PropertyContents.Children.Add(source); RegisterPropertyControl(source);
+            order = Field("linkOrder", "Ordre de liaison", c.LinkOrder.ToString(), "Entier de 0 à 99 999. 0 : tri automatique par folio et position.");
+        });
+        PropertyGroup("Destinations", () => { PropertyContents.Children.Add(destinations); PropertyContents.Children.Add(Button("Navigateur des renvois…", ReferenceNavigator)); });
+        PropertyGroup("Textes du report", () => TextPositionEditor(c));
         void SyncFields()
         {
             updatingPropertyControls = true;
-            try { var current = Current(); displayName.Text = ReferenceDisplay.Name(current); independentName.IsChecked = current.ReferenceIndependentName; }
+            try { var current = Editor.Sheet.Components.Single(x => x.Id == c.Id); displayName.Text = ReferenceDisplay.Name(current); independentName.IsChecked = current.ReferenceIndependentName; }
             finally { updatingPropertyControls = false; }
         }
         void Configure(Control control)
         {
-            LiveProperty(control, () => { if (!int.TryParse(order.Text, out var n)) throw new ArgumentException("Ordre entier attendu."); Editor.ConfigureReference(c.Id, names.Text, mode.SelectedIndex == 1 ? "star" : "pair", n, source.IsChecked == true, null, independentName.IsChecked == true, c.Id + ":link"); SyncFields(); });
+            LiveProperty(control, () => { if (!int.TryParse(order.Text, out var n) || n < 0 || n > 99999) throw new ArgumentException("Saisir un entier de 0 à 99 999 ; 0 utilise l’ordre automatique."); Editor.ConfigureReference(c.Id, names.Text, mode.SelectedIndex == 1 ? "star" : "pair", n, source.IsChecked == true, null, independentName.IsChecked == true, c.Id + ":link"); SyncFields(); Targets(); });
         }
         LiveText(displayName, value => Editor.RenameReference(c.Id, value, c.Id + ":name"));
         order.TextChanged += (_, _) => Configure(order); order.LostKeyboardFocus += (_, _) => Editor.EndPropertyEdit();
-        independentName.Click += (_, _) => Configure(independentName);
-        source.Click += (_, _) => Configure(source);
-        mode.SelectionChanged += (_, _) => Configure(mode);
+        independentName.Click += (_, _) => Configure(independentName); source.Click += (_, _) => Configure(source);
+        mode.SelectionChanged += (_, _) => { source.IsEnabled = mode.SelectedIndex == 1; Configure(mode); };
         names.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) => Configure(names)));
-        names.LostKeyboardFocus += (_, _) => Editor.EndPropertyEdit();
-
-        properties.Children.Add(Hint("En chaîne, le tri utilise l’ordre, puis le folio et la position. En étoile, choisir une source ; à défaut le premier point est utilisé. Le mode est commun aux points de même nom."));
-        var targets = new CrossReferences(Editor.Project).Targets(c.Id);
-        if (targets.Count == 0) properties.Children.Add(Hint("Non lié : placer un autre renvoi puis lui attribuer le même nom."));
-        foreach (var t in targets) properties.Children.Add(Button("Aller à " + SheetZones.Address(Editor.Project, t.Sheet, t.Component), () => GoToReference(t)));
-        properties.Children.Add(Button("Navigateur des renvois…", ReferenceNavigator));
-        TextPositionEditor(c);
+        names.LostKeyboardFocus += (_, _) => Editor.EndPropertyEdit(); Targets();
     }
     private void GoToReference(ReferencePoint point) { Canvas.CancelDrag(); Editor.SelectSheet(point.Sheet.Id); Canvas.Select(point.Component.Id); Canvas.CenterOn(point.Component.X, point.Component.Y); }
     private void FollowReference(string id)

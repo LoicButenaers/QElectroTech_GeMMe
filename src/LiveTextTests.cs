@@ -39,10 +39,11 @@ public static class LiveTextTests
             assert(c.Tag == "MOTEUR" && ReferenceEquals(field, window.PropertyField("tag")), "Modèle immédiat sans reconstruire le champ ni perdre le curseur"); e.Undo(); assert(ProjectStore.Serialize(e.Project) == initial, "Une annulation pour une séquence de saisie"); e.Redo();
             var a = e.AddComponent("folio_next", 500, 300); e.AddSheet("Suite"); var b = e.AddComponent("folio_previous", 300, 300); e.LinkReferencePair(a.Id, b.Id, "24V"); window.Canvas.Select(b.Id);
             window.PropertyField("referenceName").Text = "Commande moteur"; assert(ReferenceDisplay.Name(a) == "Commande moteur" && ReferenceDisplay.Name(b) == "Commande moteur", "Nom propagé sans Appliquer");
-            var checkbox = ((StackPanel)window.PropertyPanel).Children.OfType<CheckBox>().Single(x => x.Content as string == "Nom indépendant"); checkbox.IsChecked = true; checkbox.RaiseEvent(new(ButtonBase.ClickEvent)); window.PropertyField("referenceName").Text = "Nom local"; assert(ReferenceDisplay.Name(a) == "Commande moteur" && ReferenceDisplay.Name(b) == "Nom local", "Case appliquée immédiatement");
+            window.PropertyPanel.Measure(new(290, 1200)); window.PropertyPanel.Arrange(new(0, 0, 290, 1200)); window.PropertyPanel.UpdateLayout();
+            var checkbox = Descendants(window.PropertyPanel).OfType<CheckBox>().Single(x => x.Content as string == "Nom indépendant"); checkbox.IsChecked = true; checkbox.RaiseEvent(new(ButtonBase.ClickEvent)); window.PropertyField("referenceName").Text = "Nom local"; assert(ReferenceDisplay.Name(a) == "Commande moteur" && ReferenceDisplay.Name(b) == "Nom local", "Case appliquée immédiatement");
             checkbox.IsChecked = false; checkbox.RaiseEvent(new(ButtonBase.ClickEvent)); assert(ReferenceDisplay.Name(b) == "Commande moteur" && window.PropertyField("referenceName").Text == "Commande moteur", "Décocher rétablit immédiatement le nom commun dans le champ");
             window.PropertyField("linkOrder").Text = "invalide"; assert(b.LinkOrder == 0, "Ordre incomplet refusé"); window.PropertyField("linkOrder").Text = "7"; assert(e.Sheet.Components.Single(x => x.Id == b.Id).LinkOrder == 7, "Correction acceptée");
-            assert(!((StackPanel)window.PropertyPanel).Children.OfType<Button>().Any(x => (x.Content as string)?.StartsWith("Appliquer") == true), "Aucun bouton Appliquer dans les propriétés");
+            assert(!Descendants(window.PropertyPanel).OfType<Button>().Any(x => (x.Content as string)?.StartsWith("Appliquer") == true), "Aucun bouton Appliquer dans les propriétés");
         }));
         test("Propriétés immédiates : conducteur, coordonnées et annotation", () => WithWindow(window =>
         {
@@ -63,7 +64,7 @@ public static class LiveTextTests
                 Descendants(content).OfType<Button>().Single(b => b.Name == "SmartText_right").RaiseEvent(new(ButtonBase.ClickEvent));
                 var preview = Descendants(content).OfType<TextPlacementPreview>().Single(); assert(preview.Scene().Any(i => i.Text == "Départ moteur"), "Texte ajouté dans l’aperçu");
                 content.UpdateLayout(); var image = new RenderTargetBitmap(1010, 680, 96, 96, PixelFormats.Pbgra32); image.Render(content); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image)); using (var file = File.Create(Path.Combine(dir, "self-test-all-texts-dialog.png"))) encoder.Save(file);
-                Descendants(content).OfType<Button>().Single(b => b.Content as string == "Valider").RaiseEvent(new(ButtonBase.ClickEvent));
+                Descendants(content).OfType<Button>().Single(b => b.Content as string == "Fermer").RaiseEvent(new(ButtonBase.ClickEvent));
             };
             window.TextPositionDialog(c.Id); assert(c.AdditionalTexts.Single().Text == "Départ moteur", "Ajout validé dans le composant"); e.Undo(); assert(e.Sheet.Components.Single(x => x.Id == c.Id).AdditionalTexts.Count == 0, "Ajout et alignement annulés ensemble");
         }));

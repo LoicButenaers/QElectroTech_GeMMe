@@ -6,6 +6,8 @@ namespace GeMMeElec;
 
 public sealed class SheetCanvas : FrameworkElement
 {
+    public static readonly DependencyProperty WorkspaceBackgroundProperty = DependencyProperty.Register(nameof(WorkspaceBackground), typeof(Brush), typeof(SheetCanvas), new FrameworkPropertyMetadata(Drawing.Brush("#E7EDF3"), FrameworkPropertyMetadataOptions.AffectsRender));
+    public Brush WorkspaceBackground { get => (Brush)GetValue(WorkspaceBackgroundProperty); set => SetValue(WorkspaceBackgroundProperty, value); }
     public readonly Editor Editor;
     public bool GridVisible { get; set; } = true;
     public double GridIntensity { get; set; } = 25;
@@ -90,7 +92,7 @@ public sealed class SheetCanvas : FrameworkElement
     public void Select(string id) { Selected.Clear(); Selected.Add(id); SelectionChanged?.Invoke(); InvalidateVisual(); }
     protected override void OnRender(DrawingContext dc)
     {
-        dc.DrawRectangle(Drawing.Brush("#E7EDF3"), null, new(0, 0, ActualWidth, ActualHeight));
+        dc.DrawRectangle(WorkspaceBackground, null, new(0, 0, ActualWidth, ActualHeight));
         dc.PushTransform(new TranslateTransform(offset.X, offset.Y)); dc.PushTransform(new ScaleTransform(Zoom, Zoom));
         var sheet = Editor.Sheet;
         dc.DrawRectangle(Drawing.Brush("#CBD5E1"), null, new(6, 7, sheet.Width, sheet.Height));

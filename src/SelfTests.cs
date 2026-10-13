@@ -70,6 +70,7 @@ public static class SelfTests
         InteractionTests.Run(Test,Assert,Reject,dir);
         TextInteractionTests.Run(Test,Assert,Reject,dir);
         LiveTextTests.Run(Test,Assert,Reject,dir);
+        WorkspaceUiTests.Run(Test,Assert,Reject,dir);
         File.WriteAllText(Path.Combine(dir, "self-test.json"), JsonSerializer.Serialize(new { passed = failures == 0, failures, results }, ProjectStore.Json)); return failures == 0 ? 0 : 1;
     }
 }

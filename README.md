@@ -1,4 +1,4 @@
-﻿# GeMMeElec
+# GeMMeElec
 
 Atelier Windows de conception de schémas électriques industriels, réécrit en **C# / WPF / .NET 10**. Branche `GeMMeElec`, créée depuis `main`. Les anciens fichiers suivis ont été retirés de cette branche ; l’historique Git et la branche `EPLAN_DESIGN` sont conservés. Aucun code QElectroTech n’est utilisé par cette nouvelle application.
 
@@ -8,7 +8,7 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.11)
+## Fonctionnalités (version 0.12)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
@@ -40,23 +40,29 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
 - Serveur MCP local avec 45 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
+## Interface
+
+**Affichage → Paramètres de l’interface…** (également l’icône de réglage en haut à droite) permet de choisir **Compacte** ou **Ruban**, et **Clair** ou **Sombre**. Le thème clair et la disposition compacte sont les valeurs par défaut. Les réglages sont mémorisés immédiatement dans les préférences locales. Les deux dispositions utilisent les mêmes commandes et raccourcis ; changer de disposition conserve les panneaux. Le dessin reste sur un folio blanc et les exports conservent les couleurs du document.
+
+L’inspecteur regroupe identification, position, textes, article et bornes. Les groupes secondaires se replient. Les coordonnées sont exprimées en **unités de dessin**, sans les présenter comme des millimètres. Les erreurs restent visibles sous les champs et la dernière valeur valide reste sur le schéma. Une sélection multiple expose les actions de groupe, plutôt que les propriétés d’un seul élément. Les éditeurs de modèles de cartouche et de symboles restent des ateliers avec brouillon explicite et enregistrement de la copie.
+
 ## Dessiner
 
 Cliquer un équipement dans la bibliothèque puis cliquer le folio. Échap termine la pose. Pour câbler, maintenir le bouton gauche sur une borne, tirer vers une autre borne et relâcher : cela fonctionne en mode Sélection et immédiatement après la pose. Pour une **dérivation**, relâcher sur le trajet d’un conducteur : un point coloré prévisualise la jonction. Le conducteur cible est scindé en conservant son tracé, sa couleur et son numéro ; le nouveau fil arrive perpendiculairement au point. Une borne ou jonction déjà présente est réutilisée. Un relâchement dans le vide annule la liaison. Le mode Conducteur permet aussi de cliquer une première borne, des points de passage facultatifs, puis la borne ou le fil d’arrivée. Un simple croisement n’établit pas de connexion électrique.
 
 Sélectionner un conducteur puis glisser un segment ou une **poignée carrée** pour ajuster son tracé. Glisser une **poignée ronde** vers une borne pour changer son raccordement. L’inspecteur permet aussi de saisir les points `X ; Y`, un par ligne, et de rétablir le tracé automatique. Échap annule le geste ; Ctrl+Z annule sa validation. Pour créer un nouveau fil depuis une borne occupée par le fil sélectionné, activer Conducteur (W).
 
-Sélectionner un composant puis **Propriétés → Position des textes…** (également au clic droit). Dans l’aperçu interactif, glisser le texte encadré, utiliser les quatre flèches pour choisir un côté et les icônes pour l’alignement. Les coordonnées X/Y et la distance sont visibles immédiatement ; les décimales acceptent une virgule ou un point. La molette zoome ; les flèches du clavier déplacent le texte d’une unité (Maj : dix). Échap annule un glissement. Passer d’un texte à l’autre conserve les réglages du brouillon ; **Valider** enregistre tous les changements en une seule opération annulable, **Annuler** les abandonne. Pour un report, la destination s’affiche par défaut en vert sous le nom. La case **Destination sous le nom** conserve ce placement automatique ; elle peut être décochée pour placer le lien séparément.
+Sélectionner un composant puis **Propriétés → Position des textes…** (également au clic droit). Dans l’aperçu interactif, glisser le texte encadré, utiliser les quatre flèches pour choisir un côté et les icônes pour l’alignement. Les coordonnées X/Y et la distance sont visibles immédiatement ; les décimales acceptent une virgule ou un point. La molette zoome ; les flèches du clavier déplacent le texte d’une unité (Maj : dix). Échap annule un glissement. Les modifications valides sont appliquées immédiatement au schéma, sans validation supplémentaire. **Fermer** conserve ces modifications ; **Ctrl+Z / Ctrl+Y** annule ou rétablit les modifications. **Ctrl+S** enregistre le fichier. Pour un report, la destination s’affiche par défaut en vert sous le nom. La case **Destination sous le nom** conserve ce placement automatique ; elle peut être décochée pour placer le lien séparément.
 
 Tous les textes sont accessibles dans cette fenêtre : repère, caractéristiques, description, libellés de bornes, textes internes du symbole et textes ajoutés. Cliquer directement un texte dans l’aperçu ou le choisir dans la liste, puis modifier son contenu, sa position ou son style. **Ajouter du texte** crée un texte attaché au composant ; **Supprimer ce texte** retire uniquement un texte ajouté. Les textes internes sont personnalisés pour ce composant sans modifier le symbole de bibliothèque. La destination des reports reste calculée automatiquement.
 
 Cocher **Aligner tous les textes visibles**, puis cliquer **Haut**, **Bas**, **Gauche**, **Droite** ou **Automatique** pour ranger les textes du composant ensemble, sans superposition entre eux. Les tailles, couleurs et rotations sont conservées ; les textes vides ou masqués restent inchangés. Décocher la case pour ajuster seulement le texte sélectionné.
 
-La section **Ajustement intelligent** propose quatre boutons **↑ Haut**, **↓ Bas**, **← Gauche** et **→ Droite** : le texte sélectionné reste du côté demandé, aligné sur le centre ou les bords du symbole. Le bouton **Automatique · tous les côtés** conserve la recherche libre autour du symbole. Il recherche une place libre autour de celui-ci en tenant compte des bornes, des fils, des autres textes et des limites du folio. Le résultat apparaît dans l’aperçu ; **Valider** l’enregistre et **Annuler** l’abandonne. Si aucun emplacement libre n’est trouvé parmi les positions proposées du côté choisi, un message invite à vérifier le résultat ; le texte ne bascule pas automatiquement de l’autre côté. Les textes vides ou masqués restent inchangés.
+La section **Ajustement intelligent** propose quatre boutons **↑ Haut**, **↓ Bas**, **← Gauche** et **→ Droite** : le texte sélectionné reste du côté demandé, aligné sur le centre ou les bords du symbole. Le bouton **Automatique · tous les côtés** conserve la recherche libre autour du symbole. Il recherche une place libre autour de celui-ci en tenant compte des bornes, des fils, des autres textes et des limites du folio. Le résultat apparaît immédiatement dans l’aperçu et sur le schéma ; **Ctrl+Z** l’annule. Si aucun emplacement libre n’est trouvé parmi les positions proposées du côté choisi, un message invite à vérifier le résultat ; le texte ne bascule pas automatiquement de l’autre côté. Les textes vides ou masqués restent inchangés.
 
 Le **nom affiché du report** est partagé automatiquement avec ses reports liés quand on le renomme depuis les propriétés ou **clic droit → Renommer le report…**. La case **Nom indépendant**, dans les propriétés du report, permet de conserver un nom différent pour celui-ci. Décocher cette case reprend immédiatement le nom partagé. La liaison électrique et la navigation par double-clic sont conservées.
 
-Dans **Position des textes → Taille, couleur et rotation**, régler séparément le repère, les caractéristiques, la description, ou le nom et la destination des reports. Taille de 4 à 200 unités (0 = automatique), couleur de la palette ou code `#RRGGBB` (vide = couleur automatique), rotation de −360° à 360°. L’aperçu est immédiat ; **Valider** enregistre tous les réglages en une opération annulable. L’ajustement intelligent conserve ces styles et tient compte de l’encombrement du texte tourné. Les styles sont enregistrés dans le projet et conservés dans les exports SVG/PDF.
+Dans **Position des textes → Taille, couleur et rotation**, régler séparément le repère, les caractéristiques, la description, ou le nom et la destination des reports. Taille de 4 à 200 unités (0 = automatique), couleur de la palette ou code `#RRGGBB` (vide = couleur automatique), rotation de −360° à 360°. L’aperçu est immédiat ; Les réglages valides sont appliqués immédiatement ; **Ctrl+Z** annule la séquence de modification. L’ajustement intelligent conserve ces styles et tient compte de l’encombrement du texte tourné. Les styles sont enregistrés dans le projet et conservés dans les exports SVG/PDF.
 
 Les noms des câbles suivent automatiquement leur plus long segment : horizontaux au-dessus du fil, verticaux le long du fil (lecture de bas en haut), à l’écran comme dans les exports SVG/PDF.
 
@@ -99,11 +105,11 @@ Les jonctions de borne commune sont calculées sans ajouter un composant. Une d�
 
 **Folio → Repérage lignes / colonnes…** règle les colonnes (20 par défaut) et les lignes (A à J par défaut). Le cadre reste visible dans le PDF, contrairement aux points de la grille de placement. La zone correspond au centre du composant. La colonne BOM **Folios / zones** associe chaque repère à son emplacement, même pour des articles regroupés. Actualiser les folios BOM déjà générés pour y reporter les nouvelles positions.
 
-Dans **Symboles industriels → 10 · Renvois interfolios**, placer **Folio suivant · départ** puis **Folio précédent · arrivée** sur le folio destinataire et raccorder leurs bornes aux fils. Sélectionner chaque flèche, saisir le même **Nom de liaison** et cliquer **Appliquer le renvoi**. Le mode chaîne relie les points deux par deux ; le mode étoile relie une source à plusieurs arrivées. Le libellé indique automatiquement le folio et la zone de la contrepartie. Double-cliquer une flèche pour la rejoindre ; **Projet → Navigateur des renvois…** affiche toutes les liaisons. Voir [le fonctionnement et les sources EPLAN](docs/RENVOIS.md).
+Dans **Symboles industriels → 10 · Renvois interfolios**, placer **Folio suivant · départ** puis **Folio précédent · arrivée** sur le folio destinataire et raccorder leurs bornes aux fils. Sélectionner chaque flèche, saisir le même **Nom commun de la liaison** ; le changement est immédiat. Le mode chaîne relie les points deux par deux ; le mode étoile relie une source à plusieurs arrivées. Le libellé indique automatiquement le folio et la zone de la contrepartie. Double-cliquer une flèche pour la rejoindre ; **Projet → Navigateur des renvois…** affiche toutes les liaisons. Voir [le fonctionnement et les sources EPLAN](docs/RENVOIS.md).
 
 ## Cartouches, folios et nomenclature
 
-**Folio → Propriétés du folio** renseigne les données de la page et choisit son cartouche. Un numéro vide suit automatiquement l’ordre des folios ; un numéro libre comme `01-A` reste inchangé lors d’un déplacement. L’auteur, la date et la révision vides héritent du projet. **Fichier → Informations du projet** renseigne les valeurs communes, le client et le numéro du document. Les champs personnalisés se saisissent sous la forme `nom=valeur`, un par ligne.
+**Folio → Propriétés du folio** renseigne immédiatement les données de la page et son cartouche. **Fermer** conserve les changements ; **Ctrl+Z** annule et **Ctrl+S** enregistre le fichier. Un numéro vide suit automatiquement l’ordre des folios ; un numéro libre comme `01-A` reste inchangé lors d’un déplacement. L’auteur, la date et la révision vides héritent du projet. **Fichier → Informations du projet** renseigne les valeurs communes, le client et le numéro du document. Les champs personnalisés se saisissent sous la forme `nom=valeur`, un par ligne.
 
 **Folio → Cartouches** ouvre l’éditeur. Dupliquer **Technique · révisions** pour partir d’une grille inspirée du style de l’exemple `see-technical.titleblock`, ou créer un modèle vide. Chaque ligne du tableau est une cellule : coordonnées X/Y et largeur/hauteur en pourcentage du cartouche, texte multiligne, taille, alignements, bordure et image. Une cellule plus grande représente une zone fusionnée ; retirer les cellules couvertes pour éviter les superpositions. Double-cliquer la cellule Texte pour la modifier ; Entrée y ajoute une ligne. L’aperçu se met à jour après validation de la cellule. Le texte est réduit automatiquement pour tenir dans sa zone.
 
@@ -154,6 +160,7 @@ Le mode `-Headless` crée une instance invisible et une session MCP séparée : 
 | `src/SheetCanvas.cs` | Interaction du dessinateur |
 | `src/MainWindow.cs` | Interface, inspecteur, commandes et exemple |
 | `src/ContextActions.cs` | Menus rapides du schéma |
+| `src/WorkspaceCommands.cs`, `src/UiTheme.cs`, `src/PropertyInspector.cs` | Commandes communes, dispositions, thèmes et inspecteur |
 | `src/WorkspacePanels.cs` | Panneaux, masquage automatique et disposition persistante |
 | `src/Documents.cs` | Cartouches, champs liés, images et validation |
 | `src/DocumentDialogs.cs` | Éditeurs de cartouches, folios et nomenclature |

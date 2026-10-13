@@ -7,12 +7,13 @@ using System.Windows.Media;
 
 namespace GeMMeElec;
 
-// Edits only a component draft. The project receives one undoable change on validation.
+// Isolated preview state; the dialog publishes valid changes to the editor.
+// Standalone previews can still be used without changing a project.
 public sealed class TextPlacementPreview : FrameworkElement
 {
-    public Component Draft { get; }
-    private readonly Project project;
-    private readonly CrossReferences references;
+    public Component Draft { get; private set; }
+    private Project project;
+    private CrossReferences references;
     public int Target { get; set; }
     public event Action? Edited;
     private double zoom = 1.8;
@@ -28,6 +29,11 @@ public sealed class TextPlacementPreview : FrameworkElement
         Draft = DocumentModel.Copy(component); Draft.ResolvedDefinition = component.Definition; ComponentTexts.Materialize(Draft);
         Focusable = true; ClipToBounds = true; Cursor = Cursors.Hand;
         ToolTip = "Glisser le texte sélectionné · flèches du clavier : 1 unité (Maj : 10) · molette : zoom · Échap : annuler le glissement";
+    }
+    public bool IsDragging => drag is not null;
+    public void Reload(Project source, Component component)
+    {
+        int selected = Target; project = source; references = new(source); Draft = DocumentModel.Copy(component); Draft.ResolvedDefinition = component.Definition; ComponentTexts.Materialize(Draft); Target = Math.Min(selected, Items.Count - 1); InvalidateVisual();
     }
     public SmartTextResult SmartAdjust(string? side = null)
     {
@@ -122,13 +128,18 @@ public sealed partial class MainWindow
     {
         Canvas.CancelDrag(); var component = Editor.Sheet.Components.Single(c => c.Id == id);
         var dialog = DocumentWindow("Position des textes · aperçu interactif", 1050, 760);
-        var root = new DockPanel { Margin = new(16), Background = Brushes.White }; dialog.Content = root;
+        var root = UiTheme.Bind(new DockPanel { Margin = new(16) }, Panel.BackgroundProperty, "Ui.Surface"); dialog.Content = root;
         var footer = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right }; DockPanel.SetDock(footer, Dock.Bottom); root.Children.Add(footer);
         var controls = new StackPanel { Margin = new(0, 0, 18, 0) }; var scroll = new ScrollViewer { Content = controls, Width = 305, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; DockPanel.SetDock(scroll, Dock.Left); root.Children.Add(scroll);
         var area = new DockPanel(); root.Children.Add(area);
-        var instruction = Hint("Glisse le texte encadré pour le placer. Les réglages sont visibles immédiatement dans cet aperçu. Molette : zoom. Flèches du clavier : déplacement précis."); DockPanel.SetDock(instruction, Dock.Top); area.Children.Add(instruction);
+        var instruction = Hint("Glisse le texte encadré pour le placer. Les modifications sont immédiates sur le schéma. Ctrl+Z annule ; Ctrl+S enregistre. Molette : zoom. Flèches du clavier : déplacement précis."); DockPanel.SetDock(instruction, Dock.Top); area.Children.Add(instruction);
         var preview = new TextPlacementPreview(Editor.Project, component); var fit = DocButton("Ajuster l’aperçu", dialog, preview.Fit); DockPanel.SetDock(fit, Dock.Bottom); area.Children.Add(fit); area.Children.Add(preview);
         bool report = CrossReferences.IsPoint(component), loading = true;
+        string publishedDraft = System.Text.Json.JsonSerializer.Serialize(preview.Draft, ProjectStore.Json);
+        string sessionKey = id + ":text-dialog:" + Guid.NewGuid().ToString("N");
+        var publishTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
+        var errors = new Dictionary<TextBox, TextBlock>();
+
         controls.Children.Add(Hint("Texte à modifier · ou cliquer sur le texte dans l’aperçu"));
         var target = new ComboBox { Name = "TextTarget", DisplayMemberPath = "Name", Padding = new(6) }; controls.Children.Add(target); preview.Target = Math.Min(labelTarget, preview.Items.Count - 1);
         var contentText = DocField(controls, "Contenu", ""); contentText.Name = "ComponentTextContent"; contentText.AcceptsReturn = true; contentText.MaxLength = 2000;
@@ -140,7 +151,7 @@ public sealed partial class MainWindow
         var visible = new CheckBox { Content = "Afficher ce texte", Margin = new(0, 12, 0, 8) }; controls.Children.Add(visible);
         var inline = new CheckBox { Content = "Destination sous le nom", Visibility = report ? Visibility.Visible : Visibility.Collapsed, Margin = new(0, 0, 0, 8) }; controls.Children.Add(inline);
         var stylePanel = new StackPanel(); controls.Children.Add(new Expander { Header = "Taille, couleur et rotation", IsExpanded = true, Content = stylePanel, Margin = new(0, 4, 0, 8) });
-        var fontSize = DocField(stylePanel, "Taille du texte (0 = automatique)", "0"); fontSize.Name = "TextFontSize";
+        var fontSize = DocField(stylePanel, "Taille (unités de dessin · 0 = automatique)", "0"); fontSize.Name = "TextFontSize";
         var textColor = DocField(stylePanel, "Couleur #RRGGBB (vide = automatique)", ""); textColor.Name = "TextColor";
         var swatches = new WrapPanel { Margin = new(0, 4, 0, 0) }; stylePanel.Children.Add(swatches);
         foreach (var color in preferences.Colors)
@@ -148,7 +159,7 @@ public sealed partial class MainWindow
             var swatch = new Button { Width = 23, Height = 23, Margin = new(2), Background = Drawing.Brush(color.Color), ToolTip = color.Name + " " + color.Color };
             AutomationProperties.SetName(swatch, color.Name); swatch.Click += (_, _) => textColor.Text = color.Color; swatches.Children.Add(swatch);
         }
-        var textRotation = DocField(stylePanel, "Rotation du texte (degrés)", "0"); textRotation.Name = "TextRotation";
+        var textRotation = DocField(stylePanel, "Rotation du texte (°)", "0"); textRotation.Name = "TextRotation";
         TextBox gap = null!, x = null!, y = null!; TextBlock feedback = null!;
         var smartStatus = Hint(""); smartStatus.Visibility = Visibility.Collapsed;
         void AdjustText(string? side) { var result = allTexts.IsChecked == true ? preview.AlignAll(side) : preview.SmartAdjust(side); smartStatus.Text = result.Message; smartStatus.Visibility = Visibility.Visible; }
@@ -183,26 +194,58 @@ public sealed partial class MainWindow
             }
         }
         var alignmentIndex = controls.Children.Count;
-        gap = DocField(controls, "Distance au symbole", ""); gap.Name = "TextGap";
-        x = DocField(controls, "Décalage X (droite +)", ""); x.Name = "TextOffsetX";
-        y = DocField(controls, "Décalage Y (bas +)", ""); y.Name = "TextOffsetY";
+        gap = DocField(controls, "Distance au symbole (unités de dessin)", ""); gap.Name = "TextGap";
+        x = DocField(controls, "Décalage X (unités de dessin · droite +)", ""); x.Name = "TextOffsetX";
+        y = DocField(controls, "Décalage Y (unités de dessin · bas +)", ""); y.Name = "TextOffsetY";
         feedback = Hint(""); controls.Children.Add(feedback);
         Alignments("Alignement horizontal", false, horizontal); Alignments("Alignement vertical", true, vertical);
         var alignmentControls = controls.Children.Cast<UIElement>().Skip(controls.Children.Count - 4).ToArray();
         foreach (var control in alignmentControls) { controls.Children.Remove(control); controls.Children.Insert(alignmentIndex++, control); }
-        var apply = DocButton("Valider", dialog, () => { if (!ReadCoordinates()) return; var c = Editor.Sheet.Components.Single(c => c.Id == id); Editor.Change(() => { c.TagPlacement = DocumentModel.Copy(preview.Draft.TagPlacement); c.DetailPlacement = DocumentModel.Copy(preview.Draft.DetailPlacement); c.DescriptionPlacement = DocumentModel.Copy(preview.Draft.DescriptionPlacement); c.ReferenceDestinationInline = preview.Draft.ReferenceDestinationInline;
-                c.AdditionalTexts = DocumentModel.Copy(preview.Draft.AdditionalTexts); c.TextOverrides = DocumentModel.Copy(preview.Draft.TextOverrides); c.PortLabels = DocumentModel.Copy(preview.Draft.PortLabels); c.ShowPortLabels = preview.Draft.ShowPortLabels;
-                c.Tag = preview.Draft.Tag; c.Rating = preview.Draft.Rating; c.Reference = preview.Draft.Reference; c.Range = preview.Draft.Range; c.Description = preview.Draft.Description;
-                if (report && c.ReferenceName != preview.Draft.ReferenceName) Editor.SetReferenceName(c, preview.Draft.ReferenceName);
-            }); dialog.Close(); }); footer.Children.Add(apply);
-        footer.Children.Add(DocButton("Annuler", dialog, dialog.Close));
+        void Publish(bool force = false)
+        {
+            if (preview.IsDragging && !force) { if (!publishTimer.IsEnabled) publishTimer.Start(); return; }
+            publishTimer.Stop(); string draftState = System.Text.Json.JsonSerializer.Serialize(preview.Draft, ProjectStore.Json); if (draftState == publishedDraft) return;
+            editingProperty = true;
+            try {
+                Editor.Change(() => {
+                    var c = Editor.Sheet.Components.Single(c => c.Id == id);
+                    c.TagPlacement = DocumentModel.Copy(preview.Draft.TagPlacement); c.DetailPlacement = DocumentModel.Copy(preview.Draft.DetailPlacement); c.DescriptionPlacement = DocumentModel.Copy(preview.Draft.DescriptionPlacement); c.ReferenceDestinationInline = preview.Draft.ReferenceDestinationInline;
+                    c.AdditionalTexts = DocumentModel.Copy(preview.Draft.AdditionalTexts); c.TextOverrides = DocumentModel.Copy(preview.Draft.TextOverrides); c.PortLabels = DocumentModel.Copy(preview.Draft.PortLabels); c.ShowPortLabels = preview.Draft.ShowPortLabels;
+                    c.Tag = preview.Draft.Tag; c.Rating = preview.Draft.Rating; c.Reference = preview.Draft.Reference; c.Range = preview.Draft.Range; c.Description = preview.Draft.Description;
+                    if (report && c.ReferenceName != preview.Draft.ReferenceName) Editor.SetReferenceName(c, preview.Draft.ReferenceName);
+                }, sessionKey);
+                publishedDraft = draftState; feedback.Text = "Modifications immédiates · Ctrl+Z pour annuler.";
+            } catch (Exception ex) { feedback.Text = ex.Message; }
+            finally { editingProperty = false; }
+        }
+        publishTimer.Tick += (_, _) => Publish(true);
+        void Reload()
+        {
+            if (editingProperty) return;
+            preview.Reload(Editor.Project, Editor.Sheet.Components.Single(c => c.Id == id)); publishedDraft = System.Text.Json.JsonSerializer.Serialize(preview.Draft, ProjectStore.Json); Load();
+        }
+        Editor.Changed += Reload;
+        dialog.PreviewKeyDown += (_, e) => { if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return; if (e.Key is Key.Z or Key.Y) { e.Handled = true; publishTimer.Stop(); if (e.Key == Key.Z) Editor.Undo(); else Editor.Redo(); } else if (e.Key == Key.S) { e.Handled = true; preview.EndDrag(); Publish(true); Run(() => Save(false)); } };
+        dialog.Closed += (_, _) => { preview.EndDrag(); Publish(true); publishTimer.Stop(); Editor.Changed -= Reload; Editor.EndPropertyEdit(); Refresh(); };
+        footer.Children.Add(DocButton("Fermer", dialog, dialog.Close));
+        foreach (var field in new[] { gap, x, y, fontSize, textColor, textRotation })
+        {
+            var parent = (Panel)field.Parent; var error = UiTheme.Bind(new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Visibility = Visibility.Collapsed, Margin = new(0, 3, 0, 0) }, TextBlock.ForegroundProperty, "Ui.Error"); parent.Children.Insert(parent.Children.IndexOf(field) + 1, error); errors[field] = error;
+        }
         bool ReadCoordinates()
         {
-            try { var p = DocumentModel.Copy(preview.Placement); p.Gap = ReadNumber(gap.Text); p.OffsetX = ReadNumber(x.Text); p.OffsetY = ReadNumber(y.Text); p.FontSize = ReadNumber(fontSize.Text); p.Color = textColor.Text.Trim(); p.Rotation = ReadNumber(textRotation.Text); p.Validate(); preview.Placement.Gap = p.Gap; preview.Placement.OffsetX = p.OffsetX; preview.Placement.OffsetY = p.OffsetY; preview.Placement.FontSize = p.FontSize; preview.Placement.Color = p.Color; preview.Placement.Rotation = p.Rotation; feedback.Text = ""; return true; } catch (Exception ex) { feedback.Text = ex.Message; return false; }
+            TextBox? current = null;
+            try {
+                var p = DocumentModel.Copy(preview.Placement);
+                foreach (var (field, change) in new (TextBox, Action<LabelPlacement>)[] { (gap, p => p.Gap = ReadNumber(gap.Text)), (x, p => p.OffsetX = ReadNumber(x.Text)), (y, p => p.OffsetY = ReadNumber(y.Text)), (fontSize, p => p.FontSize = ReadNumber(fontSize.Text)), (textColor, p => p.Color = textColor.Text.Trim()), (textRotation, p => p.Rotation = ReadNumber(textRotation.Text)) }) { current = field; change(p); p.Validate(); }
+                preview.Placement.Gap = p.Gap; preview.Placement.OffsetX = p.OffsetX; preview.Placement.OffsetY = p.OffsetY; preview.Placement.FontSize = p.FontSize; preview.Placement.Color = p.Color; preview.Placement.Rotation = p.Rotation;
+                foreach (var pair in errors) { pair.Key.ClearValue(Control.BorderBrushProperty); pair.Value.Visibility = Visibility.Collapsed; } feedback.Text = ""; return true;
+            } catch (Exception ex) { feedback.Text = ex.Message; if (current is not null) { UiTheme.Bind(current, Control.BorderBrushProperty, "Ui.Error"); errors[current].Text = ex.Message; errors[current].Visibility = Visibility.Visible; } return false; }
         }
         void Load()
         {
-            smartStatus.Visibility = Visibility.Collapsed; loading = true;
+            Publish(); smartStatus.Visibility = Visibility.Collapsed; loading = true;
+            foreach (var pair in errors) { pair.Key.ClearValue(Control.BorderBrushProperty); pair.Value.Visibility = Visibility.Collapsed; }
             target.ItemsSource = preview.Items; target.SelectedIndex = preview.Target; contentText.IsReadOnly = preview.Items[preview.Target].ReadOnly; contentText.Text = preview.ContentText; removeText.IsEnabled = preview.TextKey.StartsWith("extra:");
             var p = preview.Placement; visible.IsChecked = p.Visible; inline.IsChecked = preview.Draft.ReferenceDestinationInline;
             gap.Text = Number(p.Gap); x.Text = Number(p.OffsetX); y.Text = Number(p.OffsetY); fontSize.Text = Number(p.FontSize); textColor.Text = p.Color; textRotation.Text = Number(p.Rotation);
@@ -211,18 +254,18 @@ public sealed partial class MainWindow
             feedback.Text = independent ? "Coordonnées en unités du schéma, sans arrondi à la grille." : "Glisse la destination ou choisis une flèche pour la placer séparément.";
             loading = false; preview.InvalidateVisual();
         }
-        foreach (var field in new[] { gap, x, y, fontSize, textColor, textRotation }) field.TextChanged += (_, _) => { if (!loading) { smartStatus.Visibility = Visibility.Collapsed; ReadCoordinates(); preview.InvalidateVisual(); } };
+        foreach (var field in new[] { gap, x, y, fontSize, textColor, textRotation }) field.TextChanged += (_, _) => { if (!loading) { smartStatus.Visibility = Visibility.Collapsed; if (ReadCoordinates()) Publish(); preview.InvalidateVisual(); } };
         target.SelectionChanged += (_, _) => { if (loading || target.SelectedIndex < 0) return; int selected = target.SelectedIndex; preview.EndDrag(); preview.Target = labelTarget = selected; Load(); };
-        contentText.TextChanged += (_, _) => { if (loading || contentText.IsReadOnly) return; try { preview.SetContent(contentText.Text); } catch (Exception ex) { feedback.Text = ex.Message; } };
+        contentText.TextChanged += (_, _) => { if (loading || contentText.IsReadOnly) return; try { preview.SetContent(contentText.Text); Publish(); } catch (Exception ex) { feedback.Text = ex.Message; } };
         visible.Click += (_, _) => { preview.Placement.Visible = visible.IsChecked == true; Load(); };
         inline.Click += (_, _) => { if (inline.IsChecked == true) preview.Draft.ReferenceDestinationInline = true; else { int old = preview.Target; preview.Target = 1; preview.DetachDestination(); preview.Target = old; } Load(); };
         preview.Edited += Load; preview.Loaded += (_, _) => preview.Fit(); Load(); ShowDocumentDialog(dialog);
     }
-    private static Image AlignmentIcon(string alignment, bool vertical)
+    private Image AlignmentIcon(string alignment, bool vertical)
     {
         var drawing = new DrawingGroup(); using (var dc = drawing.Open())
         {
-            var pen = new Pen(Drawing.Brush("#203348"), 1.8);
+            var pen = new Pen((Brush)Resources["Ui.Text"], 1.8);
             for (int i = 0; i < 4; i++)
             {
                 double length = i % 2 == 0 ? 22 : 13;

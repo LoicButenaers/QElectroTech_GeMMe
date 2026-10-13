@@ -30,7 +30,7 @@ public sealed class WorkspacePanels : Grid
     private readonly GridSplitter leftSplitter, rightSplitter;
     private readonly PaneSettings settings;
     private bool arranged;
-    private static string SettingsPath => Path.Combine(AppContext.BaseDirectory, "GeMMeElec.layout.json");
+    internal static string SettingsPath => Path.Combine(AppContext.BaseDirectory, Environment.GetEnvironmentVariable("GEMMEELEC_TEST_SESSION") == "1" ? "GeMMeElec.test-layout.json" : "GeMMeElec.layout.json");
     public WorkspacePanels(UIElement canvas, UIElement library, UIElement pages, UIElement properties)
     {
         settings = ReadSettings();
@@ -38,7 +38,7 @@ public sealed class WorkspacePanels : Grid
         foreach (var pane in panes)
         {
             if (settings.States.TryGetValue(pane.Id, out var state) && state is "pinned" or "auto" or "closed") pane.State = state;
-            var dock = new DockPanel { Background = Brushes.White }; var header = new DockPanel { Background = Drawing.Brush("#EDF3F8"), Height = 34 };
+            var dock = UiTheme.Bind(new DockPanel(), Panel.BackgroundProperty, "Ui.Surface"); var header = UiTheme.Bind(new DockPanel { Height = 34 }, Panel.BackgroundProperty, "Ui.Raised");
             var close = new Button { Content = "×", Width = 28, Padding = new(0), Margin = new(1), ToolTip = "Fermer " + pane.Title };
             System.Windows.Automation.AutomationProperties.SetName(close, "Fermer " + pane.Title);
             close.Click += (_, _) => SetState(pane.Id, "closed"); DockPanel.SetDock(close, Dock.Right); header.Children.Add(close);
@@ -47,7 +47,7 @@ public sealed class WorkspacePanels : Grid
             System.Windows.Automation.AutomationProperties.SetName(pin, "Épingler " + pane.Title);
             pin.Click += (_, _) => SetState(pane.Id, pane.State == "pinned" ? "auto" : "pinned"); DockPanel.SetDock(pin, Dock.Right); header.Children.Add(pin);
             header.Children.Add(new TextBlock { Text = pane.Title, FontWeight = FontWeights.SemiBold, Margin = new(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
-            DockPanel.SetDock(header, Dock.Top); dock.Children.Add(header); dock.Children.Add(pane.Content); pane.Frame = new Border { Child = dock, BorderThickness = new(0, 0, 0, 1), BorderBrush = Drawing.Brush("#D5DFE9") };
+            DockPanel.SetDock(header, Dock.Top); dock.Children.Add(header); dock.Children.Add(pane.Content); pane.Frame = UiTheme.Bind(new Border { Child = dock, BorderThickness = new(0, 0, 0, 1) }, Border.BorderBrushProperty, "Ui.Border");
         }
         ColumnDefinitions.Add(new() { Width = new(settings.LeftWidth) }); ColumnDefinitions.Add(new() { Width = new(5) }); ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star), MinWidth = 250 }); ColumnDefinitions.Add(new() { Width = new(5) }); ColumnDefinitions.Add(new() { Width = new(settings.RightWidth) });
         SetColumn(left, 0); Children.Add(left); SetColumn(canvas, 2); Children.Add(canvas); SetColumn(right, 4); Children.Add(right);
@@ -58,7 +58,7 @@ public sealed class WorkspacePanels : Grid
     }
     private GridSplitter Splitter(int column)
     {
-        var splitter = new GridSplitter { Width = 5, HorizontalAlignment = HorizontalAlignment.Stretch, Background = Drawing.Brush("#D5DFE9"), ResizeBehavior = GridResizeBehavior.PreviousAndNext };
+        var splitter = UiTheme.Bind(new GridSplitter { Width = 5, HorizontalAlignment = HorizontalAlignment.Stretch, ResizeBehavior = GridResizeBehavior.PreviousAndNext }, Control.BackgroundProperty, "Ui.Border");
         SetColumn(splitter, column); Children.Add(splitter); splitter.DragCompleted += (_, _) => { RememberWidths(); Save(); }; return splitter;
     }
     private bool Open(Pane p) => p.State == "pinned" || (p.State == "auto" && p.Expanded);
@@ -84,7 +84,7 @@ public sealed class WorkspacePanels : Grid
         // Detach frames before rebuilding the docking containers.
         foreach (var pane in panes.Where(p => p.Right == isRight)) if (pane.Frame.Parent is Panel parent) parent.Children.Remove(pane.Frame);
         shell.Children.Clear(); var group = panes.Where(p => p.Right == isRight).ToList(); bool hasOpen = group.Any(Open); bool hasTabs = group.Any(p => p.State == "auto");
-        var rail = new StackPanel { Width = 30, Background = Drawing.Brush("#EDF3F8") };
+        var rail = UiTheme.Bind(new StackPanel { Width = 30 }, Panel.BackgroundProperty, "Ui.Raised");
         foreach (var p in group.Where(p => p.State == "auto"))
         {
             var tab = new Button { Content = new TextBlock { Text = p.Title, LayoutTransform = new RotateTransform(-90) }, Margin = new(2, 6, 2, 2), Padding = new(4, 10, 4, 10), ToolTip = "Ouvrir " + p.Title };
