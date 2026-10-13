@@ -1,4 +1,4 @@
-# MCP GeMMeElec
+﻿# MCP GeMMeElec
 
 Le serveur est intégré au logiciel : **`GeMMeElec.exe --mcp`**. Il utilise JSON-RPC 2.0 sur stdin/stdout UTF-8, un objet par ligne. L’interface doit être ouverte pour exécuter les outils ; initialize et tools/list restent disponibles sans fenêtre.
 
@@ -45,6 +45,7 @@ Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `li
 | Projet | `project_new`, `project_open`, `project_save`, `project_update` |
 | Folios | `page_add`, `page_select`, `page_update` |
 | Composants | `component_add`, `component_update`, `component_text_update`, `component_delete` |
+| Textes (0.11) | `component_text_list`, `component_text_add`, `component_text_delete`, `component_text_align` |
 | Conducteurs | `wire_add`, `wire_update`, `wire_delete` |
 | Annotation | `note_add` |
 | Exports | `export_svg`, `export_pdf`, `export_bom` |
@@ -56,7 +57,23 @@ Depuis la version 0.8, `library_search` accepte `library: "manufacturer"` ou `li
 
 `tools/list` fournit les paramètres, types et champs requis. Les retours de `tools/call` sont des contenus texte JSON ; une erreur d’opération renvoie `isError: true`.
 
-La version 0.7 conserve les 41 outils. `component_text_update` prend `id`, `target` (`tag`, `detail`, `description`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`. Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports en ligne, le placement du nom ancre l’ensemble nom/destination ; la visibilité de la destination reste indépendante.
+La version 0.11 propose 45 outils. `component_text_update` prend `id`, `target` (clé retournée par `component_text_list` : `tag`, `detail`, `description`, `port:…`, `shape:…` ou `extra:…`) et les réglages facultatifs `side` (`top`, `bottom`, `left`, `right`, `custom`), `horizontal` (`left`, `center`, `right`), `vertical` (`top`, `center`, `bottom`), `gap`, `offsetX`, `offsetY`, `visible`, `fontSize` (4..200, 0 = automatique), `color` (#RRGGBB ou vide = automatique) et `rotation` (−360..360 degrés). Les décalages sont en unités de dessin, sans arrondi. `custom` ancre au centre du composant, ou sur la borne indiquée par `placement.anchorPort` pour les libellés de bornes ; les autres positions ancrent au bord choisi. Les alignements indiquent quel point du texte rejoint cette ancre. Pour les reports, la destination est verte sous le nom par défaut ; sa visibilité et son style restent indépendants. Depuis 0.9, `destinationInline` conserve sa clé historique : true place la destination sous le nom, false permet son placement indépendant. Modifier une position de `detail` sur un report le détache automatiquement, sauf si `destinationInline: true` est explicitement fourni.
+
+## Textes individuels et alignement (0.11)
+
+- `component_text_list` prend `id` sur le folio actif et retourne un tableau de `key`, `name`, `text`, `placement`, `readOnly`. Les IDs des bornes restent ceux des connexions, indépendamment de leur libellé. Les clés `shape:…` désignent les textes vectoriels du symbole, pas du texte incorporé dans une image fabricant.
+- `component_text_update` accepte aussi `text` pour changer le contenu. `tag` sur un report renomme les reports liés selon la case Nom indépendant. `detail` sur un report est en lecture seule pour son contenu (page/zone calculées), mais son style et sa position restent modifiables. Pour les composants ordinaires, `detail` modifie le champ actuellement affiché : caractéristiques, sinon référence, sinon gamme. Les changements des textes internes sont propres à l’instance et préservent la bibliothèque.
+- `component_text_add` prend `id`, `text` et retourne `{ "key": "extra:…" }`. Utiliser cette clé pour régler ensuite contenu, taille, couleur, rotation ou position. Maximum 100 textes ajoutés par composant, de 2 000 caractères chacun.
+- `component_text_delete` prend `id`, `target` et ne supprime que les textes ajoutés (`extra:…`). Pour les textes existants, employer `component_text_update` avec `visible: false`.
+- `component_text_align` prend `id`, `target` facultatif (défaut `all`) et `side` facultatif (`auto`, `top`, `bottom`, `left`, `right` ; défaut `auto`). `all` range les textes visibles non vides en un groupe près du symbole ; une clé individuelle ajuste seulement ce texte. Les styles restent conservés. Le résultat indique si une disposition sans collision a été trouvée et signale les conflits résiduels ; il ne garantit pas un placement global optimal du folio. L’alignement de tous les textes détache la destination du report pour la placer séparément dans le groupe.
+
+Ces actions sont atomiques, annulables et enregistrées avec le projet. `component_text_list` est une lecture seule. Les nouvelles propriétés des composants sont `additionalTexts` et `textOverrides` ; les fichiers antérieurs restent lisibles. La fenêtre et le MCP utilisent le même modèle.
+
+Exemple d’alignement collectif :
+
+```json
+{"id":"id-Q1","target":"all","side":"right"}
+```
 
 ## Symboles et imports (0.6)
 
@@ -73,7 +90,7 @@ La version 0.7 conserve les 41 outils. `component_text_update` prend `id`, `targ
 
 - `page_update` accepte `zoneColumns` (1–40) et `zoneRows` (1–26) pour le folio actif. Les valeurs par défaut sont 20 et 10. La colonne BOM `pages` contient maintenant le repère, le folio et la zone de chaque appareil.
 - `library_search` retourne également la catégorie de chaque symbole. Poser les flèches avec `component_add` et `symbol: "folio_next"` ou `"folio_previous"` ; leur borne porte l’ID `1`.
-- `reference_update` reçoit `id`, `name`, `mode` (`pair` ou `star`), et éventuellement `order` (0–99999, défaut 0) et `source` (défaut false). Il modifie le renvoi du folio actif, harmonise le mode des points de même nom et garantit une seule source explicite. L’opération est annulable ; un nom vide délie le point.
+- `reference_update` reçoit `id` et les paramètres facultatifs `name` (liaison électrique), `displayName` (nom affiché partagé), `independentName` (nom indépendant), `mode` (`pair` ou `star`), `order` (0–99999) et `source`. Les paramètres absents sont conservés. `displayName` seul renomme aussi les reports liés qui ne sont pas en mode indépendant, sans modifier leur liaison ; une chaîne vide rétablit le nom de liaison comme affichage. L’opération est annulable. `name` vide délie le point ; le mode est harmonisé entre les points de même nom de liaison. `reference_list` retourne également `displayName` et `referenceIndependentName`. `independentName: true` protège un nom local des renommages partagés ; false reprend le nom du groupe si aucun nouveau nom n’est fourni.
 - `reference_list` retourne tous les renvois avec leur adresse et leurs destinations résolues. Les noms sont comparés sans tenir compte de la casse ni des espaces en début/fin.
 - `connection_trace` reçoit `componentId` et `portId`. Cette lecture retourne les bornes accessibles en suivant les fils et les renvois résolus, sans traverser l’intérieur des appareils. Il ne s’agit pas d’une simulation électrique.
 

@@ -47,7 +47,7 @@ public sealed partial class Editor
                 if (CrossReferences.IsPoint(c) || c.Symbol == "junction") throw new ArgumentException("Les nœuds et reports sont des symboles de connexion spécialisés.");
                 var used = Sheet.Wires.SelectMany(w => new[] { w.From, w.To }).Where(e => e.ComponentId == c.Id).Select(e => e.PortId);
                 if (used.Any(id => !copy.Ports.Any(p => p.Id == id))) throw new ArgumentException("Conserver les IDs des bornes raccordées avant de remplacer ce composant.");
-                c.Symbol = copy.Id; c.ResolvedDefinition = copy; c.CatalogId = "";
+                c.Symbol = copy.Id; c.ResolvedDefinition = copy; c.CatalogId = ""; c.TextOverrides.Clear();
                 c.PortLabels = c.PortLabels.Where(x => copy.Ports.Any(p => p.Id == x.Key)).ToDictionary(x => x.Key, x => x.Value);
             }
         }); return copy;

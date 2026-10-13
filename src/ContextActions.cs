@@ -23,8 +23,10 @@ public sealed partial class MainWindow
             if (components.Count == 1 && Canvas.Selected.Count == 1)
             {
                 var c = components[0];
+                menu.Items.Add(QuickAction("Position des textes…", () => TextPositionDialog(c.Id)));
                 if (CrossReferences.IsPoint(c))
                 {
+                    menu.Items.Add(QuickAction("Renommer le report…", () => { var name = Prompt("Nom du report", "Nom affiché (la liaison est conservée)", ReferenceDisplay.Name(c)); if (name is not null) Editor.RenameReference(c.Id, name); }));
                     menu.Items.Add(QuickAction("Lier à un autre report…", () => LinkReferenceDialog(c.Id)));
                     if (new CrossReferences(Editor.Project).Targets(c.Id).Count > 0) menu.Items.Add(QuickAction("Aller au report lié", () => FollowReference(c.Id)));
                 }

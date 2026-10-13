@@ -30,7 +30,7 @@ public static class ImportEditingTests
         });
         test("Reports : triangle noir, nom, destination et zone cliquable",()=>{
             var e=new Editor();var a=e.AddComponent("folio_next",200,200);e.ConfigureReference(a.Id,"DI1.4","pair",0,false);e.AddSheet("Arrivée");var b=e.AddComponent("folio_previous",600,300);e.ConfigureReference(b.Id,"DI1.4","pair",0,false);var refs=new CrossReferences(e.Project);var ink=ReferenceDisplay.Scene(e.Project,a,refs);
-            assert(ink.Count(x=>x.Kind=="line")==4&&ink.All(x=>x.Color=="#000000")&&ink.Any(x=>x.Text=="DI1.4"),"Présentation du report");var text=ink.Single(x=>x.Text=="DI1.4");assert(ReferenceDisplay.HitBounds(e.Project,a,refs).Contains(new Point(text.X+20,text.Y+5)),"Nom inclus dans le double-clic");
+            assert(ink.Count(x=>x.Kind=="line")==4&&ink.Where(x=>x.Kind=="line").All(x=>x.Color=="#000000")&&ink.Any(x=>x.Kind=="text"&&x.Color=="#008000")&&ink.Any(x=>x.Text=="DI1.4"),"Présentation du report");var text=ink.Single(x=>x.Text=="DI1.4");assert(ReferenceDisplay.HitBounds(e.Project,a,refs).Contains(new Point(text.X+20,text.Y+5)),"Nom inclus dans le double-clic");
             Export.Pdf(e.Project,Path.Combine(dir,"inline-reports.pdf"));Render(e.Project,e.Project.Sheets[0],Path.Combine(dir,"inline-reports.png"));
         });
         test("Symboles personnels : copie indépendante, bornes, sauvegarde, BOM et rollback",()=>{

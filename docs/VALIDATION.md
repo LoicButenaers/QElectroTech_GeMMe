@@ -1,4 +1,52 @@
-# Vérifications de livraison
+﻿# Vérifications de livraison
+
+## Version 0.11 — 12 octobre 2026
+
+Exécutable **0.11.0.0** publié au même chemin `build/GeMMeElec.exe`. **75 scénarios intégrés et 68 vérifications MCP réussis sur l’exécutable publié**, compilation sans avertissement. Contrôles WPF hors écran, sans contrôle souris/clavier du PC ni ouverture du projet utilisateur LaserSieve.
+
+- Tous les textes vectoriels d’un composant sont sélectionnables séparément dans l’aperçu : repère, caractéristiques, description, bornes, textes internes et textes ajoutés. Test du clic direct sur un libellé de borne, déplacement décimal, modification du contenu et suivi de la borne après rotation.
+- Ajout et suppression de textes attachés au composant ; alignement collectif sur un côté ou automatique, sans superposition entre les textes du groupe et avec styles conservés. Persistance, export SVG et annulation vérifiés. Les dessins intégrés sous forme d’image conservent leur texte incorporé non éditable.
+- Propriétés appliquées immédiatement : composants, noms de reports liés, case Nom indépendant, ordre, conducteurs et annotations. Pas de reconstruction de l’inspecteur pendant la saisie ; les entrées invalides gardent la dernière valeur valide. L’historique regroupe les changements successifs d’un même champ, avec séparation après une pause de deux secondes, changement de champ ou autre commande. Le dialogue Position des textes conserve son aperçu instantané et sa validation groupée.
+- MCP : **45 outils**, dont `component_text_list`, `component_text_add`, `component_text_delete`, `component_text_align`. `component_text_update` accepte les nouvelles clés individuelles et le contenu. Vérifications du renommage partagé, de la destination en lecture seule, des clés de bornes, des styles, des alignements, des erreurs atomiques, de l’annulation et de la sauvegarde/relecture.
+- Aperçu contrôlé visuellement : `build/self-test-all-texts-dialog.png`. Mesure locale : dix modifications immédiates dans un projet synthétique de 1 000 composants en **370 ms**, sans recréer le champ de saisie (`build/self-test-live-properties-performance.json`). Cette mesure inclut modèle, validation et historique ; elle ne mesure pas la cadence d’affichage GPU.
+
+L’alignement collectif concerne les textes du composant sélectionné. Si le côté choisi est encombré, il conserve ce côté et signale les conflits restants. Les textes internes personnalisés n’altèrent pas la définition de bibliothèque ; remplacer le symbole réinitialise ces personnalisations internes, en conservant les textes ajoutés.
+
+## Version 0.10 — 12 octobre 2026
+
+Exécutable **0.10.0.0** publié au chemin habituel. **69 scénarios intégrés et 56 vérifications MCP réussis** sur cet exécutable, compilation sans avertissement et contrôles hors écran.
+
+- Reports : renommage propagé aux reports effectivement liés, en paire ou étoile ; case **Nom indépendant** pour une exception locale, réintégration au nom partagé en la décochant, connexions conservées, sauvegarde et annulation. La clé MCP `independentName` expose le même mode.
+- Destination verte `#008000` sous le nom par défaut, mise à jour du numéro/zone de destination et zone de double-clic calculée sur les textes tournés. Le placement séparé existant reste disponible ; `destinationInline` conserve sa clé de fichier/MCP historique mais signifie désormais « sous le nom ».
+- Taille, couleur et rotation propres à chaque texte : repère, caractéristiques, description, nom et destination des reports. Aperçu immédiat, palette existante, code couleur libre, validation des valeurs, persistance et annulation. Les anciens projets utilisent les tailles et couleurs par défaut, sans migration du fichier sur disque.
+- Ajustement intelligent : styles conservés et collisions évaluées sur les limites réelles du texte après rotation. Recherche parmi 1 000 composants : **26,4 ms** sur le jeu local, déclenchée uniquement au clic.
+- SVG : couleur, taille et rotation contrôlées ; PDF : taille et matrice de rotation vérifiées. Les textes multilignes sont décomposés avec leur rotation pour les deux exports. Aperçus WPF inspectés : `build/self-test-report-style.png` et `build/self-test-text-style-dialog.png`.
+
+Le projet utilisateur LaserSieve n’a pas été ouvert ni enregistré pendant ces modifications du logiciel.
+
+## Version 0.9.2 — 12 octobre 2026
+
+Ajustement intelligent directionnel : **Haut, Bas, Gauche, Droite**. Recherche limitée à 21 dispositions du côté demandé, avec alignement sur le symbole et détection des obstacles. Le mode automatique tous côtés reste disponible. En cas d’encombrement ou de débordement, le côté choisi est conservé et le résultat est signalé comme à vérifier.
+
+Exécutable **0.9.2.0** remplacé au chemin habituel ; **65 scénarios intégrés et 49 vérifications MCP réussis** sur cet exécutable. Vérifications des quatre côtés à 0°, 90°, 180° et 270°, centrage sur le symbole, maintien du côté encombré, clics répétés, reports liés et destination séparée. Les quatre boutons sont exercés hors écran, avec validation, sauvegarde/relecture et annulation/rétablissement. Compilation sans avertissement ; aperçu inspecté sans contrôle du PC. Recherche toujours déclenchée uniquement au clic, avec moins de candidats que le mode automatique.
+
+## Version 0.9.1 — 12 octobre 2026
+
+Bouton **Ajustement intelligent** dans le dialogue de position des textes. Recherche déterministe de 84 dispositions alignées sur le centre ou les bords du symbole, avec prise en compte de sa rotation, des bornes, des textes, des conducteurs et de la zone de dessin. La destination d’un report peut être ajustée séparément ; sa liaison reste intacte. Un message indique les conflits résiduels si aucune proposition libre n’est disponible. Les textes masqués ou vides restent inchangés.
+
+Publication au même chemin `build/GeMMeElec.exe`, version **0.9.1.0** ; **63 scénarios intégrés et 49 vérifications MCP réussis** sur cet exécutable, sans avertissement de compilation. Tests : obstacles, bord du folio, rotation, stabilité des clics répétés, connexion interfolio, validation du brouillon, sauvegarde/relecture et annulation/rétablissement. Aperçu contrôlé hors écran : `build/self-test-smart-text.png`.
+
+Recherche parmi 1 000 composants : **16,5 ms** sur le jeu local (`build/self-test-smart-text-performance.json`). Les obstacles sont collectés une fois par clic ; aucun calcul supplémentaire au survol. Le test dense signale correctement qu’aucune des propositions n’est libre. Ce bouton propose une disposition locale et ne constitue pas un placement global optimal de tous les textes du folio.
+
+## Version 0.9 — 12 octobre 2026
+
+Exécutable autonome `build/GeMMeElec.exe`, version **0.9.0.0**. **59 scénarios intégrés et 49 vérifications MCP réussis sur l’exécutable publié**. Compilation sans erreur ni avertissement, tests hors écran sans contrôle du PC.
+
+- Nom affiché des reports indépendant de la liaison : rendu, continuité électrique, sauvegarde/relecture, annulation/rétablissement et compatibilité avec les anciens projets. Propriétés, menu contextuel, navigateur et MCP exposent le nom libre.
+- Dialogue de placement interactif : brouillon isolé, glissement précis sans arrondi, annulation du geste, quatre flèches, icônes accessibles d’alignement, champs numériques mis à jour immédiatement. Validation de plusieurs textes en une seule opération annulable ; abandon sans mutation du projet. Destination d’un report détachable et déplaçable indépendamment.
+- Noms des câbles sur le plus long segment, centrés et parallèles au conducteur, quelle que soit la direction du parcours. Routes vides et segments nuls gérés. Orientation SVG contrôlée ; même scène utilisée par le PDF. Aperçus WPF du dialogue et des conducteurs inspectés dans `build/self-test-text-dialog.png` et `build/self-test-wire-orientation.png`.
+- Fluidité : 5 000 déplacements et reconstructions de la scène d’un seul composant dans un projet de 1 000 composants en **21,7 ms**. Cette mesure porte sur la logique et la scène, pas sur 5 000 affichages WPF. Le projet complet n’est ni sérialisé ni redessiné à chaque déplacement de l’aperçu.
+- `LaserSieve_GH.gemelec` n’a pas été ouvert ni enregistré par l’application : SHA-256 inchangé, `FE799B60123762D3D2E213D2D621A241EB2B0F8FA9482155404E6140D0C0A3A6`.
 
 ## Version 0.8 — 12 octobre 2026
 

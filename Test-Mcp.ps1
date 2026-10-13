@@ -1,4 +1,4 @@
-param([switch]$Headless, [string]$AssemblyPath = '')
+﻿param([switch]$Headless, [string]$AssemblyPath = '')
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $stem = if ($Headless) { 'MCP-headless-demo' } else { 'MCP-demo' }
@@ -63,7 +63,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 41) '41 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 45) '45 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -105,6 +105,14 @@ try {
     Assert (($state.project.sheets[0].wires | Where-Object id -eq $w1.id).waypoints.Count -eq 2) 'Édition du tracé des conducteurs'
     $null = Call 'component_text_update' @{ id = $coil.id; target = 'tag'; side = 'top'; horizontal = 'center'; vertical = 'bottom'; offsetX = 12.5; offsetY = -8.25 }
     $null = Call 'component_text_update' @{ id = $coil.id; target = 'tag'; side = 'incorrect' } -ExpectError
+    $null = Call 'component_text_update' @{ id=$coil.id; target='tag'; fontSize=24; color='#AA1122'; rotation=30 }
+    $styled = ((Call 'project_get').project.sheets[0].components | Where-Object id -eq $coil.id).tagPlacement
+    Assert ($styled.fontSize -eq 24 -and $styled.color -eq '#AA1122' -and $styled.rotation -eq 30) 'Style de texte via MCP'
+    $null = Call 'component_text_update' @{ id=$coil.id; target='tag'; fontSize=-2 } -ExpectError
+    $null = Call 'component_text_update' @{ id=$coil.id; target='tag'; color='incorrect' } -ExpectError
+    $styled = ((Call 'project_get').project.sheets[0].components | Where-Object id -eq $coil.id).tagPlacement
+    Assert ($styled.fontSize -eq 24 -and $styled.color -eq '#AA1122') 'Styles invalides rejetés sans perte'
+
     $null = Call 'project_validate'
     $firstPage = (Call 'project_get').currentSheetId
     $null = Call 'page_add' @{ title = 'Deuxième folio · réserves' }
@@ -175,6 +183,30 @@ try {
     $lamp = Call 'component_add' @{ symbol='lamp'; x=600; y=300 }
     $null = Call 'wire_add' @{ fromComponent=$arrival.id; fromPort='1'; toComponent=$lamp.id; toPort='X1' }
     $null = Call 'reference_update' @{ id=$arrival.id; name='+24V'; mode='pair' }
+    $null = Call 'reference_update' @{ id=$arrival.id; displayName='Arrivée automate / été' }
+    $renamed = (Call 'reference_list') | Where-Object id -eq $arrival.id
+    Assert ($renamed.displayName -eq 'Arrivée automate / été' -and $renamed.linkName -eq '+24V' -and $renamed.targets.Count -eq 1) 'Nom libre sans rupture de liaison'
+    Assert (((Call 'reference_list') | Where-Object id -eq $departure.id).displayName -eq 'Arrivée automate / été') 'Renommage automatiquement propagé au report lié'
+    $null = Call 'reference_update' @{ id=$arrival.id; displayName='Nom local'; independentName=$true }
+    $localRefs = Call 'reference_list'
+    Assert (($localRefs | Where-Object id -eq $arrival.id).displayName -eq 'Nom local' -and ($localRefs | Where-Object id -eq $departure.id).displayName -eq 'Arrivée automate / été') 'Nom indépendant sans propagation'
+    $null = Call 'reference_update' @{ id=$arrival.id; independentName=$false }
+    Assert (((Call 'reference_list') | Where-Object id -eq $arrival.id).displayName -eq 'Arrivée automate / été') 'Retour au nom partagé'
+    $referenceTexts = Call 'component_text_list' @{id=$arrival.id}
+    Assert (($referenceTexts | Where-Object key -eq 'detail').readOnly -and ($referenceTexts | Where-Object key -eq 'detail').text.Length -gt 0) 'Destination calculée exposée en lecture seule'
+    $null = Call 'component_text_update' @{id=$arrival.id;target='detail';text='Fausse destination'} -ExpectError
+    $null = Call 'component_text_update' @{id=$arrival.id;target='tag';text='Nom par outil texte'}
+    Assert (((Call 'reference_list') | Where-Object id -eq $departure.id).displayName -eq 'Nom par outil texte') 'Édition du texte de report avec propagation'
+    $null = Call 'history_undo'
+    $null = Call 'component_text_update' @{ id=$arrival.id; target='detail'; fontSize=11; rotation=15; color='#008000'; destinationInline=$true }
+    $reportSvg = Join-Path $root 'build/MCP-report-style.svg'
+    $null = Call 'export_svg' @{ path=$reportSvg; overwrite=$true }
+    [xml]$styledSvg = Get-Content -LiteralPath $reportSvg -Raw
+    $green = @($styledSvg.SelectNodes("//*[local-name()='text']") | Where-Object { $_.fill -eq '#008000' -and $_.'font-size' -eq '11' -and $_.transform -like 'rotate(15 *' })
+    Assert ($green.Count -eq 1) 'Destination verte et rotation exportées en SVG'
+    $null = Call 'component_text_update' @{ id=$arrival.id; target='detail'; side='custom'; offsetX=13.25; offsetY=42.5; horizontal='left'; vertical='top' }
+    $renamedComponent = (Call 'project_get').project.sheets[1].components | Where-Object id -eq $arrival.id
+    Assert (!$renamedComponent.referenceDestinationInline -and $renamedComponent.detailPlacement.offsetY -eq 42.5) 'Destination du report positionnée indépendamment via MCP'
     $refs = Call 'reference_list'
     Assert ($refs.Count -eq 2 -and ($refs | Where-Object id -eq $departure.id).targets[0].address -eq '2 / D3') 'Renvois réciproques avec emplacement du folio'
     $trace = Call 'connection_trace' @{ componentId=$coil.id; portId='A2' }
@@ -191,6 +223,10 @@ try {
     $null = Call 'project_open' @{ path=$path }
     $trace = Call 'connection_trace' @{ componentId=$coil.id; portId='A2' }
     Assert (@($trace | Where-Object componentId -eq $lamp.id).Count -eq 1) 'Renvois persistants après relecture'
+    Assert (((Call 'reference_list') | Where-Object id -eq $arrival.id).displayName -eq 'Arrivée automate / été') 'Nom libre persistant après relecture'
+    $savedStyle = ((Call 'project_get').project.sheets[0].components | Where-Object id -eq $coil.id).tagPlacement
+    Assert ($savedStyle.fontSize -eq 24 -and $savedStyle.color -eq '#AA1122' -and $savedStyle.rotation -eq 30) 'Styles persistants après relecture'
+
     $state = Call 'project_get'
     $bomText = $state.project.sheets[-1].bomPage.rows | ConvertTo-Json -Depth 20
     Assert ($bomText.Contains('CMD-2') -and $bomText.Contains('C7')) 'Nomenclature avec position des composants'
@@ -233,6 +269,40 @@ try {
     Assert (($state.project.sheets[0].components | Where-Object autoJunction).x -eq 250) 'Jonction déplaçable avec le segment via MCP'
     $null = Call 'wire_delete' @{id=$branch.id}
     Assert (@((Call 'project_get').project.sheets[0].components | Where-Object autoJunction).Count -eq 0) 'Nettoyage automatique après suppression de branche'
+    $texts = Call 'component_text_list' @{id=$a.id}
+    Assert (@($texts | Where-Object key -like 'port:*').Count -eq 2 -and @($texts | Where-Object key -eq 'tag').Count -eq 1) 'Liste des textes avec clés stables des bornes'
+    $null = Call 'component_text_update' @{id=$a.id;target='port:A1';text='Alimentation';offsetX=12.5;color='#112233';fontSize=13;rotation=90}
+    $portText = (Call 'component_text_list' @{id=$a.id}) | Where-Object key -eq 'port:A1'
+    Assert ($portText.text -eq 'Alimentation' -and $portText.placement.offsetX -eq 12.5 -and $portText.placement.anchorPort -eq 'A1' -and $portText.placement.rotation -eq 90) 'Libellé et style individuels de borne sans changer son ID'
+    $addedText = Call 'component_text_add' @{id=$a.id;text='Texte MCP ajouté'}
+    Assert ($addedText.key -like 'extra:*') 'Ajout de texte attaché au composant'
+    $null = Call 'component_text_update' @{id=$a.id;target=$addedText.key;text='Commande principale';fontSize=17;color='#654321';rotation=15}
+    $null = Call 'component_text_align' @{id=$a.id;side='right'}
+    $alignedTexts = Call 'component_text_list' @{id=$a.id}
+    $extra = $alignedTexts | Where-Object key -eq $addedText.key
+    Assert ($extra.placement.side -eq 'custom' -and $extra.placement.offsetX -gt 0 -and $extra.placement.fontSize -eq 17 -and $extra.placement.rotation -eq 15) 'Alignement global conserve le style du texte ajouté'
+    $beforeInvalid = (Call 'project_get').project | ConvertTo-Json -Depth 40 -Compress
+    $null = Call 'component_text_align' @{id=$a.id;side='invalide'} -ExpectError
+    $null = Call 'component_text_update' @{id=$a.id;target='port:absent';text='Erreur'} -ExpectError
+    $null = Call 'component_text_delete' @{id=$a.id;target='tag'} -ExpectError
+    Assert (((Call 'project_get').project | ConvertTo-Json -Depth 40 -Compress) -eq $beforeInvalid) 'Cibles et alignements invalides rejetés atomiquement'
+    $null = Call 'component_text_align' @{id=$a.id;target=$addedText.key;side='bottom'}
+    Assert (((Call 'component_text_list' @{id=$a.id}) | Where-Object key -eq $addedText.key).placement.side -eq 'bottom') 'Alignement individuel directionnel'
+    $null = Call 'component_text_delete' @{id=$a.id;target=$addedText.key}
+    Assert (@((Call 'component_text_list' @{id=$a.id}) | Where-Object key -eq $addedText.key).Count -eq 0) 'Suppression du texte ajouté'
+    $null = Call 'history_undo'
+    Assert (@((Call 'component_text_list' @{id=$a.id}) | Where-Object key -eq $addedText.key).Count -eq 1) 'Annulation de la suppression de texte'
+    $textPath = Join-Path $root 'build/MCP-all-texts.gemelec'
+    $null = Call 'project_save' @{path=$textPath;overwrite=$true}
+    $null = Call 'project_open' @{path=$textPath}
+    $persisted = Call 'component_text_list' @{id=$a.id}
+    Assert (($persisted | Where-Object key -eq $addedText.key).text -eq 'Commande principale' -and ($persisted | Where-Object key -eq 'port:A1').text -eq 'Alimentation') 'Textes ajoutés et bornes persistants après relecture'
+    $definition = Call 'symbol_get' @{id='coil'}
+    $definition.shapes += @{kind='text';x=0;y=0;a=12;b=0;text='Texte interne';rotation=0}
+    $null = Call 'symbol_copy' @{definition=$definition;componentId=$a.id}
+    $shape = (Call 'component_text_list' @{id=$a.id}) | Where-Object key -like 'shape:*' | Select-Object -Last 1
+    $null = Call 'component_text_update' @{id=$a.id;target=$shape.key;text='Texte personnalisé';color='#AABBCC'}
+    Assert (((Call 'component_text_list' @{id=$a.id}) | Where-Object key -eq $shape.key).text -eq 'Texte personnalisé') 'Texte interne modifié sur une instance du symbole'
     @{ passed = $true; results = $results } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root 'build/mcp-test.json') -Encoding utf8
     Write-Output "MCP : $($results.Count) vérifications réussies."
 }

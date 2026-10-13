@@ -114,6 +114,7 @@ public sealed partial class MainWindow : Window
     }
     private void Refresh()
     {
+        if (editingProperty) { Title = $"{(Editor.Dirty ? "● " : "")}{Editor.Project.Title} — GeMMeElec"; Canvas.InvalidateVisual(); return; }
         if (!Symbols.All.ContainsKey(Canvas.Symbol) && !Editor.Project.CustomSymbols.ContainsKey(Canvas.Symbol)) { Canvas.Symbol = "breaker1"; Canvas.CatalogId = null; }
         if (libraryMode.SelectedIndex == 2 && (!ReferenceEquals(displayedCustomSymbols, Editor.Project.CustomSymbols) || displayedCustomCount != Editor.Project.CustomSymbols.Count)) Filter();
         refreshing = true; pages.ItemsSource = null; pages.ItemsSource = Editor.Project.Sheets; pages.SelectedItem = Editor.Sheet; refreshing = false;
@@ -127,7 +128,7 @@ public sealed partial class MainWindow : Window
     }
     private void Inspect()
     {
-        properties.Children.Clear(); fields.Clear();
+        Editor.EndPropertyEdit(); properties.Children.Clear(); fields.Clear();
         var c = Editor.Sheet.Components.FirstOrDefault(c => Canvas.Selected.Contains(c.Id));
         var wire = Editor.Sheet.Wires.FirstOrDefault(w => Canvas.Selected.Contains(w.Id));
         var note = Editor.Sheet.Notes.FirstOrDefault(n => Canvas.Selected.Contains(n.Id));
@@ -140,26 +141,27 @@ public sealed partial class MainWindow : Window
             if(official is not null) properties.Children.Add(Button("Dessin original et provenance…",()=>OfficialLibraryDetails(official)));
             properties.Children.Add(Hint("Emplacement : " + SheetZones.Address(Editor.Project, Editor.Sheet, c)));
             Field("tag", "Repère", c.Tag); Field("description", "Description", c.Description); Field("brand", "Fabricant", c.Brand); Field("range", "Gamme", c.Range); Field("reference", "Référence exacte", c.Reference); Field("rating", "Calibre / tension / puissance", c.Rating);
-            properties.Children.Add(Button("Appliquer les propriétés", () => { var values = fields.ToDictionary(x => x.Key, x => x.Value.Text); Editor.Change(() => { c.Tag = values["tag"]; c.Description = values["description"]; c.Brand = values["brand"]; c.Range = values["range"]; c.Reference = values["reference"]; c.Rating = values["rating"]; foreach (var p in c.Definition.Ports) c.PortLabels[p.Id] = values["port:" + p.Id]; }); }));
             if (Uri.TryCreate(c.Source, UriKind.Absolute, out var uri) && uri.Scheme == "https") properties.Children.Add(Button("Documentation fabricant ↗", () => Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true })));
             TextPositionEditor(c);
             properties.Children.Add(Button(c.ImageId.Length > 0 ? "Remplacer l’image BOM…" : "Ajouter une image BOM…", () => ComponentImage(c.Id)));
             if (c.ImageId.Length > 0) { properties.Children.Add(new Image { Source = ImageAssets.Decode(Editor.Project.Images[c.ImageId]), Height = 90, Margin = new(8), Stretch = Stretch.Uniform }); properties.Children.Add(Button("Retirer l’image BOM", () => Editor.Change(() => c.ImageId = ""))); }
             properties.Children.Add(new TextBlock { Text = "Bornes fonctionnelles : adapter les libellés à la référence choisie.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Drawing.Brush("#7C6B4B"), Margin = new(0, 14, 0, 0) });
             foreach (var p in c.Definition.Ports) Field("port:" + p.Id, "Borne " + p.Id, c.PortLabels.GetValueOrDefault(p.Id, p.Id));
+            BindComponentProperties(c.Id);
         }
         else if (wire is not null)
         {
             Field("number", "Numéro du conducteur", wire.Number); Field("color", "Couleur (#RRGGBB)", wire.Color);
             properties.Children.Add(Button("Palette de couleurs…", () => PaletteDialog(fields["color"].Text, color => fields["color"].Text = color)));
-            properties.Children.Add(Button("Appliquer", () => { string n = fields["number"].Text, color = fields["color"].Text; Editor.Change(() => { wire.Number = n; wire.Color = color; }); }));
             properties.Children.Add(Button("Rétablir le parcours automatique", () => Editor.Change(() => wire.Waypoints.Clear())));
             properties.Children.Add(new TextBlock { Text = "Tirez une poignée carrée pour déplacer un segment. Tirez une poignée ronde vers une borne pour changer le raccordement.", TextWrapping = TextWrapping.Wrap, Margin = new(0, 12, 0, 10), Foreground = Drawing.Brush("#61758A") });
             var points = Field("waypoints", "Points de passage · X ; Y par ligne", string.Join(Environment.NewLine, wire.Waypoints.Select(p => $"{Number(p.X)} ; {Number(p.Y)}"))); points.AcceptsReturn = true; points.Height = 110; points.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-            properties.Children.Add(Button("Appliquer le tracé", () => { var values = ParsePoints(points.Text); Editor.Change(() => wire.Waypoints = values); }));
+            LiveText(fields["number"], value => Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Number = value, wire.Id + ":number"));
+            LiveText(fields["color"], value => { if (!EditorPreferences.IsColor(value)) throw new ArgumentException("Couleur attendue : #RRGGBB."); Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Color = value, wire.Id + ":color"); });
+            LiveText(points, value => { var parsed = ParsePoints(value); Editor.Change(() => Editor.Sheet.Wires.Single(w => w.Id == wire.Id).Waypoints = parsed, wire.Id + ":waypoints"); });
             properties.Children.Add(new TextBlock { Text = "Coordonnées du folio, en unités de dessin. Un champ vide rétablit le tracé automatique.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new(0, 6, 0, 0) });
         }
-        else if (note is not null) { Field("text", "Annotation", note.Text); properties.Children.Add(Button("Appliquer", () => { var t = fields["text"].Text; Editor.Change(() => note.Text = t); })); }
+        else if (note is not null) { var input = Field("text", "Annotation", note.Text); LiveText(input, value => Editor.Change(() => Editor.Sheet.Notes.Single(n => n.Id == note.Id).Text = value, note.Id + ":text")); }
         else if (Editor.Sheet.BomPage is not null)
         {
             properties.Children.Add(new TextBlock { Text = "Folio de nomenclature", FontSize = 20, TextWrapping = TextWrapping.Wrap, Margin = new(0, 18, 0, 12) });
@@ -185,44 +187,6 @@ public sealed partial class MainWindow : Window
     private void TextPositionEditor(Component component)
     {
         properties.Children.Insert(1, Button("Position des textes…", () => TextPositionDialog(component.Id)));
-    }
-    private void TextPositionDialog(string id)
-    {
-        var dialog = new Window { Owner = this, Title = "Position des textes", Width = 460, Height = Math.Min(720, SystemParameters.WorkArea.Height * .9), WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = Brushes.White };
-        var panel = new StackPanel { Margin = new(20) }; dialog.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-        ComboBox Choice(string label, (string Id, string Name)[] values)
-        {
-            panel.Children.Add(new TextBlock { Text = label, Margin = new(0, 10, 0, 4) }); var combo = new ComboBox { ItemsSource = values.Select(v => new KeyValuePair<string, string>(v.Id, v.Name)), DisplayMemberPath = "Value", SelectedValuePath = "Key", Padding = new(5) }; panel.Children.Add(combo); return combo;
-        }
-        TextBox Numeric(string label) { panel.Children.Add(new TextBlock { Text = label, Margin = new(0, 10, 0, 4) }); var box = new TextBox { Padding = new(7) }; panel.Children.Add(box); return box; }
-        var target = Choice("Texte à positionner", [("tag", "Repère du composant"), ("detail", "Caractéristiques / référence / gamme"), ("description", "Description")]);
-        var visible = new CheckBox { Content = "Afficher ce texte", Margin = new(0, 12, 0, 0) }; panel.Children.Add(visible);
-        var side = Choice("Position par rapport au composant", [("top", "Haut"), ("bottom", "Bas"), ("left", "Gauche"), ("right", "Droite"), ("custom", "Coordonnées libres depuis le centre")]);
-        var horizontal = Choice("Alignement horizontal du texte", [("left", "Gauche"), ("center", "Centré"), ("right", "Droite")]);
-        var vertical = Choice("Alignement vertical du texte", [("top", "Haut"), ("center", "Milieu"), ("bottom", "Bas")]);
-        var gap = Numeric("Distance au bord du symbole"); var x = Numeric("Décalage X précis · positif vers la droite"); var y = Numeric("Décalage Y précis · positif vers le bas");
-        panel.Children.Add(new TextBlock { Text = "Les décalages sont en unités de dessin, sans arrondi à la grille. En position libre, X et Y partent du centre du composant. Le texte suit ses déplacements et reste lisible après rotation.", TextWrapping = TextWrapping.Wrap, Foreground = Drawing.Brush("#61758A"), FontSize = 11, Margin = new(0, 12, 0, 8) });
-        bool loading = false;
-        void LoadPlacement()
-        {
-            loading = true; var c = Editor.Sheet.Components.Single(c => c.Id == id); labelTarget = target.SelectedIndex;
-            var p = labelTarget == 0 ? c.TagPlacement : labelTarget == 1 ? c.DetailPlacement : c.DescriptionPlacement;
-            visible.IsChecked = p.Visible; side.SelectedValue = p.Side; horizontal.SelectedValue = p.Horizontal; vertical.SelectedValue = p.Vertical; gap.Text = Number(p.Gap); x.Text = Number(p.OffsetX); y.Text = Number(p.OffsetY); loading = false;
-        }
-        side.SelectionChanged += (_, _) => { if (loading) return; string s = (string)side.SelectedValue; horizontal.SelectedValue = s == "left" ? "right" : s == "right" ? "left" : "center"; vertical.SelectedValue = s == "top" ? "bottom" : s == "bottom" ? "top" : "center"; x.Text = "0"; y.Text = "0"; };
-        target.SelectionChanged += (_, _) => LoadPlacement(); target.SelectedIndex = labelTarget;
-        var feedback = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new(0, 8, 0, 8), Foreground = Drawing.Brush("#007F86") }; panel.Children.Add(feedback);
-        var apply = new Button { Content = "Appliquer au schéma", Padding = new(10), IsDefault = true, Margin = new(0, 8, 0, 0) };
-        apply.Click += (_, _) =>
-        {
-            try
-            {
-                var placement = new LabelPlacement { Side = (string)side.SelectedValue, Horizontal = (string)horizontal.SelectedValue, Vertical = (string)vertical.SelectedValue, Gap = ReadNumber(gap.Text), OffsetX = ReadNumber(x.Text), OffsetY = ReadNumber(y.Text), Visible = visible.IsChecked == true }; placement.Validate();
-                var c = Editor.Sheet.Components.Single(c => c.Id == id); Editor.Change(() => { if (labelTarget == 0) c.TagPlacement = placement; else if (labelTarget == 1) c.DetailPlacement = placement; else c.DescriptionPlacement = placement; }); feedback.Text = "Position appliquée. Ctrl+Z permet de l’annuler dans l’éditeur.";
-            }
-            catch (Exception ex) { feedback.Text = ex.Message; }
-        };
-        panel.Children.Add(apply); var close = new Button { Content = "Fermer", IsCancel = true, Padding = new(10), Margin = new(0, 6, 0, 0) }; panel.Children.Add(close); dialog.ShowDialog();
     }
     private string? Prompt(string title, string label, string value)
     {
@@ -288,7 +252,7 @@ public sealed partial class MainWindow : Window
         var dialog = new SaveFileDialog { Filter = $"{format.ToUpperInvariant()}|*.{format}", FileName = "Schema." + format }; if (dialog.ShowDialog(this) != true) return;
         if (format == "pdf") Export.Pdf(Editor.Project, dialog.FileName); else if (format == "svg") Export.Svg(Editor.Project, Editor.Sheet, dialog.FileName); else Export.Csv(Editor.Project, dialog.FileName); status.Text = "Export créé · " + dialog.FileName;
     }
-    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nGlisser dans le vide : sélection par rectangle · Ctrl : ajouter\nClic droit : commandes rapides · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour choisir côté, alignement ou coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Pour une dérivation, tirez une borne sur le trajet d’un fil : un point de jonction est créé. Les simples croisements restent sans connexion.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
+    private void Help() => MessageBox.Show(this, "Bibliothèque : cliquez un équipement, puis cliquez sur le folio. Échap termine la pose.\n\nV : sélectionner · W : conducteur · T : texte · R : rotation · F : ajuster\nGlisser dans le vide : sélection par rectangle · Ctrl : ajouter\nClic droit : commandes rapides · Suppr : supprimer · Ctrl+D : dupliquer\nMolette : zoom · Bouton central : déplacer la vue\nCtrl+S : enregistrer · Ctrl+Z / Ctrl+Y : annuler / rétablir\n\nCâbler : tirez depuis une borne vers une autre, même en mode Sélection. W permet aussi de cliquer les bornes et les points de passage.\nFil sélectionné : glissez un segment ou sa poignée carrée pour ajuster le tracé ; glissez une poignée ronde pour changer de borne.\nComposant sélectionné : Propriétés → Position des textes pour glisser les textes dans l’aperçu, choisir un côté ou une icône d’alignement et saisir des coordonnées précises.\nPanneaux : ● / ○ pour épingler ou masquer automatiquement, × pour fermer ; menu Affichage pour les retrouver.\n\nLes connexions sont attachées aux bornes et suivent les déplacements. Pour une dérivation, tirez une borne sur le trajet d’un fil : un point de jonction est créé. Les simples croisements restent sans connexion.\n\nLes gammes fabricants sont des aides à la sélection. Les symboles sont fonctionnels ; vérifiez le bornage de la référence retenue. La vérification ne calcule pas les protections ni la conformité électrique.", "Utiliser GeMMeElec");
     private void McpHelp() => MessageBox.Show(this, "Le serveur MCP fait partie du même exécutable.\n\nCommande :\n" + Environment.ProcessPath + " --mcp\n\nTransport stdio. Gardez l’application ouverte. Le serveur rejoint cette fenêtre par un canal Windows limité à votre compte. Les modifications sont annulables avec Ctrl+Z.\n\nVoir docs/MCP.md dans le dépôt pour la configuration du client.", "MCP GeMMeElec");
     public void McpActivity(string tool) { mcpStatus.Text = "● MCP · " + tool; status.Text = "Commande MCP exécutée : " + tool; }
     internal void DisposeTestBridge() => bridge.Dispose();

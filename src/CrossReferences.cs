@@ -96,13 +96,37 @@ public sealed partial class Editor
         if (first.Id == second.Id || first.Symbol == second.Symbol) throw new ArgumentException("Choisir un départ et une arrivée distincts.");
         if (name.Length == 0) throw new ArgumentException("Saisir un nom de liaison.");
         if (points.Any(c => c.Id != firstId && c.Id != secondId && c.LinkName.Trim().Equals(name, StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("Ce nom appartient déjà à d’autres reports. Choisir un nom unique pour cette paire, ou utiliser les propriétés pour une liaison en étoile.");
-        Change(() => { foreach (var c in new[] { first, second }) { c.LinkName = name; c.LinkMode = "pair"; c.LinkSource = false; c.LinkOrder = 0; } });
+        Change(() => { foreach (var c in new[] { first, second }) { c.LinkName = name; if (!c.ReferenceIndependentName) c.ReferenceName = name; c.LinkMode = "pair"; c.LinkSource = false; c.LinkOrder = 0; } });
     }
-    public void ConfigureReference(string id, string name, string mode, int order, bool source)
+    public void ConfigureReference(string id, string name, string mode, int order, bool source, string? displayName = null, bool? independentName = null, string? historyKey = null)
     {
         var c = Sheet.Components.Single(x => x.Id == id && CrossReferences.IsPoint(x));
-        Change(() => { c.LinkName = name.Trim(); c.LinkOrder = order; c.LinkMode = mode; c.LinkSource = source && mode == "star";
+        Change(() => {
+            bool rejoin = c.ReferenceIndependentName && independentName == false;
+            string oldDisplay = ReferenceDisplay.Name(c), oldLink = c.LinkName;
+            c.ReferenceIndependentName = independentName ?? c.ReferenceIndependentName;
+            c.LinkName = name.Trim(); c.LinkOrder = order; c.LinkMode = mode; c.LinkSource = source && mode == "star";
             if (c.LinkName.Length > 0) foreach (var other in CrossReferences.Points(Project).Select(x => x.Component).Where(x => x.Id != c.Id && x.LinkName.Trim().Equals(c.LinkName, StringComparison.OrdinalIgnoreCase))) { other.LinkMode = mode; if (source || mode == "pair") other.LinkSource = false; }
-        });
+            string value = displayName ?? (oldLink != c.LinkName && !c.ReferenceIndependentName ? c.LinkName : ReferenceDisplay.Name(c));
+            if (rejoin && (displayName is null || displayName == oldDisplay)) value = LinkedNames(c).FirstOrDefault(x => x.Id != c.Id && !x.ReferenceIndependentName) is Component shared ? ReferenceDisplay.Name(shared) : value;
+            if (displayName is not null || oldLink != c.LinkName || rejoin) SetReferenceName(c, value);
+        }, historyKey);
     }
+    private List<Component> LinkedNames(Component c)
+    {
+        var refs = new CrossReferences(Project); var result = new List<Component>(); var seen = new HashSet<string>(); var queue = new Queue<Component>(); queue.Enqueue(c);
+        while (queue.TryDequeue(out var current)) { if (!seen.Add(current.Id)) continue; result.Add(current); foreach (var target in refs.Targets(current.Id)) queue.Enqueue(target.Component); }
+        return result;
+    }
+    internal void SetReferenceName(Component c, string name)
+    {
+        c.ReferenceName = name;
+        if (!c.ReferenceIndependentName) foreach (var linked in LinkedNames(c).Where(x => !x.ReferenceIndependentName)) linked.ReferenceName = name;
+    }
+    public void RenameReference(string id, string name, string? historyKey = null)
+    {
+        var c = CrossReferences.Points(Project).Single(x => x.Component.Id == id).Component;
+        Change(() => SetReferenceName(c, name), historyKey);
+    }
+
 }

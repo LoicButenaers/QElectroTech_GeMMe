@@ -50,9 +50,14 @@ public sealed class Sheet
 }
 public sealed class Component
 {
+    public List<ComponentText> AdditionalTexts { get; set; } = [];
+    public Dictionary<string, ComponentText> TextOverrides { get; set; } = [];
     public bool AutoJunction { get; set; }
     public bool ShowPortLabels { get; set; } = true;
     [JsonIgnore] public SymbolDefinition? ResolvedDefinition { get; set; }
+    public bool ReferenceIndependentName { get; set; }
+    public string ReferenceName { get; set; } = "";
+    public bool ReferenceDestinationInline { get; set; } = true;
     public string LinkName { get; set; } = "";
     public string LinkMode { get; set; } = "pair";
     public int LinkOrder { get; set; }
@@ -95,6 +100,12 @@ public sealed class Component
 }
 public sealed class LabelPlacement
 {
+    public string AnchorPort { get; set; } = "";
+    public double FontSize { get; set; }
+    public string Color { get; set; } = "";
+    public double Rotation { get; set; }
+    public double EffectiveSize(double fallback) => FontSize > 0 ? FontSize : fallback;
+    public string EffectiveColor(string fallback) => Color.Length > 0 ? Color : fallback;
     public string Side { get; set; } = "right";
     public string Horizontal { get; set; } = "left";
     public string Vertical { get; set; } = "center";
@@ -108,13 +119,15 @@ public sealed class LabelPlacement
         var anchor = Side switch
         {
             "top" => new Point(c.X, r.Top - Gap), "bottom" => new Point(c.X, r.Bottom + Gap),
-            "left" => new Point(r.Left - Gap, c.Y), "right" => new Point(r.Right + Gap, c.Y), _ => new Point(c.X, c.Y)
+            "left" => new Point(r.Left - Gap, c.Y), "right" => new Point(r.Right + Gap, c.Y), _ => AnchorPort.Length > 0 ? c.PortPoint(AnchorPort) : new Point(c.X, c.Y)
         };
         return new(anchor.X + OffsetX - (Horizontal == "center" ? width / 2 : Horizontal == "right" ? width : 0),
             anchor.Y + OffsetY - (Vertical == "center" ? height / 2 : Vertical == "bottom" ? height : 0));
     }
     public void Validate()
     {
+        if (AnchorPort is null || AnchorPort.Length > 100) throw new InvalidDataException("Ancrage de texte invalide.");
+        if (!double.IsFinite(FontSize) || (FontSize != 0 && (FontSize < 4 || FontSize > 200)) || !double.IsFinite(Rotation) || Math.Abs(Rotation) > 360 || Color is null || (Color.Length > 0 && !System.Text.RegularExpressions.Regex.IsMatch(Color, "^#[0-9a-fA-F]{6}$"))) throw new InvalidDataException("Style de texte invalide : taille 4 à 200 (0 = automatique), couleur #RRGGBB et rotation de −360° à 360°.");
         if (Side is not ("top" or "bottom" or "left" or "right" or "custom") || Horizontal is not ("left" or "center" or "right") || Vertical is not ("top" or "center" or "bottom") || !double.IsFinite(Gap) || Gap is < 0 or > 1000 || !double.IsFinite(OffsetX) || !double.IsFinite(OffsetY) || Math.Abs(OffsetX) > 10000 || Math.Abs(OffsetY) > 10000) throw new InvalidDataException("Position de texte invalide.");
     }
 }
@@ -231,7 +244,7 @@ public static class ProjectStore
             {
                 if (c is null) throw new InvalidDataException("Composant vide.");
                 Text(c.Tag); Text(c.Description); Text(c.Brand); Text(c.Range); Text(c.Reference); Text(c.Rating); Text(c.Source); Text(c.CatalogId);
-                Text(c.LinkName);
+                Text(c.LinkName); Text(c.ReferenceName);
                 if (c.LinkMode is not ("pair" or "star") || c.LinkOrder is < 0 or > 99999 || c.LinkName.Length > 80) throw new InvalidDataException("Paramètres de renvoi invalides.");
                 Id(c.Id);
                 if (c.Symbol is null) throw new InvalidDataException("Symbole non pris en charge.");
@@ -240,7 +253,7 @@ public static class ProjectStore
                 if (!double.IsFinite(c.X) || !double.IsFinite(c.Y) || c.X < 0 || c.X > s.Width || c.Y < 0 || c.Y > s.Height || c.Rotation % 90 != 0) throw new InvalidDataException("Position ou rotation de symbole invalide.");
                 c.PortLabels ??= [];
                 if (c.TagPlacement is null || c.DetailPlacement is null || c.DescriptionPlacement is null) throw new InvalidDataException("Position de texte absente.");
-                c.TagPlacement.Validate(); c.DetailPlacement.Validate(); c.DescriptionPlacement.Validate();
+                c.TagPlacement.Validate(); c.DetailPlacement.Validate(); c.DescriptionPlacement.Validate(); ComponentTexts.Validate(c);
                 foreach (var label in c.PortLabels) { Text(label.Value); if (!c.Definition.Ports.Any(port => port.Id == label.Key)) throw new InvalidDataException("Libellé de borne inconnue."); }
             }
             var componentIndex=s.Components.ToDictionary(c=>c.Id);
@@ -302,32 +315,38 @@ public sealed partial class Editor
     public void SelectSheet(string id)
     {
         if (!Project.Sheets.Any(s => s.Id == id)) throw new ArgumentException("Folio introuvable.");
-        CurrentSheetId = id; Notify();
+        EndPropertyEdit(); CurrentSheetId = id; Notify();
     }
     public void New(string title)
     {
         var created = new Project { Title = title }; ProjectStore.ValidateStructure(created);
-        Project = created; CurrentSheetId = Project.Sheets[0].Id; FilePath = null; undo.Clear(); redo.Clear(); saved = ProjectStore.Serialize(Project); Notify();
+        Project = created; CurrentSheetId = Project.Sheets[0].Id; FilePath = null; undo.Clear(); redo.Clear(); EndPropertyEdit(); saved = ProjectStore.Serialize(Project); Notify();
     }
     public void Open(string path)
     {
         var loaded = ProjectStore.Load(path);
-        Project = loaded; CurrentSheetId = Project.Sheets[0].Id; FilePath = Path.GetFullPath(path); undo.Clear(); redo.Clear(); saved = ProjectStore.Serialize(Project); Notify();
+        Project = loaded; CurrentSheetId = Project.Sheets[0].Id; FilePath = Path.GetFullPath(path); undo.Clear(); redo.Clear(); EndPropertyEdit(); saved = ProjectStore.Serialize(Project); Notify();
     }
-    public void Save(string path) { ProjectStore.Save(Project, path); FilePath = Path.GetFullPath(path); saved = ProjectStore.Serialize(Project); Notify(); }
-    public void Change(Action action)
+    public void Save(string path) { EndPropertyEdit(); ProjectStore.Save(Project, path); FilePath = Path.GetFullPath(path); saved = ProjectStore.Serialize(Project); Notify(); }
+    private string? propertyHistoryKey;
+    private DateTime propertyHistoryTime;
+    public void EndPropertyEdit() => propertyHistoryKey = null;
+    public void Change(Action action, string? historyKey = null)
     {
         if (InteractionInProgress) throw new InvalidOperationException("Terminer le déplacement en cours.");
         var before = ProjectStore.Serialize(Project);
-        try { action(); Commit(before); }
+        try { action(); Commit(before, historyKey); }
         catch { Project = ProjectStore.Deserialize(before); Notify(); throw; }
     }
-    public void Commit(string before)
+    public void Commit(string before, string? historyKey = null)
     {
         ProjectStore.ValidateStructure(Project);
         Junctions.Cleanup(Project);
         ProjectStore.ValidateStructure(Project);
-        if (before != ProjectStore.Serialize(Project)) { undo.Add(before); redo.Clear(); TrimHistory(); }
+        if (before != ProjectStore.Serialize(Project)) {
+            if (historyKey is null || propertyHistoryKey != historyKey || undo.Count == 0 || DateTime.UtcNow - propertyHistoryTime > TimeSpan.FromSeconds(2)) undo.Add(before);
+            redo.Clear(); TrimHistory(); propertyHistoryKey = historyKey; propertyHistoryTime = DateTime.UtcNow;
+        } else if (historyKey is null) EndPropertyEdit();
         Notify();
     }
     public void CancelPreview(string before) { Project = ProjectStore.Deserialize(before); InteractionInProgress = false; RepairSelection(); Notify(); }
@@ -338,12 +357,12 @@ public sealed partial class Editor
     }
     public void Undo()
     {
-        if (!CanUndo || InteractionInProgress) return;
+        EndPropertyEdit(); if (!CanUndo || InteractionInProgress) return;
         redo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(undo[^1]); undo.RemoveAt(undo.Count - 1); TrimHistory(); RepairSelection(); Notify();
     }
     public void Redo()
     {
-        if (!CanRedo || InteractionInProgress) return;
+        EndPropertyEdit(); if (!CanRedo || InteractionInProgress) return;
         undo.Add(ProjectStore.Serialize(Project)); Project = ProjectStore.Deserialize(redo[^1]); redo.RemoveAt(redo.Count - 1); TrimHistory(); RepairSelection(); Notify();
     }
     private void TrimHistory()

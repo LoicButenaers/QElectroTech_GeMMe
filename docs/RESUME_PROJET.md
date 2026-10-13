@@ -1,0 +1,175 @@
+# GeMMeElec — résumé du travail réalisé
+
+État au **13 octobre 2026**, version publiée **0.11.0.0**.
+
+Ce document résume les réalisations présentes dans le dépôt et la dernière livraison vérifiée. L’objectif initial reste un outil de conception de schémas électriques industriels pour la Belgique et l’Europe, avec une richesse fonctionnelle inspirée d’EPLAN P8. La version actuelle constitue une base fonctionnelle ; l’équivalence complète avec EPLAN n’est pas réalisée.
+
+## 1. Projet et livraison
+
+- Une première phase de travail s’appuyait sur QElectroTech et la branche `EPLAN_DESIGN`.
+- À la demande de l’utilisateur, le développement est ensuite reparti de zéro sur la branche **`GeMMeElec`**, créée depuis `main`. Les anciennes branches et leur historique sont conservés.
+- L’application actuelle est indépendante des sources QElectroTech, développée en **C# / WPF / .NET 10**, pour Windows x64.
+- Le logo fourni par l’utilisateur est intégré.
+- Dépôt de travail : `C:\dev\QElectroTech_GeMMe`.
+- Exécutable autonome : `C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`.
+- Une seule version de l’exécutable est conservée à ce chemin ; le runtime et les bibliothèques nécessaires y sont embarqués.
+- Les projets utilisent le format JSON **`.gemelec`**, avec sauvegarde atomique, contrôle de structure et historique d’annulation/rétablissement.
+
+Le travail reste dans le dépôt de l’utilisateur ; le dépôt public de QElectroTech n’est pas modifié. Le projet utilisateur `C:\Users\pravi\Documents\LaserSieve_GH.gemelec`, travaillé lors d’une étape précédente à partir du schéma LaserSieve, est laissé intact pendant les évolutions actuelles du logiciel.
+
+## 2. Éditeur de schémas
+
+- Folios A3 paysage : création, renommage, changement d’ordre et suppression annulable.
+- Placement de composants depuis la bibliothèque, déplacement, rotation, duplication et suppression.
+- Sélection multiple par rectangle avec le clic gauche maintenu ; Ctrl permet d’ajouter à la sélection.
+- Déplacement groupé des composants avec les coudes des conducteurs internes au groupe.
+- Zoom à la molette, déplacement de la vue et ajustement du folio à l’écran.
+- Menus contextuels sur les composants, reports, conducteurs, fond du schéma et éléments de bibliothèque.
+- Panneaux Bibliothèque, Folios et Propriétés épinglables, fermables et masquables automatiquement ; disposition et largeur mémorisées.
+- Grille de placement dont l’affichage et l’intensité sont réglables. Elle est absente des exports PDF/SVG.
+- Palette de couleurs avec ajout et enregistrement de couleurs personnalisées.
+
+## 3. Conducteurs et jonctions
+
+- Création de liaisons en tirant d’une borne vers une autre, ou par clics successifs.
+- Routage orthogonal, points de passage manuels, déplacement des segments et reconnexion par poignées.
+- Les conducteurs suivent les bornes lorsque les composants sont déplacés ou tournés.
+- Dérivation sur le trajet d’un fil existant, avec division du conducteur et conservation de ses propriétés.
+- Points de jonction dynamiques pour les trajets communs ; ils suivent les déplacements et disparaissent lorsque la connexion ne nécessite plus de point.
+- Les croisements de fils indépendants ne créent pas automatiquement une connexion.
+- Numéros de conducteurs orientés le long du fil, sur son plus long segment, à l’écran comme dans les exports.
+
+Le routage ne contourne pas automatiquement tous les obstacles du schéma.
+
+## 4. Reports interfolios
+
+- Deux symboles noirs distincts : **Folio suivant / départ** et **Folio précédent / arrivée**, avec triangles évidés et raccordements adaptés.
+- Liaison par nom ou par sélection guidée d’une contrepartie ; modes chaîne et étoile.
+- Double-clic sur le report ou son nom pour rejoindre le report lié.
+- Continuité des connexions entre folios et navigateur des renvois.
+- Nom affiché libre, propagé aux reports liés lors du renommage.
+- Case **Nom indépendant** pour conserver un nom différent sur un report ; la décocher reprend le nom partagé.
+- Destination calculée automatiquement avec numéro de folio et zone, affichée en vert sous le nom par défaut.
+- Style et position de la destination réglables séparément ; son contenu reste calculé.
+
+## 5. Textes et propriétés
+
+- Fenêtre **Position des textes** avec aperçu interactif, sélection directe et déplacement à la souris.
+- Édition individuelle du repère, des caractéristiques, de la description, des libellés de bornes, des textes vectoriels internes et des textes ajoutés.
+- Ajout de textes attachés au composant et suppression des textes ajoutés depuis cette fenêtre.
+- Placement haut, bas, gauche, droite ou par coordonnées précises ; icônes d’alignement du texte.
+- Taille, couleur, rotation et visibilité propres à chaque texte.
+- Ajustement intelligent individuel tenant compte du symbole, des autres textes, des conducteurs et des limites du folio.
+- Case **Aligner tous les textes visibles** pour ranger ensemble les textes du composant, du côté choisi ou automatiquement, en conservant leurs styles.
+- Signalement des conflits restants lorsqu’aucune position libre n’est trouvée parmi les propositions.
+- Propriétés du panneau principal appliquées **en temps réel**, sans bouton Appliquer : composants, reports, fils et annotations. La saisie conserve le curseur et les valeurs invalides ne remplacent pas la dernière valeur valide.
+- Annulation des modifications ; regroupement des saisies successives d’un même champ dans l’historique.
+
+La fenêtre Position des textes conserve un brouillon avec aperçu immédiat : **Valider** applique l’ensemble en une opération annulable, **Annuler** abandonne les modifications. Les textes incorporés dans une image fabricant ne deviennent pas éditables individuellement. L’enregistrement sur disque reste une action distincte, avec Ctrl+S.
+
+## 6. Folios, cartouches et nomenclature
+
+### Folios et cartouches
+
+- Numéro de page automatique ou libre, titre, auteur, date, révision, vérificateur, approbateur, fonction, localisation et champs personnalisés.
+- Valeurs communes héritées du projet lorsque les valeurs du folio sont vides.
+- Cadre de repérage : lettres à gauche et numéros en haut, dimensions configurables. Ce cadre reste dans le PDF.
+- Création, duplication et modification de cartouches par cellules : dimensions, texte, alignements, bordures et images.
+- Champs liés aux données du projet et du folio, recalculés à l’écran et à l’export.
+- Modèles Simple et Technique ; import/export du format **`.gemcartouche`**.
+
+Le fichier QElectroTech `see-technical.titleblock` a servi de référence de présentation ; son import direct n’est pas implémenté.
+
+### BOM / nomenclature
+
+- Colonnes sélectionnables, renommables et réordonnables ; regroupement d’articles et filtres par folio ou fabricant.
+- Photos intégrées aux composants ou utilisation de leurs symboles.
+- Localisation associant chaque repère à son folio et sa zone, y compris dans les articles regroupés.
+- Ajout de la nomenclature au projet sous forme de folios **sans cartouche**.
+- Pagination automatique, en-têtes répétés et continuation des longues lignes.
+- Exports CSV et HTML avec images ; les folios BOM sont inclus dans le PDF du projet.
+
+Les folios BOM sont des instantanés : la commande d’actualisation doit être relancée après modification du schéma. Le CSV n’embarque pas d’images et l’export XLSX natif n’est pas disponible.
+
+## 7. Bibliothèques et création de symboles
+
+Trois ensembles sont distingués pour éviter de confondre dessins génériques et sources officielles :
+
+| Ensemble | Contenu actuel | Utilisation |
+| --- | --- | --- |
+| Symboles industriels GeMMeElec | 92 symboles génériques | Placement et raccordement ; aucune identité revendiquée avec les symboles EPLAN |
+| GeMMe fabricant · dessins officiels | Schneider LC1D09BD, ABB AF09-30-01-13 / 1SBL137001R1301, Eaton 276705 / DILM9-10(24VDC) | Images issues de documents officiels, avec bornes relevées et raccordables |
+| EPLAN · aperçus officiels | 4 illustrations officielles | Consultation uniquement, sans placement ni raccordement |
+
+Les sources, références, éditions, méthodes et empreintes SHA-256 des dessins officiels sont documentées. Les images fabricants sont conservées sans redessin ; les bornes ont été relevées manuellement. Le contrôle d’intégrité ne constitue pas une certification électrique.
+
+Un atelier interactif permet de créer un symbole vide ou une copie : lignes, rectangles, cercles, textes, bornes, poignées, coordonnées, grille, zoom et historique local. Les copies sont embarquées dans le projet et échangeables au format **`.gemsymbol`**. La bibliothèque d’origine reste intacte.
+
+**La bibliothèque équivalente à l’intégralité d’EPLAN et la couverture de trois fabricants pour chaque famille ne sont pas réalisées.** La collection officielle actuelle couvre trois références dans une famille et quatre aperçus EPLAN.
+
+## 8. Imports et exports
+
+| Format | Fonctionnement actuel |
+| --- | --- |
+| QElectroTech `.qet` | Conversion partielle des folios, symboles embarqués, bornes, propriétés et conducteurs ; rapport des pertes avant ouverture |
+| Symboles `.dxf` | Import de géométrie, blocs et textes ; réglage d’échelle et ajout manuel des bornes électriques |
+| Folios EPLAN / CAO exportés en `.dxf` | Récupération graphique multipage ; aucune reconstruction automatique des appareils, réseaux ou articles BOM |
+| EPLAN `.elk`, `.zw1`, `.epj` | Import non implémenté |
+| PDF | Export vectoriel multipage du projet, avec cartouches, repérage et folios BOM |
+| SVG | Export du folio avec les styles et positions des textes |
+| CSV / HTML | Exports de nomenclature configurables |
+
+La conversion QET comporte des simplifications : cartouches remplacés, certaines géométries/styles non repris, images et dessins libres non récupérés. Les liens des reports QET doivent être recréés avec les reports GeMMeElec. Un DXF graphique ne fournit pas à lui seul un bornage ou une connectivité fiable. Les sources importées ne sont pas écrasées automatiquement.
+
+## 9. MCP intégré
+
+- Le même exécutable, lancé avec **`--mcp`**, sert de passerelle vers l’application ouverte.
+- **45 outils** couvrent projets, folios, composants, conducteurs, reports, textes, symboles, imports, cartouches, nomenclature, exports et historique.
+- La passerelle utilise le modèle de l’application : les modifications sont visibles et annulables dans le logiciel.
+- Les nouvelles commandes permettent de lister les textes, en ajouter, les modifier individuellement, les supprimer et les aligner.
+- Transport JSON-RPC sur stdin/stdout, avec communication locale vers la fenêtre par un canal Windows limité au compte utilisateur.
+- Les paramètres sont validés et les projets non enregistrés sont protégés contre un remplacement implicite.
+- La configuration locale du client est fournie dans `.codex/config.toml` ; son chargement dépend de la session MCP du client.
+
+Le serveur a été testé directement par son transport MCP. Une configuration fournie ne signifie pas que les outils sont automatiquement chargés dans toutes les conversations déjà ouvertes.
+
+## 10. Fluidité et validation
+
+Les améliorations comprennent le cache de la scène et de la grille, l’indexation des composants et renvois, des caches bornés pour les textes/images, la virtualisation des tableaux, les imports en arrière-plan et la pagination BOM à la demande. L’aperçu des textes travaille sur le composant sélectionné et le panneau de propriétés n’est pas reconstruit à chaque caractère.
+
+Dernière livraison vérifiée : **0.11.0.0**, le 12 octobre 2026.
+
+- **75 scénarios applicatifs réussis**.
+- **68 vérifications MCP réussies**, sur les 45 outils déclarés et les parcours couverts par la suite.
+- Compilation sans avertissement.
+- Contrôles des connexions, sauvegardes/relectures, annulations, imports, exports, reports, textes et propriétés immédiates.
+- Tests WPF hors écran et instance MCP de test isolée, sans manipulation du PC ni remplacement d’un projet utilisateur.
+- Mesure locale : dix modifications immédiates dans un projet synthétique de 1 000 composants en environ **370 ms**. Ce résultat ne constitue pas une garantie de cadence d’affichage pour tous les projets.
+
+Ces résultats proviennent des rapports de la dernière livraison, consultés pour ce résumé. Aucune nouvelle compilation ni nouvelle exécution des tests n’a été nécessaire pour rédiger ce document.
+
+## 11. Limites restantes et règles de poursuite
+
+Restent notamment à développer : bibliothèque exhaustive, import EPLAN natif, références croisées bobines/contacts, gestion de câbles multicœurs, borniers automatiques, implantation d’armoires, dimensionnement et simulation électriques. Aucune équivalence complète à EPLAN P8 ni certification IEC/RGIE n’est annoncée.
+
+Le nettoyage du dépôt a été étudié et les sources actives réorganisées, mais la suppression de certains anciens outils/caches QElectroTech/Qt/MSYS2 avait été bloquée lors d’une étape précédente. Le nettoyage intégral de ces fichiers locaux ne doit donc pas être considéré comme terminé.
+
+Pour poursuivre : travailler sur `GeMMeElec`, préserver les anciennes branches et les documents utilisateur, remplacer le même exécutable à chaque livraison, conserver la distinction entre symboles génériques et sources officielles, et vérifier la fluidité ainsi que les connexions, la persistance, l’annulation et le MCP après les changements de modèle.
+
+## 12. Documents et commandes utiles
+
+- [Guide d’utilisation et structure du dépôt](../README.md)
+- [Configuration et outils MCP](MCP.md)
+- [Origine et limites des bibliothèques](CATALOGUE.md)
+- [Imports et édition de symboles](IMPORTS.md)
+- [Fonctionnement des renvois](RENVOIS.md)
+- [Historique des validations](VALIDATION.md)
+
+Depuis `C:\dev\QElectroTech_GeMMe`, sous PowerShell, après fermeture de l’application pour la compilation :
+
+```powershell
+./Build.ps1 -Test
+./Test-Mcp.ps1 -Headless
+```
+
+Les rapports sont enregistrés dans `build/self-test.json` et `build/mcp-test.json`. Les outils de compilation, dépendances et caches restent sous `build/`, hors du suivi Git.

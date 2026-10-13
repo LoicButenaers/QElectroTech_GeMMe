@@ -1,4 +1,4 @@
-# GeMMeElec
+﻿# GeMMeElec
 
 Atelier Windows de conception de schémas électriques industriels, réécrit en **C# / WPF / .NET 10**. Branche `GeMMeElec`, créée depuis `main`. Les anciens fichiers suivis ont été retirés de cette branche ; l’historique Git et la branche `EPLAN_DESIGN` sont conservés. Aucun code QElectroTech n’est utilisé par cette nouvelle application.
 
@@ -8,7 +8,7 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.8)
+## Fonctionnalités (version 0.11)
 
 - Projets JSON `.gemelec`, sauvegarde atomique, ouverture et contrôle de structure.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
@@ -38,7 +38,7 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec un budget mémoire de 64 Mo pour les projets contenant des images.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3, nomenclature CSV UTF-8.
-- Serveur MCP local avec 41 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Serveur MCP local avec 45 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Dessiner
 
@@ -46,11 +46,23 @@ Cliquer un équipement dans la bibliothèque puis cliquer le folio. Échap termi
 
 Sélectionner un conducteur puis glisser un segment ou une **poignée carrée** pour ajuster son tracé. Glisser une **poignée ronde** vers une borne pour changer son raccordement. L’inspecteur permet aussi de saisir les points `X ; Y`, un par ligne, et de rétablir le tracé automatique. Échap annule le geste ; Ctrl+Z annule sa validation. Pour créer un nouveau fil depuis une borne occupée par le fil sélectionné, activer Conducteur (W).
 
-Sélectionner un composant puis **Propriétés → Position des textes…**. Choisir le repère, les caractéristiques ou la description ; régler haut/bas/gauche/droite, alignement horizontal et vertical, distance et décalages X/Y. Le mode **Coordonnées libres depuis le centre** utilise le centre du composant comme origine. Les décimales acceptent une virgule ou un point, sans arrondi à la grille. Appliquer avant de changer de texte ; les positions suivent le composant et sont enregistrées avec le projet.
+Sélectionner un composant puis **Propriétés → Position des textes…** (également au clic droit). Dans l’aperçu interactif, glisser le texte encadré, utiliser les quatre flèches pour choisir un côté et les icônes pour l’alignement. Les coordonnées X/Y et la distance sont visibles immédiatement ; les décimales acceptent une virgule ou un point. La molette zoome ; les flèches du clavier déplacent le texte d’une unité (Maj : dix). Échap annule un glissement. Passer d’un texte à l’autre conserve les réglages du brouillon ; **Valider** enregistre tous les changements en une seule opération annulable, **Annuler** les abandonne. Pour un report, la destination s’affiche par défaut en vert sous le nom. La case **Destination sous le nom** conserve ce placement automatique ; elle peut être décochée pour placer le lien séparément.
+
+Tous les textes sont accessibles dans cette fenêtre : repère, caractéristiques, description, libellés de bornes, textes internes du symbole et textes ajoutés. Cliquer directement un texte dans l’aperçu ou le choisir dans la liste, puis modifier son contenu, sa position ou son style. **Ajouter du texte** crée un texte attaché au composant ; **Supprimer ce texte** retire uniquement un texte ajouté. Les textes internes sont personnalisés pour ce composant sans modifier le symbole de bibliothèque. La destination des reports reste calculée automatiquement.
+
+Cocher **Aligner tous les textes visibles**, puis cliquer **Haut**, **Bas**, **Gauche**, **Droite** ou **Automatique** pour ranger les textes du composant ensemble, sans superposition entre eux. Les tailles, couleurs et rotations sont conservées ; les textes vides ou masqués restent inchangés. Décocher la case pour ajuster seulement le texte sélectionné.
+
+La section **Ajustement intelligent** propose quatre boutons **↑ Haut**, **↓ Bas**, **← Gauche** et **→ Droite** : le texte sélectionné reste du côté demandé, aligné sur le centre ou les bords du symbole. Le bouton **Automatique · tous les côtés** conserve la recherche libre autour du symbole. Il recherche une place libre autour de celui-ci en tenant compte des bornes, des fils, des autres textes et des limites du folio. Le résultat apparaît dans l’aperçu ; **Valider** l’enregistre et **Annuler** l’abandonne. Si aucun emplacement libre n’est trouvé parmi les positions proposées du côté choisi, un message invite à vérifier le résultat ; le texte ne bascule pas automatiquement de l’autre côté. Les textes vides ou masqués restent inchangés.
+
+Le **nom affiché du report** est partagé automatiquement avec ses reports liés quand on le renomme depuis les propriétés ou **clic droit → Renommer le report…**. La case **Nom indépendant**, dans les propriétés du report, permet de conserver un nom différent pour celui-ci. Décocher cette case reprend immédiatement le nom partagé. La liaison électrique et la navigation par double-clic sont conservées.
+
+Dans **Position des textes → Taille, couleur et rotation**, régler séparément le repère, les caractéristiques, la description, ou le nom et la destination des reports. Taille de 4 à 200 unités (0 = automatique), couleur de la palette ou code `#RRGGBB` (vide = couleur automatique), rotation de −360° à 360°. L’aperçu est immédiat ; **Valider** enregistre tous les réglages en une opération annulable. L’ajustement intelligent conserve ces styles et tient compte de l’encombrement du texte tourné. Les styles sont enregistrés dans le projet et conservés dans les exports SVG/PDF.
+
+Les noms des câbles suivent automatiquement leur plus long segment : horizontaux au-dessus du fil, verticaux le long du fil (lecture de bas en haut), à l’écran comme dans les exports SVG/PDF.
 
 Dans les en-têtes des panneaux, **● / ○** épingle ou désépingle ; **×** ferme. Un panneau désépinglé reste accessible par son onglet latéral et se replie après une action sur le folio. Le menu **Affichage** rouvre les panneaux ou rétablit la disposition initiale. Les séparateurs règlent leur largeur. La disposition est enregistrée dans `build/GeMMeElec.layout.json`.
 
-**Affichage → Grille du plan** règle la visibilité de 0 à 100 % ou masque la grille, avec aperçu immédiat. L’accrochage reste de 10 unités. Les exports PDF/SVG et les folios BOM ne contiennent jamais cette grille. **Affichage → Palette des conducteurs** définit la couleur des prochains fils ; **Propriétés du fil → Palette de couleurs** choisit sa couleur, puis **Appliquer** la valide. Composer une teinte avec les curseurs rouge/vert/bleu ou le code hexadécimal, lui donner un nom et cliquer **Enregistrer cette couleur**. Un nom existant remplace sa teinte. La palette et les réglages de grille sont conservés dans `build/GeMMeElec.preferences.json` ; les couleurs appliquées aux fils sont également dans le projet.
+**Affichage → Grille du plan** règle la visibilité de 0 à 100 % ou masque la grille, avec aperçu immédiat. L’accrochage reste de 10 unités. Les exports PDF/SVG et les folios BOM ne contiennent jamais cette grille. **Affichage → Palette des conducteurs** définit la couleur des prochains fils ; **Propriétés du fil → Palette de couleurs** choisit sa couleur et l’applique immédiatement. Composer une teinte avec les curseurs rouge/vert/bleu ou le code hexadécimal, lui donner un nom et cliquer **Enregistrer cette couleur**. Un nom existant remplace sa teinte. La palette et les réglages de grille sont conservés dans `build/GeMMeElec.preferences.json` ; les couleurs appliquées aux fils sont également dans le projet.
 
 | Action | Raccourci |
 | --- | --- |
@@ -65,7 +77,7 @@ Dans les en-têtes des panneaux, **● / ○** épingle ou désépingle ; **×**
 | Annuler / rétablir | Ctrl+Z / Ctrl+Y |
 | Dupliquer / supprimer | Ctrl+D / Suppr |
 
-Les valeurs de l’inspecteur sont enregistrées dans le projet après **Appliquer les propriétés**. Le menu Fichier propose un exemple de départ moteur, explicitement incomplet côté commande.
+Les valeurs de l’inspecteur sont appliquées en temps réel au schéma, sans bouton Appliquer. La saisie reste en place sans perdre le curseur ; les valeurs incomplètes ou invalides sont signalées sans remplacer la dernière valeur valide. Ctrl+Z annule une séquence de saisie continue dans un même champ. Ctrl+S reste nécessaire pour enregistrer le projet sur disque. Le menu Fichier propose un exemple de départ moteur, explicitement incomplet côté commande.
 
 ## Bibliothèque et périmètre
 

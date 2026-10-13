@@ -14,7 +14,7 @@ public static class Export
         var root = new XElement(ns + "svg", new XAttribute("viewBox", $"0 0 {N(sheet.Width)} {N(sheet.Height)}"), new XAttribute("width", "420mm"), new XAttribute("height", "297mm"));
         root.Add(new XElement(ns + "title", $"{p.Title} — {sheet.Title}"));
         root.Add(new XElement(ns + "rect", new XAttribute("width", "100%"), new XAttribute("height", "100%"), new XAttribute("fill", "white")));
-        foreach (var s in Drawing.Scene(p, sheet))
+        foreach (var s in Drawing.Scene(p, sheet).SelectMany(Drawing.TextLines))
         {
             if(s.Kind=="image") { var img = new XElement(ns+"image",new XAttribute("x",N(s.X)),new XAttribute("y",N(s.Y)),new XAttribute("width",N(s.A)),new XAttribute("height",N(s.B)),new XAttribute("href",(s.Text.StartsWith("iVBOR") ? "data:image/png;base64," : "data:image/jpeg;base64,")+s.Text)); if(s.Rotation!=0) img.Add(new XAttribute("transform", $"rotate({N(s.Rotation)} {N(s.X)} {N(s.Y)})")); root.Add(img);continue; }
             XElement el;
@@ -58,7 +58,7 @@ public static class Export
         {
             var b = new StringBuilder(); double scale = Math.Min(1190.55 / sheet.Width, 841.89 / sheet.Height);
             b.AppendLine($"q {N(scale)} 0 0 {N(-scale)} 0 841.89 cm 1.6 w");
-            foreach (var s in Drawing.Scene(project, sheet))
+            foreach (var s in Drawing.Scene(project, sheet).SelectMany(Drawing.TextLines))
             {
                 var color = (System.Windows.Media.SolidColorBrush)Drawing.Brush(s.Color);
                 string rgb = $"{N(color.Color.R / 255.0)} {N(color.Color.G / 255.0)} {N(color.Color.B / 255.0)}";
