@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 9;
+    public const int CurrentVersion = 10;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -126,6 +126,8 @@ public sealed class Component
 }
 public sealed class LabelPlacement
 {
+    public bool Bold {get;set;}
+    public bool Italic {get;set;}
     public string AnchorPort { get; set; } = "";
     public double FontSize { get; set; }
     public string Color { get; set; } = "";
@@ -237,6 +239,9 @@ public static class WireRouting
 }
 public sealed class Annotation
 {
+    public bool Bold {get;set;}
+    public bool Italic {get;set;}
+    public List<RichRun> Runs {get;set;}=[];
     public double FontSize {get;set;}=16;
     public string Color {get;set;}="#203348";
     public double Rotation {get;set;}
@@ -268,7 +273,7 @@ public static class ProjectStore
             project.PdfOptions.Contents=false;
         }
         else if (project.Version is 3 or 4 or 5 or 6) {project.Version = Project.CurrentVersion;project.PdfOptions.Contents=false;}
-        else if (project.Version is 7 or 8) project.Version=Project.CurrentVersion;
+        else if (project.Version is 7 or 8 or 9) project.Version=Project.CurrentVersion;
         ValidateStructure(project);
         return project;
     }

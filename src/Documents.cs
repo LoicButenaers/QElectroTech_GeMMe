@@ -19,6 +19,9 @@ public sealed class TitleBlockTemplate
 // Coordinates are percentages of the cartouche, making templates portable between folios.
 public sealed class TitleBlockCell
 {
+    public bool Bold {get;set;}
+    public bool Italic {get;set;}
+    public List<RichRun> Runs {get;set;}=[];
     public double X { get; set; }
     public double Y { get; set; }
     public double Width { get; set; } = 25;
@@ -81,11 +84,12 @@ public static class DocumentModel
                 var image=ImageAssets.Decode(data); double scale=Math.Min(Math.Max(1,w-8)/image.PixelWidth,Math.Max(1,h-8)/image.PixelHeight);
                 double iw=image.PixelWidth*scale, ih=image.PixelHeight*scale; result.Add(new("image",x+(w-iw)/2,y+(h-ih)/2,iw,ih,Text:data)); continue;
             }
+            if(cell.Runs.Count>0){var resolved=RichText.ResolveRuns(cell.Text,cell.Runs,values);result.AddRange(RichText.Layout(Presentation.TextContent(p,new(){Text=string.Concat(resolved.Select(r=>r.Text)),Runs=resolved,FontSize=cell.FontSize,Bold=cell.Bold,Italic=cell.Italic,Align=cell.Align,Vertical=cell.Vertical}),new(x,y,w,h),4));continue;}
             var lines=Resolve(cell.Text,values).Replace("\r","").Split('\n');
-            double size=cell.FontSize; var widths=lines.Select(line=>Drawing.Measure(line,size).Width).ToArray();
+            bool bold=cell.Bold||p.Presentation.AllTextBold,italic=cell.Italic||p.Presentation.AllTextItalic;double size=cell.FontSize; var widths=lines.Select(line=>Drawing.Measure(line,size,bold,italic).Width).ToArray();
             double factor=Math.Min(1,Math.Min(Math.Max(1,w-8)/Math.Max(1,widths.DefaultIfEmpty(0).Max()),Math.Max(1,h-6)/(lines.Length*size*1.3)));
             size*=factor; double total=lines.Length*size*1.3; double ty=y+(cell.Vertical=="top"?3:cell.Vertical=="bottom"?h-total-3:(h-total)/2);
-            for(int i=0;i<lines.Length;i++) { double tw=widths[i]*factor; double tx=x+(cell.Align=="left"?4:cell.Align=="right"?w-tw-4:(w-tw)/2); result.Add(new("text",tx,ty+i*size*1.3,Text:lines[i],Size:size)); }
+            for(int i=0;i<lines.Length;i++) { double tw=widths[i]*factor; double tx=x+(cell.Align=="left"?4:cell.Align=="right"?w-tw-4:(w-tw)/2); result.Add(new("text",tx,ty+i*size*1.3,Text:lines[i],Size:size,Bold:bold,Italic:italic)); }
         }
         return result;
     }
@@ -103,7 +107,7 @@ public static class DocumentModel
         {
             if(t is null || string.IsNullOrWhiteSpace(t.Id)) throw new InvalidDataException("Identifiant de cartouche absent."); Text(t.Id); Text(t.Name);
             if(!double.IsFinite(t.Height)||t.Height<20||t.Height>500||t.Cells is null||t.Cells.Count>300) throw new InvalidDataException("Cartouche : hauteur 20 à 500, maximum 300 cellules.");
-            foreach(var c in t.Cells) { if(c is null || !new[]{c.X,c.Y,c.Width,c.Height,c.FontSize}.All(double.IsFinite)||c.X<0||c.Y<0||c.Width<=0||c.Height<=0||c.X+c.Width>100.001||c.Y+c.Height>100.001||c.FontSize<4||c.FontSize>72||c.Align is not("left" or "center" or "right")||c.Vertical is not("top" or "center" or "bottom")) throw new InvalidDataException("Cellule invalide : limites 0–100 %, taille 4–72."); Text(c.Text); Image(c.ImageId); }
+            foreach(var c in t.Cells) { if(c is null || !new[]{c.X,c.Y,c.Width,c.Height,c.FontSize}.All(double.IsFinite)||c.X<0||c.Y<0||c.Width<=0||c.Height<=0||c.X+c.Width>100.001||c.Y+c.Height>100.001||c.FontSize<4||c.FontSize>72||c.Align is not("left" or "center" or "right")||c.Vertical is not("top" or "center" or "bottom")) throw new InvalidDataException("Cellule invalide : limites 0–100 %, taille 4–72."); Text(c.Text);RichText.Validate(c.Text,c.Runs); Image(c.ImageId); }
         }
         if(p.Sheets is null) throw new InvalidDataException("Folios absents.");
         foreach(var s in p.Sheets)

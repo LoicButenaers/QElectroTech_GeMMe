@@ -121,7 +121,7 @@ public sealed partial class MainWindow
         else if (note is not null)
         {
             properties.Children.Add(new TextBlock { Text = "Texte du folio", FontSize = 18, Margin = new(0, 14, 0, 4) });
-            PropertyGroup("Contenu", () => { var input = Field("text", "Texte affiché", note.Text); input.AcceptsReturn = true; input.MinHeight = 75; LiveText(input, value => Editor.Change(() => Editor.Sheet.Notes.Single(n => n.Id == note.Id).Text = value, note.Id + ":text")); });
+            PropertyGroup("Contenu", () => { var input = Field("text", "Texte affiché", note.Text); input.AcceptsReturn = true; input.MinHeight = 75; LiveText(input, value => Editor.Change(() => {var live=Editor.Sheet.Notes.Single(n=>n.Id==note.Id);live.Text=value;live.Runs.Clear();}, note.Id + ":text")); });
             NoteStyleProperties(note);
             PropertyGroup("Position sur la page", () => PagePositionFields(note.Id, "note"));
         }

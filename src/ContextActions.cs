@@ -24,6 +24,7 @@ public sealed partial class MainWindow
         {
             menu.Items.Add(QuickAction("Propriétés", () => { workspace?.Show("properties"); Inspect(); }));
             menu.Items.Add(QuickAction("Cadrer la sélection",()=>Canvas.ZoomSelection()));
+            if(Canvas.Selected.Count==1&&Editor.Sheet.Graphics.FirstOrDefault(g=>Canvas.Selected.Contains(g.Id)&&g.Kind is "rect" or "textbox" or "table") is SheetGraphic freeGraphic)menu.Items.Add(QuickAction(freeGraphic.Kind=="table"?"Modifier le tableau…":"Écrire / formater le texte…",()=>EditGraphicContent(freeGraphic.Id)));
             if(components.Count>0)menu.Items.Add(QuickAction("Créer un bloc de circuit…",SaveCircuitBlock));
             if (components.Count > 0) menu.Items.Add(QuickAction("Rotation 90°    R", Rotate));
             if (components.Count > 0 || Editor.Sheet.Notes.Any(n => Canvas.Selected.Contains(n.Id))||Editor.Sheet.Graphics.Any(g=>Canvas.Selected.Contains(g.Id))) menu.Items.Add(QuickAction("Dupliquer    Ctrl+D", Duplicate));

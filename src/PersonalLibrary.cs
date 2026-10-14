@@ -59,7 +59,7 @@ public sealed partial class SheetCanvas
         var block=PendingBlock??throw new InvalidOperationException("Aucune copie à placer.");var p=block.Project;var s=p.Sheets[0];var drawing=new System.Windows.Media.DrawingGroup();
         using(var dc=drawing.Open())
         {
-            Drawing.Render(dc,s.Graphics.Select(g=>FreeGraphics.Ink(p,g)));Drawing.Render(dc,s.Notes.Select(n=>FreeGraphics.NoteInk(p,s,n)));var refs=new CrossReferences(p);
+            Drawing.Render(dc,s.Graphics.SelectMany(g=>FreeGraphics.Scene(p,g)));Drawing.Render(dc,s.Notes.Select(n=>FreeGraphics.NoteInk(p,s,n)));var refs=new CrossReferences(p);
             foreach(var w in s.Wires){var path=w.Route(s);for(int i=1;i<path.Count;i++)dc.DrawLine(new(Drawing.Brush(w.Color),w.Thickness),path[i-1],path[i]);}
             foreach(var c in s.Components)Drawing.Render(dc,Drawing.ComponentScene(p,c,refs));
         }

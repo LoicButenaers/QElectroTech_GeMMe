@@ -35,9 +35,9 @@ public static class SmartTextPlacement
         {
             var route = wire.Route(sheet, components);
             for (int i = 1; i < route.Count; i++) Add(new Rect(route[i - 1], route[i]));
-            if (Drawing.WireLabel(wire, route) is Ink label) Add(Bounds(label));
+            if (Drawing.WireLabel(wire, route,project.Presentation) is Ink label) Add(Bounds(label));
         }
-        foreach (var note in sheet.Notes) Add(Bounds(new("text", note.X, note.Y, Text: note.Text, Size: 16)));
+        foreach (var note in sheet.Notes) Add(FreeGraphics.NoteBounds(project,sheet,note));
         var paper = new Rect(30, 40, Math.Max(1, sheet.Width - 60), Math.Max(1, DocumentModel.DrawingBottom(project, sheet) - 40));
         var symbol = working.Bounds();
         var candidates = new List<(LabelPlacement Placement, Rect Bounds, double Preference)>();
@@ -88,8 +88,8 @@ public static class SmartTextPlacement
         var obstacles = new List<Rect> { draft.Bounds() };
         foreach (var c in sheet.Components.Where(c => c.Id != draft.Id)) { obstacles.Add(c.Bounds()); obstacles.AddRange(Drawing.ComponentScene(project, c, refs).Where(i => i.Kind == "text").Select(Drawing.TextBounds)); }
         var index = sheet.Components.ToDictionary(c => c.Id);
-        foreach (var wire in sheet.Wires) { var path = wire.Route(sheet, index); for (int i = 1; i < path.Count; i++) { var r = new Rect(path[i - 1], path[i]); r.Inflate(3, 3); obstacles.Add(r); } if (Drawing.WireLabel(wire, path) is Ink label) obstacles.Add(Drawing.TextBounds(label)); }
-        obstacles.AddRange(sheet.Notes.Select(n => Drawing.TextBounds(new("text", n.X, n.Y, Text: n.Text, Size: 16))));
+        foreach (var wire in sheet.Wires) { var path = wire.Route(sheet, index); for (int i = 1; i < path.Count; i++) { var r = new Rect(path[i - 1], path[i]); r.Inflate(3, 3); obstacles.Add(r); } if (Drawing.WireLabel(wire, path,project.Presentation) is Ink label) obstacles.Add(Drawing.TextBounds(label)); }
+        obstacles.AddRange(sheet.Notes.Select(n => FreeGraphics.NoteBounds(project,sheet,n)));
         var paper = new Rect(30, 40, sheet.Width - 60, Math.Max(1, DocumentModel.DrawingBottom(project, sheet) - 40)); var bounds = draft.Bounds();
         double bestScore = double.PositiveInfinity; Point best = new(); bool clear = false; string bestSide = "right";
         foreach (var candidateSide in side is null ? new[] { "right", "left", "top", "bottom" } : new[] { side })

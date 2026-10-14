@@ -5,7 +5,7 @@ using System.Windows.Media;
 namespace GeMMeElec;
 
 // A single scene description drives screen, SVG and PDF rendering.
-public sealed record Ink(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "", string Color = "#203348", double Size = 12, double Rotation = 0, double Thickness = 1.6, string LineStyle = "solid", string Fill = "");
+public sealed record Ink(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "", string Color = "#203348", double Size = 12, double Rotation = 0, double Thickness = 1.6, string LineStyle = "solid", string Fill = "", bool Bold=false, bool Italic=false, IReadOnlyList<RichRun>? Runs=null);
 public sealed class SymbolPreview(string symbol) : FrameworkElement
 {
     public SymbolDefinition? Definition { get; set; }
@@ -23,13 +23,13 @@ public static class Drawing
 {
     public static List<Ink> Scene(Project project, Sheet sheet, ReadingOptions? reading = null)
     {
-        if (sheet.BomPage is not null) return BomFolios.Scene(project, sheet);
-        if (sheet.TerminalPlanId.Length>0) return TerminalStrips.Scene(project,sheet);
-        if (sheet.CabinetPlanId.Length>0) return Cabinets.PlanScene(project,sheet);
+        if (sheet.BomPage is not null) return Presentation.TextScene(project,BomFolios.Scene(project, sheet));
+        if (sheet.TerminalPlanId.Length>0) return Presentation.TextScene(project,TerminalStrips.Scene(project,sheet));
+        if (sheet.CabinetPlanId.Length>0) return Presentation.TextScene(project,Cabinets.PlanScene(project,sheet));
         List<Ink> result = sheet.Kind=="cover"?[]:[new("rect", 10, 10, sheet.Width - 40, sheet.Height - 40, Color: "#53677B")];
         result.AddRange(DocumentModel.Scene(project,sheet));
         result.AddRange(SheetZones.Frame(project, sheet));
-        result.AddRange(sheet.Graphics.Select(g=>FreeGraphics.Ink(project,g)));
+        result.AddRange(sheet.Graphics.SelectMany(g=>FreeGraphics.Scene(project,g)));
         var references = new CrossReferences(project);
         var components = sheet.Components.ToDictionary(c => c.Id);
         var routes = sheet.Wires.ToDictionary(w => w.Id, w => w.Route(sheet, components));
@@ -44,16 +44,16 @@ public static class Drawing
         {
             var path = routes[wire.Id];
             for (int i = 1; i < path.Count; i++) result.Add(new("line", path[i - 1].X, path[i - 1].Y, path[i].X, path[i].Y, Color: wire.Color, Thickness: wire.Thickness, LineStyle: wire.LineStyle));
-            var label = WireLabel(wire, path); if (label is not null && (reading?.WireNumbers ?? true)) result.Add(reading?.Scale(label) ?? label);
+            var label = WireLabel(wire, path,project.Presentation); if (label is not null && (reading?.WireNumbers ?? true)) result.Add(reading?.Scale(label) ?? label);
         }
         foreach (var c in sheet.Components) result.AddRange(ComponentScene(project, c, references, false, reading));
         foreach (var dot in Junctions.Dots(sheet, routes)) result.Add(new("dot", dot.Point.X, dot.Point.Y, 4, Color: dot.Color));
         if (reading?.Notes ?? true) foreach (var n in sheet.Notes) result.Add(FreeGraphics.NoteInk(project,sheet,n,reading?.TextScale ?? 1));
         result.AddRange(CableDefinitions.Scene(project,sheet));
         foreach(var marker in sheet.TerminalMarkers)result.Add(new("text",Math.Max(32,Math.Min(marker.A.X,marker.B.X)-40),Math.Min(marker.A.Y,marker.B.Y)-15,Text:project.TerminalStrips.Single(t=>t.Id==marker.StripId).Name,Size:14));
-        return result;
+        return Presentation.TextScene(project,result);
     }
-    public static Ink? WireLabel(Wire wire, IReadOnlyList<Point> path)
+    public static Ink? WireLabel(Wire wire, IReadOnlyList<Point> path,ProjectPresentation? style=null)
     {
         if (string.IsNullOrWhiteSpace(wire.Number) || !wire.NumberPlacement.Visible) return null;
         int segment = 0; double length = 0;
@@ -63,9 +63,9 @@ public static class Drawing
         if (tangent.X < -.00001 || (Math.Abs(tangent.X) < .00001 && tangent.Y > 0)) tangent = -tangent;
         var midpoint = path[segment - 1] + (path[segment] - path[segment - 1]) / 2;
         double font = wire.NumberPlacement.FontSize == 0 ? 10 : wire.NumberPlacement.FontSize;
-        var size = Measure(wire.Number, font); var normal = new Vector(tangent.Y, -tangent.X);
+        bool bold=wire.NumberPlacement.Bold||(style?.AllTextBold??false),italic=wire.NumberPlacement.Italic||(style?.AllTextItalic??false);var size = Measure(wire.Number, font,bold,italic); var normal = new Vector(tangent.Y, -tangent.X);
         var origin = midpoint - tangent * (size.Width / 2) + normal * (size.Height + 4);
-        return new("text", origin.X + wire.NumberPlacement.OffsetX, origin.Y + wire.NumberPlacement.OffsetY, Text: wire.Number, Color: wire.NumberPlacement.Color.Length > 0 ? wire.NumberPlacement.Color : wire.Color, Size: font, Rotation: wire.NumberPlacement.Rotation ?? Math.Atan2(tangent.Y, tangent.X) * 180 / Math.PI);
+        return new("text", origin.X + wire.NumberPlacement.OffsetX, origin.Y + wire.NumberPlacement.OffsetY, Text: wire.Number, Color: wire.NumberPlacement.Color.Length > 0 ? wire.NumberPlacement.Color : wire.Color, Size: font, Rotation: wire.NumberPlacement.Rotation ?? Math.Atan2(tangent.Y, tangent.X) * 180 / Math.PI,Bold:bold,Italic:italic);
     }
     public static List<Ink> ComponentScene(Project project, Component c, CrossReferences references, bool images = true, ReadingOptions? reading = null)
     {
@@ -93,40 +93,46 @@ public static class Drawing
     {
         if (!placement.Visible || text.Length == 0) return null;
         size = placement.EffectiveSize(size);
-        var local = new RotateTransform(placement.Rotation).TransformBounds(new Rect(new Point(), Measure(text, size)));
+        var local = new RotateTransform(placement.Rotation).TransformBounds(new Rect(new Point(), Measure(text, size,placement.Bold,placement.Italic)));
         var origin = placement.Origin(component, local.Width, local.Height);
         return TextAt(placement, text, size, color, origin);
     }
     public static Ink TextAt(LabelPlacement placement, string text, double size, string color, Point topLeft)
     {
         size = placement.EffectiveSize(size); color = placement.EffectiveColor(color);
-        var local = new RotateTransform(placement.Rotation).TransformBounds(new Rect(new Point(), Measure(text, size)));
-        return new("text", topLeft.X - local.X, topLeft.Y - local.Y, Text: text, Size: size, Color: color, Rotation: placement.Rotation);
+        var local = new RotateTransform(placement.Rotation).TransformBounds(new Rect(new Point(), Measure(text, size,placement.Bold,placement.Italic)));
+        return new("text", topLeft.X - local.X, topLeft.Y - local.Y, Text: text, Size: size, Color: color, Rotation: placement.Rotation,Bold:placement.Bold,Italic:placement.Italic);
     }
     public static IEnumerable<Ink> TextLines(Ink ink)
     {
+        if(ink.Kind=="text"&&ink.Runs is {Count:>0}){foreach(var fragment in RichText.Unwrapped(ink))yield return fragment;yield break;}
         if (ink.Kind != "text" || !ink.Text.Contains('\n')) { yield return ink; yield break; }
-        var lines = ink.Text.Replace("\r", "").Split('\n'); double step = Measure("Mg", ink.Size).Height;
+        var lines = ink.Text.Replace("\r", "").Split('\n'); double step = Measure("Mg", ink.Size,ink.Bold,ink.Italic).Height;
         double angle = ink.Rotation * Math.PI / 180;
         for (int i = 0; i < lines.Length; i++) yield return ink with { Text = lines[i], X = ink.X - Math.Sin(angle) * i * step, Y = ink.Y + Math.Cos(angle) * i * step };
     }
-    public static Rect TextBounds(Ink ink) => new RotateTransform(ink.Rotation, ink.X, ink.Y).TransformBounds(new Rect(new Point(ink.X, ink.Y), Measure(ink.Text, ink.Size)));
+    public static Rect TextBounds(Ink ink) => new RotateTransform(ink.Rotation, ink.X, ink.Y).TransformBounds(new Rect(new Point(ink.X, ink.Y), Measure(ink.Text, ink.Size,ink.Bold,ink.Italic,ink.Runs)));
     public static double[] DashPattern(string style) => style switch { "dashed" => [4, 3], "dotted" => [1, 2], "dashdot" => [4, 2, 1, 2], _ => [] };
     private static void AddLabel(List<Ink> scene, Component c, LabelPlacement p, string text, double size, string color) { var label = Label(c, p, text, size, color); if (label is not null) scene.Add(label); }
     [ThreadStatic] private static Dictionary<string,Brush>? brushesCache;
-    [ThreadStatic] private static Dictionary<(string,double,string),FormattedText>? textCache;
-    [ThreadStatic] private static Typeface? textFace;
+    [ThreadStatic] private static Dictionary<(string,double,string,bool,bool,string),FormattedText>? textCache;
+    [ThreadStatic] private static Dictionary<(bool,bool),Typeface>? textFaces;
     private static Dictionary<string,Brush> BrushesCache => brushesCache ??= [];
-    private static Dictionary<(string,double,string),FormattedText> TextCache => textCache ??= [];
-    private static Typeface TextFace => textFace ??= new("Segoe UI");
+    private static Dictionary<(string,double,string,bool,bool,string),FormattedText> TextCache => textCache ??= [];
+    internal static Typeface TextFace(bool bold=false,bool italic=false) {textFaces??=[];if(!textFaces.TryGetValue((bold,italic),out var face))textFaces[(bold,italic)]=face=new(new FontFamily("Segoe UI"),italic?FontStyles.Italic:FontStyles.Normal,bold?FontWeights.Bold:FontWeights.Normal,FontStretches.Normal);return face;}
     private static readonly CultureInfo TextCulture = CultureInfo.GetCultureInfo("fr-BE");
     public static Brush Brush(string color) { if(BrushesCache.TryGetValue(color,out var cached))return cached;try{var brush=new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));brush.Freeze();if(BrushesCache.Count>=256)BrushesCache.Clear();return BrushesCache[color]=brush;}catch{return Brushes.DarkSlateGray;} }
-    private static FormattedText Text(string text,double size,string color) { var key=(text,Math.Max(.5,size),color);if(TextCache.TryGetValue(key,out var cached))return cached;if(TextCache.Count>=4096)TextCache.Clear();return TextCache[key]=new FormattedText(text,TextCulture,FlowDirection.LeftToRight,TextFace,key.Item2,Brush(color),1); }
-    public static Size Measure(string text,double size) {var value=Text(text,size,"#203348");return new(value.WidthIncludingTrailingWhitespace,value.Height);}
+    private static FormattedText Text(string text,double size,string color,bool bold=false,bool italic=false,IReadOnlyList<RichRun>? runs=null)
+    {
+        string styles=runs is {Count:>0}?string.Join(';',runs.Select(r=>$"{r.Text.Length}:{(r.Bold?1:0)}:{(r.Italic?1:0)}")):"";var key=(text,Math.Max(.5,size),color,bold,italic,styles);if(TextCache.TryGetValue(key,out var cached))return cached;if(TextCache.Count>=4096)TextCache.Clear();
+        var formatted=new FormattedText(text,TextCulture,FlowDirection.LeftToRight,TextFace(bold,italic),key.Item2,Brush(color),1);int offset=0;if(runs is {Count:>0})foreach(var run in runs){if(run.Text.Length>0){formatted.SetFontWeight(run.Bold?FontWeights.Bold:FontWeights.Normal,offset,run.Text.Length);formatted.SetFontStyle(run.Italic?FontStyles.Italic:FontStyles.Normal,offset,run.Text.Length);}offset+=run.Text.Length;}return TextCache[key]=formatted;
+    }
+    public static Size Measure(string text,double size,bool bold=false,bool italic=false,IReadOnlyList<RichRun>? runs=null) {var value=Text(text,size,"#203348",bold,italic,runs);return new(value.WidthIncludingTrailingWhitespace,value.Height);}
     public static void Render(DrawingContext dc, IEnumerable<Ink> scene)
     {
         foreach (var s in scene)
         {
+            if(s.Kind=="clipStart"){dc.PushClip(new RectangleGeometry(new(s.X,s.Y,s.A,s.B)));continue;}if(s.Kind=="clipEnd"){dc.Pop();continue;}
             var brush = Brush(s.Color); var pen = new Pen(brush, s.Thickness); if (s.LineStyle != "solid") pen.DashStyle = new DashStyle(DashPattern(s.LineStyle), 0);
             if(s.Rotation!=0)dc.PushTransform(new RotateTransform(s.Rotation, s.X, s.Y));
             switch (s.Kind)
@@ -138,7 +144,7 @@ public static class Drawing
                 case "dot": dc.DrawEllipse(brush, null, new(s.X, s.Y), s.A, s.A); break;
                 case "triangle":
                     var geometry = new StreamGeometry(); using (var g = geometry.Open()) { g.BeginFigure(new(s.X, s.Y), true, true); g.LineTo(new(s.X, s.Y + s.B), true, false); g.LineTo(new(s.X + s.A, s.Y + s.B / 2), true, false); } geometry.Freeze(); dc.DrawGeometry(brush, null, geometry); break;
-                case "text": dc.DrawText(Text(s.Text,s.Size,s.Color), new(s.X, s.Y)); break;
+                case "text": dc.DrawText(Text(s.Text,s.Size,s.Color,s.Bold,s.Italic,s.Runs), new(s.X, s.Y)); break;
                 case "image": dc.DrawImage(ImageAssets.Decode(s.Text),new(s.X,s.Y,s.A,s.B)); break;
             }
             if(s.Rotation!=0)dc.Pop();

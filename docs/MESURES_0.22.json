@@ -1,0 +1,120 @@
+{
+  "version": "0.22.0",
+  "projectFormat": 10,
+  "executableSha256": "22CC764365D5EC441F1B4657DED1FC3AB910AD83FC91410EDB1093CBAF92FE74",
+  "selfTests": {
+    "passed": true,
+    "count": 195
+  },
+  "mcp": {
+    "passed": true,
+    "count": 166,
+    "tools": 97,
+    "userProjectTestedOnCopy": true
+  },
+  "interaction": {
+    "passed": true,
+    "version": "0.22.0.0",
+    "measurement": "Préparation des dessins WPF hors écran, sans rasterisation GPU",
+    "samples": [
+      {
+        "activeComponents": 50,
+        "projectComponents": 5000,
+        "activeWires": 49,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 145.571,
+          "meanMs": 1.2130916666666667,
+          "allocatedBytes": 4511168
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 423.8719,
+          "meanMs": 3.532265833333333,
+          "allocatedBytes": 13947264
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 97.6825,
+          "meanMs": 0.8140208333333334,
+          "allocatedBytes": 4795232
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 6.6932,
+          "meanMs": 0.11155333333333334,
+          "allocatedBytes": 352672
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 9.1684,
+          "meanMs": 0.07640333333333334,
+          "allocatedBytes": 482520
+        }
+      },
+      {
+        "activeComponents": 400,
+        "projectComponents": 5000,
+        "activeWires": 392,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 129.5729,
+          "meanMs": 1.0797741666666667,
+          "allocatedBytes": 4509064
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 733.4132,
+          "meanMs": 6.111776666666667,
+          "allocatedBytes": 50812776
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 354.1705,
+          "meanMs": 2.951420833333333,
+          "allocatedBytes": 21821768
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 9.3171,
+          "meanMs": 0.155285,
+          "allocatedBytes": 348832
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 14.4712,
+          "meanMs": 0.12059333333333333,
+          "allocatedBytes": 474840
+        }
+      }
+    ]
+  },
+  "richTable": {
+    "rows": 8,
+    "columns": 6,
+    "frames": 120,
+    "totalMs": 203.8034,
+    "meanMs": 1.6983616666666668,
+    "allocatedBytes": 13265408
+  },
+  "clipboardPreview": {
+    "components": 400,
+    "frames": 120,
+    "totalMs": 0.9672,
+    "meanMs": 0.00806,
+    "allocatedBytes": 161320
+  },
+  "pdf": {
+    "passed": true,
+    "pages": 2,
+    "fonts": [
+      "/SegoeUI",
+      "/SegoeUI-Bold",
+      "/SegoeUI-Bold-Italic",
+      "/SegoeUI-Italic"
+    ],
+    "searchableText": true,
+    "file": "C:\\dev\\QElectroTech_GeMMe\\output\\pdf\\GeMMeElec_0.22_rectangles_tableaux.pdf"
+  },
+  "measuredAtUtc": "2026-10-14T12:33:20.2012093+00:00"
+}

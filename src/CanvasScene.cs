@@ -31,7 +31,7 @@ internal sealed class CanvasScene
         components=sheet.Components.ToDictionary(c=>c.Id);wires=sheet.Wires.ToDictionary(w=>w.Id);notes=sheet.Notes.ToDictionary(n=>n.Id);graphics=sheet.Graphics.ToDictionary(g=>g.Id);
         if(sheet.BomPage is not null||sheet.TerminalPlanId.Length>0||sheet.CabinetPlanId.Length>0){Add(GeMMeElec.Drawing.Scene(project,sheet,reading));return;}
         List<Ink> frame=sheet.Kind=="cover"?[]:[new("rect",10,10,sheet.Width-40,sheet.Height-40,Color:"#53677B")];frame.AddRange(DocumentModel.Scene(project,sheet));frame.AddRange(SheetZones.Frame(project,sheet));Add(frame);
-        foreach(var g in sheet.Graphics)graphicSlots[g.Id]=Add([FreeGraphics.Ink(project,g)]);
+        foreach(var g in sheet.Graphics)graphicSlots[g.Id]=Add(FreeGraphics.Scene(project,g));
         foreach(var c in sheet.Components)imageSlots[c.Id]=Add(Images(c));
         foreach(var w in sheet.Wires){Routes[w.Id]=w.Route(sheet,components);wireSlots[w.Id]=Add(WireScene(w));}
         foreach(var c in sheet.Components)componentSlots[c.Id]=Add(GeMMeElec.Drawing.ComponentScene(project,c,references,false,reading));
@@ -41,7 +41,7 @@ internal sealed class CanvasScene
     private List<Ink> WireScene(Wire w)
     {
         var path=Routes[w.Id];List<Ink> result=[];for(int i=1;i<path.Count;i++)result.Add(new("line",path[i-1].X,path[i-1].Y,path[i].X,path[i].Y,Color:w.Color,Thickness:w.Thickness,LineStyle:w.LineStyle));
-        if(reading.WireNumbers&&GeMMeElec.Drawing.WireLabel(w,path) is Ink label)result.Add(reading.Scale(label));return result;
+        if(reading.WireNumbers&&GeMMeElec.Drawing.WireLabel(w,path,project.Presentation) is Ink label)result.Add(reading.Scale(label));return result;
     }
     private List<Ink> NoteScene(Annotation n)=>reading.Notes?[FreeGraphics.NoteInk(project,sheet,n,reading.TextScale)]:[];
     private List<Ink> Dots()=>Junctions.Dots(sheet,Routes).Select(dot=>new Ink("dot",dot.Point.X,dot.Point.Y,4,Color:dot.Color)).ToList();
@@ -50,8 +50,8 @@ internal sealed class CanvasScene
         var result=CableDefinitions.Scene(project,sheet);foreach(var marker in sheet.TerminalMarkers)result.Add(new("text",Math.Max(32,Math.Min(marker.A.X,marker.B.X)-40),Math.Min(marker.A.Y,marker.B.Y)-15,Text:project.TerminalStrips.Single(t=>t.Id==marker.StripId).Name,Size:14));return result;
     }
     private DrawingGroup Record(List<Ink> values){RecordBuilds++;var drawing=new DrawingGroup();using(var dc=drawing.Open())GeMMeElec.Drawing.Render(dc,values);drawing.Freeze();return drawing;}
-    private int Add(List<Ink> values){int at=Drawing.Children.Count;inks[at]=values;Drawing.Children.Add(Record(values));return at;}
-    private void Replace(int at,List<Ink> values){inks[at]=values;Drawing.Children[at]=Record(values);}
+    private int Add(List<Ink> values){values=Presentation.TextScene(project,values);int at=Drawing.Children.Count;inks[at]=values;Drawing.Children.Add(Record(values));return at;}
+    private void Replace(int at,List<Ink> values){values=Presentation.TextScene(project,values);inks[at]=values;Drawing.Children[at]=Record(values);}
     public void TextChanged(string id,bool wire){if(wire)dirtyWires.Add(id);else dirtyComponents.Add(id);}
     public void GeometryChanged(IEnumerable<string> componentIds,IEnumerable<string> noteIds,IEnumerable<string>? wireIds=null)
     {
@@ -66,7 +66,7 @@ internal sealed class CanvasScene
         if(referencesDirty){references=new(project);referencesDirty=false;}
         foreach(string id in dirtyWires){var w=wires[id];if(geometryDirty)Routes[id]=w.Route(sheet,components);Replace(wireSlots[id],WireScene(w));}
         foreach(string id in dirtyComponents){var c=components[id];if(geometryDirty)Replace(imageSlots[id],Images(c));Replace(componentSlots[id],GeMMeElec.Drawing.ComponentScene(project,c,references,false,reading));}
-        foreach(string id in dirtyGraphics)Replace(graphicSlots[id],[FreeGraphics.Ink(project,graphics[id])]);dirtyGraphics.Clear();
+        foreach(string id in dirtyGraphics)Replace(graphicSlots[id],FreeGraphics.Scene(project,graphics[id]));dirtyGraphics.Clear();
         foreach(string id in dirtyNotes)Replace(noteSlots[id],NoteScene(notes[id]));
         if(geometryDirty){Replace(dotSlot,Dots());if(sheet.CableMarkers.Count>0)Replace(markerSlot,Markers());}
         dirtyComponents.Clear();dirtyWires.Clear();dirtyNotes.Clear();geometryDirty=false;

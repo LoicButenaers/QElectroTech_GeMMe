@@ -5,6 +5,8 @@ namespace GeMMeElec;
 
 public sealed class WireNumberPlacement
 {
+    public bool Bold {get;set;}
+    public bool Italic {get;set;}
     public double OffsetX { get; set; }
     public double OffsetY { get; set; }
     public double FontSize { get; set; }
@@ -24,6 +26,7 @@ public sealed partial class MainWindow
         PropertyGroup("Position du numéro", () => {
             PropertyContents.Children.Add(Hint("Maj + glisser directement sur le numéro du fil. Rotation vide : suivre le trajet ; taille 0 : automatique."));
             var placement = wire.NumberPlacement; var visible = new CheckBox { Content = "Afficher le numéro", IsChecked = placement.Visible, Name = "WireNumberVisible", Margin = new(0, 4, 0, 4) }; PropertyContents.Children.Add(visible); RegisterPropertyControl(visible);
+            TypographyProperties(placement.Bold,placement.Italic,(bold,italic)=>Editor.Change(()=>{var live=Editor.Sheet.Wires.Single(w=>w.Id==wire.Id).NumberPlacement;if(bold is bool b)live.Bold=b;if(italic is bool i)live.Italic=i;}),"WireNumberText");
             foreach (var (key, label, value) in new[] { ("wireNumberX", "Décalage horizontal", Number(placement.OffsetX)), ("wireNumberY", "Décalage vertical", Number(placement.OffsetY)), ("wireNumberSize", "Taille du numéro", Number(placement.FontSize)), ("wireNumberRotation", "Rotation · vide = automatique", placement.Rotation is double angle ? Number(angle) : ""), ("wireNumberColor", "Couleur · vide = couleur du fil", placement.Color) })
             {
                 var input = Field(key, label, value); LiveText(input, text => Editor.Change(() => { var live = Editor.Sheet.Wires.Single(w => w.Id == wire.Id).NumberPlacement; switch (key) { case "wireNumberX": live.OffsetX = ReadNumber(text); break; case "wireNumberY": live.OffsetY = ReadNumber(text); break; case "wireNumberSize": live.FontSize = ReadNumber(text); break; case "wireNumberRotation": live.Rotation = string.IsNullOrWhiteSpace(text) ? null : ReadNumber(text); break; case "wireNumberColor": live.Color = text; break; } }, wire.Id + ":" + key));

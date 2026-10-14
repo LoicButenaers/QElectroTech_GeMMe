@@ -47,7 +47,7 @@ public sealed partial class Editor
         }
         Change(() =>
         {
-            if (Sheet.Graphics.FirstOrDefault(g => g.Id == id) is SheetGraphic g) typeof(SheetGraphic).GetProperty(key)!.SetValue(g, units);
+            if (Sheet.Graphics.FirstOrDefault(g => g.Id == id) is SheetGraphic g) {if(key is "Width" or "Height")FreeGraphics.SetSize(g,key=="Width"?units:g.Width,key=="Height"?units:g.Height);else typeof(SheetGraphic).GetProperty(key)!.SetValue(g, units);}
             else if (Sheet.Notes.FirstOrDefault(n => n.Id == id) is Annotation n && key is "X" or "Y") { if (key == "X") n.X = units; else n.Y = units; }
             else throw new ArgumentException("Élément ou coordonnée introuvable.");
         }, id + ":" + key);

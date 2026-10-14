@@ -14,8 +14,15 @@ public static class Export
         var root = new XElement(ns + "svg", new XAttribute("viewBox", $"0 0 {N(sheet.Width)} {N(sheet.Height)}"), new XAttribute("width", "420mm"), new XAttribute("height", "297mm"));
         root.Add(new XElement(ns + "title", $"{p.Title} — {sheet.Title}"));
         root.Add(new XElement(ns + "rect", new XAttribute("width", "100%"), new XAttribute("height", "100%"), new XAttribute("fill", "white")));
+        var containers=new Stack<XElement>();containers.Push(root);int clipIndex=0;
         foreach (var s in Drawing.Scene(p, sheet).SelectMany(Drawing.TextLines))
         {
+            if(s.Kind=="clipStart")
+            {
+                string id="clip"+(++clipIndex);var rectangle=new XElement(ns+"rect",new XAttribute("x",N(s.X)),new XAttribute("y",N(s.Y)),new XAttribute("width",N(s.A)),new XAttribute("height",N(s.B)));
+                root.Add(new XElement(ns+"defs",new XElement(ns+"clipPath",new XAttribute("id",id),rectangle)));var group=new XElement(ns+"g",new XAttribute("clip-path","url(#"+id+")"));containers.Peek().Add(group);containers.Push(group);continue;
+            }
+            if(s.Kind=="clipEnd"){containers.Pop();continue;}
             if(s.Kind=="image") { var img = new XElement(ns+"image",new XAttribute("x",N(s.X)),new XAttribute("y",N(s.Y)),new XAttribute("width",N(s.A)),new XAttribute("height",N(s.B)),new XAttribute("href",(s.Text.StartsWith("iVBOR") ? "data:image/png;base64," : "data:image/jpeg;base64,")+s.Text)); if(s.Rotation!=0) img.Add(new XAttribute("transform", $"rotate({N(s.Rotation)} {N(s.X)} {N(s.Y)})")); root.Add(img);continue; }
             XElement el;
             if (s.Kind == "line") el = new(ns + "line", new XAttribute("x1", N(s.X)), new XAttribute("y1", N(s.Y)), new XAttribute("x2", N(s.A)), new XAttribute("y2", N(s.B)));
@@ -27,7 +34,7 @@ public static class Export
             el.Add(new XAttribute("fill", s.Fill.Length>0?s.Fill:s.Kind is "text" or "dot" or "triangle" ? s.Color : s.Kind == "circle" ? "white" : "none"));
             if (s.Kind != "text") { el.Add(new XAttribute("stroke", s.Color)); el.Add(new XAttribute("stroke-width", N(s.Thickness))); if (s.LineStyle != "solid") el.Add(new XAttribute("stroke-dasharray", string.Join(' ', Drawing.DashPattern(s.LineStyle).Select(n => N(n * s.Thickness))))); }
             if (s.Rotation != 0) el.Add(new XAttribute("transform", $"rotate({N(s.Rotation)} {N(s.X)} {N(s.Y)})"));
-            root.Add(el);
+            if(s.Kind=="text"){if(s.Bold)el.Add(new XAttribute("font-weight","bold"));if(s.Italic)el.Add(new XAttribute("font-style","italic"));}containers.Peek().Add(el);
         }
         ProjectStore.AtomicWrite(path, new XDocument(new XDeclaration("1.0", "utf-8", null), root).ToString());
     }
@@ -40,17 +47,13 @@ public static class Export
     // Glyph outlines stay embedded, so accents and electrical labels survive export.
     public static void Pdf(Project project, string path)
     {
-        var typeface = new System.Windows.Media.Typeface("Segoe UI");
-        if (!typeface.TryGetGlyphTypeface(out var font)) throw new InvalidOperationException("Police Segoe UI introuvable.");
-        byte[] fontData = File.ReadAllBytes(font.FontUri.LocalPath);
-        var glyphMap = new SortedDictionary<ushort, char>();
-        string Glyphs(string text)
-        {
-            var b = new StringBuilder();
-            foreach (var ch in text.Replace('\r', ' ').Replace('\n', ' ')) { ushort glyph = font.CharacterToGlyphMap.TryGetValue(ch, out var g) ? g : (ushort)0; glyphMap.TryAdd(glyph, ch); b.Append(glyph.ToString("X4")); }
-            return b.ToString();
-        }
         List<byte[]> objects = [[], [], [], [], [], [], []];
+        var fonts=new List<PdfTextFont>{new(1,3,false,false)};
+        PdfTextFont Font(bool bold,bool italic)
+        {
+            var existing=fonts.FirstOrDefault(f=>f.Bold==bold&&f.Italic==italic);if(existing is not null)return existing;
+            var next=new PdfTextFont(fonts.Count+1,objects.Count+1,bold,italic);fonts.Add(next);for(int i=0;i<5;i++)objects.Add([]);return next;
+        }
         byte[] Bytes(string s) => Encoding.ASCII.GetBytes(s);
         byte[] Stream(byte[] data, string extra = "") { using var m = new MemoryStream(); m.Write(Bytes($"<< /Length {data.Length} {extra} >>\nstream\n")); m.Write(data); m.Write(Bytes("\nendstream")); return m.ToArray(); }
         List<int> pages = [];
@@ -61,8 +64,9 @@ public static class Export
             var sheet=pdfPage.Sheet;
             var b = new StringBuilder(); double scale = Math.Min(1190.55 / sheet.Width, 841.89 / sheet.Height);
             b.AppendLine($"q {N(scale)} 0 0 {N(-scale)} 0 841.89 cm 1.6 w");
-            foreach (var s in pdfPage.Scene.SelectMany(Drawing.TextLines))
+            foreach (var s in pdfPage.Scene.Select(i=>Presentation.TextInk(project,i)).SelectMany(Drawing.TextLines))
             {
+                if(s.Kind=="clipStart"){b.AppendLine($"q {N(s.X)} {N(s.Y)} {N(s.A)} {N(s.B)} re W n");continue;}if(s.Kind=="clipEnd"){b.AppendLine("Q");continue;}
                 var color = (System.Windows.Media.SolidColorBrush)Drawing.Brush(s.Color);
                 string rgb = $"{N(color.Color.R / 255.0)} {N(color.Color.G / 255.0)} {N(color.Color.B / 255.0)}";
                 b.AppendLine($"q {rgb} RG {rgb} rg");
@@ -96,7 +100,7 @@ public static class Export
                         double x=s.Kind=="ellipse"?s.X+s.A/2:s.X,y=s.Kind=="ellipse"?s.Y+s.B/2:s.Y,rx=s.Kind=="ellipse"?s.A/2:s.A,ry=s.Kind=="ellipse"?s.B/2:s.A,kx=rx*.55228475,ky=ry*.55228475;
                         if(s.Fill.Length>0){var fill=(System.Windows.Media.SolidColorBrush)Drawing.Brush(s.Fill);b.AppendLine($"{N(fill.Color.R/255.0)} {N(fill.Color.G/255.0)} {N(fill.Color.B/255.0)} rg");}
                         b.AppendLine($"{N(x+rx)} {N(y)} m {N(x+rx)} {N(y+ky)} {N(x+kx)} {N(y+ry)} {N(x)} {N(y+ry)} c {N(x-kx)} {N(y+ry)} {N(x-rx)} {N(y+ky)} {N(x-rx)} {N(y)} c {N(x-rx)} {N(y-ky)} {N(x-kx)} {N(y-ry)} {N(x)} {N(y-ry)} c {N(x+kx)} {N(y-ry)} {N(x+rx)} {N(y-ky)} {N(x+rx)} {N(y)} c "+(s.Kind=="dot"?"f":s.Kind=="circle"?"1 1 1 rg B":s.Fill.Length>0?"B":"S"));break;
-                    case "text": b.AppendLine($"BT /F1 {N(s.Size)} Tf 1 0 0 -1 {N(s.X)} {N(s.Y + s.Size)} Tm <{Glyphs(s.Text)}> Tj ET"); break;
+                    case "text":var textFont=Font(s.Bold,s.Italic);b.AppendLine($"BT /F{textFont.Index} {N(s.Size)} Tf 1 0 0 -1 {N(s.X)} {N(s.Y + s.Size)} Tm <{textFont.Glyphs(s.Text)}> Tj ET"); break;
                 }
                 b.AppendLine("Q");
             }
@@ -114,7 +118,8 @@ public static class Export
                 objects.Add(Bytes($"<< /Type /Annot /Subtype /Link /Rect [{N(r.Left*record.Scale)} {N(841.89-r.Bottom*record.Scale)} {N(r.Right*record.Scale)} {N(841.89-r.Top*record.Scale)}] /Border [0 0 0] /Dest [{target.Id} 0 R /XYZ {N(link.TargetX*target.Scale)} {N(841.89-link.TargetY*target.Scale)} null] >>"));
             }
             string annots=annotations.Count>0?" /Annots ["+string.Join(' ',annotations.Select(i=>$"{i} 0 R"))+"]":"";
-            objects[record.Id-1]=Bytes($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.55 841.89] /Resources << /Font << /F1 3 0 R >> /XObject << {record.Images} >> >> /Contents {record.ContentId} 0 R{annots} >>");
+            string fontResources=string.Join(' ',fonts.Select(f=>$"/F{f.Index} {f.Id} 0 R"));
+            objects[record.Id-1]=Bytes($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.55 841.89] /Resources << /Font << {fontResources} >> /XObject << {record.Images} >> >> /Contents {record.ContentId} 0 R{annots} >>");
         }
         int outlineId=0;
         if(project.PdfOptions.Bookmarks&&pageRecords.Count>0)
@@ -125,14 +130,18 @@ public static class Export
         }
         objects[0] = Bytes("<< /Type /Catalog /Pages 2 0 R"+(outlineId>0?$" /Outlines {outlineId} 0 R /PageMode /UseOutlines":"")+" >>");
         objects[1] = Bytes($"<< /Type /Pages /Count {pages.Count} /Kids [{string.Join(' ', pages.Select(p => $"{p} 0 R"))}] >>");
-        objects[2] = Bytes("<< /Type /Font /Subtype /Type0 /BaseFont /SegoeUI /Encoding /Identity-H /DescendantFonts [4 0 R] /ToUnicode 7 0 R >>");
-        var widths = string.Join(' ', glyphMap.Keys.Select(g => $"{g} [{N(font.AdvanceWidths[g] * 1000)}]"));
-        objects[3] = Bytes($"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /SegoeUI /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor 5 0 R /CIDToGIDMap /Identity /DW 1000 /W [{widths}] >>");
-        objects[4] = Bytes("<< /Type /FontDescriptor /FontName /SegoeUI /Flags 32 /FontBBox [-1000 -1000 3000 3000] /ItalicAngle 0 /Ascent 1100 /Descent -300 /CapHeight 750 /StemV 80 /FontFile2 6 0 R >>");
-        objects[5] = Stream(fontData, $"/Length1 {fontData.Length}");
-        var cmap = new StringBuilder("/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def /CMapName /GeMMeElec-UCS def /CMapType 2 def 1 begincodespacerange <0000> <FFFF> endcodespacerange\n");
-        foreach (var chunk in glyphMap.Chunk(100)) { cmap.AppendLine($"{chunk.Length} beginbfchar"); foreach (var pair in chunk) cmap.AppendLine($"<{pair.Key:X4}> <{(int)pair.Value:X4}>"); cmap.AppendLine("endbfchar"); }
-        cmap.Append("endcmap CMapName currentdict /CMap defineresource pop end end"); objects[6] = Stream(Bytes(cmap.ToString()));
+        foreach(var textFont in fonts)
+        {
+            int at=textFont.Id-1;var font=textFont.Face;var glyphMap=textFont.Map;string name=textFont.Name;
+            objects[at]=Bytes($"<< /Type /Font /Subtype /Type0 /BaseFont /{name} /Encoding /Identity-H /DescendantFonts [{textFont.Id+1} 0 R] /ToUnicode {textFont.Id+4} 0 R >>");
+            var widths=string.Join(' ',glyphMap.Keys.Select(g=>$"{g} [{N(font.AdvanceWidths[g]*1000)}]"));
+            objects[at+1]=Bytes($"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /{name} /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor {textFont.Id+2} 0 R /CIDToGIDMap /Identity /DW 1000 /W [{widths}] >>");
+            objects[at+2]=Bytes($"<< /Type /FontDescriptor /FontName /{name} /Flags {(textFont.Italic?96:32)} /FontBBox [-1000 -1000 3000 3000] /ItalicAngle {(textFont.Italic?-12:0)} /Ascent 1100 /Descent -300 /CapHeight 750 /StemV {(textFont.Bold?120:80)} /FontFile2 {textFont.Id+3} 0 R >>");
+            byte[] fontData=File.ReadAllBytes(font.FontUri.LocalPath);objects[at+3]=Stream(fontData,$"/Length1 {fontData.Length}");
+            var cmap=new StringBuilder("/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def /CMapName /GeMMeElec-UCS def /CMapType 2 def 1 begincodespacerange <0000> <FFFF> endcodespacerange\n");
+            foreach(var chunk in glyphMap.Chunk(100)){cmap.AppendLine($"{chunk.Length} beginbfchar");foreach(var pair in chunk)cmap.AppendLine($"<{pair.Key:X4}> <{(int)pair.Value:X4}>");cmap.AppendLine("endbfchar");}
+            cmap.Append("endcmap CMapName currentdict /CMap defineresource pop end end");objects[at+4]=Stream(Bytes(cmap.ToString()));
+        }
         using var output = new MemoryStream(); output.Write(Bytes("%PDF-1.7\n%GeMMeElec\n")); List<long> offsets = [0];
         for (int i = 0; i < objects.Count; i++) { offsets.Add(output.Position); output.Write(Bytes($"{i + 1} 0 obj\n")); output.Write(objects[i]); output.Write(Bytes("\nendobj\n")); }
         long start = output.Position; output.Write(Bytes($"xref\n0 {objects.Count + 1}\n0000000000 65535 f \n"));
@@ -141,4 +150,17 @@ public static class Export
         var full = Path.GetFullPath(path); var temp = full + ".tmp-" + Guid.NewGuid().ToString("N");
         try { File.WriteAllBytes(temp, output.ToArray()); File.Move(temp, full, true); } finally { if (File.Exists(temp)) File.Delete(temp); }
     }
+    private sealed class PdfTextFont
+    {
+        public int Index {get;}
+        public int Id {get;}
+        public bool Bold {get;}
+        public bool Italic {get;}
+        public string Name=>"SegoeUI"+(Bold?"-Bold":"")+(Italic?"-Italic":"");
+        public System.Windows.Media.GlyphTypeface Face {get;}
+        public SortedDictionary<ushort,char> Map {get;}=[];
+        public PdfTextFont(int index,int id,bool bold,bool italic){Index=index;Id=id;Bold=bold;Italic=italic;if(!Drawing.TextFace(bold,italic).TryGetGlyphTypeface(out var face))throw new InvalidOperationException("Police Segoe UI introuvable.");Face=face;}
+        public string Glyphs(string text){var builder=new StringBuilder();foreach(var ch in text.Replace('\r',' ').Replace('\n',' ')){ushort glyph=Face.CharacterToGlyphMap.TryGetValue(ch,out var g)?g:(ushort)0;Map.TryAdd(glyph,ch);builder.Append(glyph.ToString("X4"));}return builder.ToString();}
+    }
+
 }

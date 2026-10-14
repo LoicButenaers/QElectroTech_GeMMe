@@ -8,7 +8,7 @@ public static class ReferenceDisplay
     public static List<Ink> Scene(Project p, Component c, CrossReferences refs)
     {
         List<Ink> ink = c.Definition.Shapes.Select(s => { var a = c.Transform(s.X, s.Y); var b = c.Transform(s.A, s.B); return new Ink("line", a.X, a.Y, b.X, b.Y, Color: "#000000"); }).ToList();
-        var name = Drawing.Label(c, c.TagPlacement, Name(c), 14, "#000000");
+        var name = Drawing.Label(c, Presentation.TextPlacement(p,c.TagPlacement), Name(c), 14, "#000000");
         if (name is not null)
         {
             if (c.Symbol == "folio_next" && c.Rotation == 0 && c.TagPlacement.Side == "right") name = name with { X = name.X - (c.Bounds().Right - c.X - 18) };
@@ -20,9 +20,9 @@ public static class ReferenceDisplay
             if (c.ReferenceDestinationInline)
             {
                 var bounds = name is null ? new Rect(c.TagPlacement.Origin(c, 0, 0), new Size()) : Drawing.TextBounds(name);
-                ink.Add(Drawing.TextAt(c.DetailPlacement, destination, 12, "#008000", new(bounds.Left, bounds.Bottom + (name is null ? 0 : 4))));
+                ink.Add(Drawing.TextAt(Presentation.TextPlacement(p,c.DetailPlacement), destination, 12, "#008000", new(bounds.Left, bounds.Bottom + (name is null ? 0 : 4))));
             }
-            else if (Drawing.Label(c, c.DetailPlacement, destination, 12, "#008000") is Ink label) ink.Add(label);
+            else if (Drawing.Label(c, Presentation.TextPlacement(p,c.DetailPlacement), destination, 12, "#008000") is Ink label) ink.Add(label);
         }
         return ink;
     }

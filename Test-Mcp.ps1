@@ -64,7 +64,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 94) '94 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 97) '97 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -384,7 +384,7 @@ try {
     $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
     $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
     $state = Call 'project_get'
-    Assert ($state.project.version -eq 9 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
+    Assert ($state.project.version -eq 10 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
     $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$true;number='CABLE-01';color='#D32F2F';thickness=3.2;lineStyle='dashed'}
     $null = Call 'wire_update' @{id=$wire.id;number='27'}
     $state = Call 'project_get'
@@ -554,7 +554,7 @@ try {
     $coverSaved = Join-Path $root 'build/MCP-cover.gemelec'
     $null = Call 'project_save' @{path=$coverSaved;overwrite=$true}
     $null = Call 'project_open' @{path=$coverSaved}
-    Assert ((Call 'project_get').project.version -eq 9 -and (Call 'project_get').project.sheets[0].graphics.Count -eq 4) 'Garde et formes sauvegardées puis relues MCP'
+    Assert ((Call 'project_get').project.version -eq 10 -and (Call 'project_get').project.sheets[0].graphics.Count -eq 4) 'Garde et formes sauvegardées puis relues MCP'
 
     $null = Call 'project_new' @{title='Placement page';discardUnsaved=$true}
     $null = Call 'page_kind' @{kind='cover'}
@@ -580,6 +580,48 @@ try {
     Assert (((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $positionBefore) 'Annulation du centrage page MCP'
     $errorText = Rpc 'tools/call' @{name='element_position';arguments=@{id=$positionRect.id;axis='X';value=10;unit='mm'}} -AllowError
     Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $positionBefore) 'Unité inconnue refusée MCP'
+
+    $null = Call 'project_new' @{title='Tableaux et styles';discardUnsaved=$true}
+    $null = Call 'page_kind' @{kind='cover'}
+    $richBox = Call 'graphic_put' @{graphic=@{kind='textbox';x=100;y=100;width=350;height=80;content=@{text='Auteur : Bureau';runs=@(@{text='Auteur : ';bold=$true},@{text='Bureau';italic=$true})}}}
+    Assert ($richBox.content.runs[0].bold -and $richBox.content.runs[1].italic) 'Rectangle avec texte partiellement gras/italique MCP'
+    $richTable = Call 'table_create' @{x=550;y=100;rows=3;columns=4;columnWidth=150;rowHeight=45}
+    Assert ($richTable.table.cells.Count -eq 12 -and $richTable.width -eq 600 -and $richTable.height -eq 135) 'Tableau avec grille et tailles initiales MCP'
+    $richTable = Call 'table_cell_put' @{id=$richTable.id;row=1;column=2;content=@{text='Texte cellule';bold=$true;italic=$true;fontSize=18;align='center'}}
+    Assert ($richTable.table.cells[6].text -eq 'Texte cellule' -and $richTable.table.cells[6].bold -and $richTable.table.cells[6].italic) 'Cellule formatée individuellement MCP'
+    $richTable.table.columnWidths = @(100,140,170,190)
+    $richTable.table.rowHeights = @(30,45,60)
+    $null = Call 'graphic_put' @{graphic=$richTable}
+    Assert ((Call 'project_get').project.sheets[0].graphics[1].table.columnWidths[0] -eq 100 -and (Call 'project_get').project.sheets[0].graphics[1].table.rowHeights[2] -eq 60) 'Dimensions individuelles de lignes/colonnes MCP'
+    $null = Call 'element_position' @{id=$richTable.id;axis='Width';value=50;unit='percent'}
+    Assert ((Call 'project_get').project.sheets[0].graphics[1].width -eq 700 -and [Math]::Abs((Call 'project_get').project.sheets[0].graphics[1].table.columnWidths[0]-116.6666666667) -lt 0.001) 'Redimensionnement proportionnel du tableau en pourcent MCP'
+    $richBefore = (Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress
+    $errorText = Rpc 'tools/call' @{name='table_cell_put';arguments=@{id=$richTable.id;row=10;column=2;content=@{text='Hors tableau'}}} -AllowError
+    Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $richBefore) 'Cellule hors grille refusée atomiquement MCP'
+    $errorText = Rpc 'tools/call' @{name='table_create';arguments=@{x=100;y=400;rows=1.5;columns=2}} -AllowError
+    Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $richBefore) 'Nombre fractionnaire de lignes refusé MCP'
+    $richNote = Call 'note_put' @{note=@{x=100;y=300;text='Note formatée';bold=$true;italic=$true}}
+    $richSymbol = Call 'component_add' @{symbol='coil';x=200;y=500}
+    $null = Call 'text_style' @{id=$richSymbol.id;textKey='tag';bold=$true;italic=$true}
+    Assert ((Call 'project_get').project.sheets[0].notes[0].bold -and (Call 'project_get').project.sheets[0].components[0].tagPlacement.italic) 'Styles des notes et textes de symboles MCP'
+    $null = Call 'text_style' @{id=$richBox.id;italic=$true}
+    Assert ((Call 'project_get').project.sheets[0].graphics[0].content.runs[0].bold -and (Call 'project_get').project.sheets[0].graphics[0].content.runs[0].italic) 'Italique global conserve le gras partiel MCP'
+    $richSvgPath = Join-Path $root 'build/MCP-rich-graphics.svg'
+    $null = Call 'export_svg' @{path=$richSvgPath;overwrite=$true}
+    $richSvg = Get-Content -LiteralPath $richSvgPath -Raw
+    Assert ($richSvg.Contains('font-weight="bold"') -and $richSvg.Contains('font-style="italic"') -and $richSvg.Contains('clipPath')) 'Exports SVG des styles et limites des cellules MCP'
+    $richPdfPath = Join-Path $root 'build/MCP-rich-graphics.pdf'
+    $null = Call 'export_pdf' @{path=$richPdfPath;overwrite=$true}
+    Assert ((Get-Content -LiteralPath $richPdfPath -Raw).Contains('/SegoeUI-Bold-Italic')) 'Police gras italique embarquée dans le PDF MCP'
+    $null = Call 'presentation_apply' @{style=@{allTextBold=$true;allTextItalic=$true;preserveIndividual=$true}}
+    $null = Call 'export_svg' @{path=$richSvgPath;overwrite=$true}
+    [xml]$richGlobalSvg = Get-Content -LiteralPath $richSvgPath -Raw
+    Assert (@($richGlobalSvg.SelectNodes('//*[local-name()="text"]') | Where-Object { $_.GetAttribute('font-weight') -ne 'bold' -or $_.GetAttribute('font-style') -ne 'italic' }).Count -eq 0) 'Présentation commune gras/italique sur tous les textes MCP'
+    $richSaved = Join-Path $root 'build/MCP-rich-graphics.gemelec'
+    $richSnapshot = (Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress
+    $null = Call 'project_save' @{path=$richSaved;overwrite=$true}
+    $null = Call 'project_open' @{path=$richSaved}
+    Assert (((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $richSnapshot -and (Call 'project_get').project.version -eq 10) 'Tableaux et styles relus au format 10 MCP'
 
     if ($RoundTripProjectPath) {
         if (!$Headless) { throw 'La relecture du document utilisateur exige un hôte de test isolé.' }

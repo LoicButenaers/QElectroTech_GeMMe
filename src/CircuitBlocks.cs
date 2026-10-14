@@ -18,6 +18,7 @@ public static class CircuitBlocks
 {
     public static void Validate(CircuitBlock block)
     {
+        if(block.Project is null)throw new InvalidDataException("Projet du bloc absent.");if(block.Project.Version<Project.CurrentVersion)block.Project=ProjectStore.Deserialize(ProjectStore.Serialize(block.Project));
         if(block.Format!="GeMMeElecBlock"||block.Version!=1||string.IsNullOrWhiteSpace(block.Name)||block.Name.Length>200||block.Category is null||block.Category.Length>100||block.Tags is null||block.Tags.Length>1000)throw new InvalidDataException("Bloc de circuit invalide.");
         ProjectStore.ValidateStructure(block.Project);
         if(block.Project.Sheets.Count!=1||block.Project.Sheets[0].BomPage is not null||block.Project.Sheets[0].TerminalPlanId.Length>0||block.Project.Sheets[0].CabinetPlanId.Length>0||block.Project.Sheets[0].Components.Count+block.Project.Sheets[0].Notes.Count+block.Project.Sheets[0].Graphics.Count==0)throw new InvalidDataException("Un bloc doit contenir des objets d’un seul schéma.");

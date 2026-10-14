@@ -75,11 +75,11 @@ public static class ComponentTexts
             var labels = ReferenceDisplay.Scene(project, c, refs).Where(i => i.Kind == "text").ToList();
             return key == "tag" ? c.TagPlacement.Visible ? labels.FirstOrDefault() : null : c.DetailPlacement.Visible ? labels.LastOrDefault() : null;
         }
-        var t = Get(c, key); return Drawing.Label(c, t.Placement, key == "coilReferences" ? refs.Coils.Label(c) : t.Text, t.Size, t.Color);
+        var t = Get(c, key); return Drawing.Label(c, Presentation.TextPlacement(project,t.Placement), key == "coilReferences" ? refs.Coils.Label(c) : t.Text, t.Size, t.Color);
     }
     public static IEnumerable<Ink> Scene(Project p, Component c, CrossReferences refs)
     {
-        foreach (var t in List(c)) if (!(CrossReferences.IsPoint(c) && t.Key is "tag" or "detail") && Drawing.Label(c, t.Placement, t.Key == "coilReferences" ? refs.Coils.Label(c) : t.Text, t.Size, t.Color) is Ink ink) yield return ink;
+        foreach (var t in List(c)) if (!(CrossReferences.IsPoint(c) && t.Key is "tag" or "detail") && Drawing.Label(c, Presentation.TextPlacement(p,t.Placement), t.Key == "coilReferences" ? refs.Coils.Label(c) : t.Text, t.Size, t.Color) is Ink ink) yield return ink;
     }
     public static void Validate(Component c)
     {

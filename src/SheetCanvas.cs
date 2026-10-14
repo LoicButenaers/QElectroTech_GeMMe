@@ -100,6 +100,7 @@ public sealed partial class SheetCanvas : FrameworkElement
     {
         CancelDrag(); CancelBand();Mode = mode; connection = null; waypoints.Clear();
         if (mode != "block") PendingBlock = null;
+        if (mode != "graphicTemplate") {pendingGraphic = null;pendingGraphicDrawing=null;}
         Cursor = mode == "select" ? Cursors.Arrow : Cursors.Cross;
         InvalidateVisual(); Status?.Invoke(mode switch { "place" => "Cliquer pour placer • Tirer depuis une borne pour câbler • Échap : terminer", "wire" => "Tirer d’une borne à l’autre, ou cliquer les bornes et les points de passage", "text" => "Cliquer sur le folio pour ajouter un texte", _ => "Tirer depuis une borne : câbler • Sélectionner un fil : déplacer ses poignées" });
     }
@@ -258,7 +259,7 @@ public sealed partial class SheetCanvas : FrameworkElement
     internal bool BeginTextMove(Point point)
     {
         if (before is not null || connection is not null || (Editor.Sheet.BomPage is not null || Editor.Sheet.TerminalPlanId.Length>0 || Editor.Sheet.CabinetPlanId.Length>0)) return false;
-        var wire = Editor.Sheet.Wires.AsEnumerable().Reverse().OrderByDescending(w => Selected.Contains(w.Id)).FirstOrDefault(w => Reading.WireNumbers && Drawing.WireLabel(w, w.Route(Editor.Sheet)) is Ink ink && Drawing.TextBounds(Reading.Scale(ink)).Contains(point));
+        var wire = Editor.Sheet.Wires.AsEnumerable().Reverse().OrderByDescending(w => Selected.Contains(w.Id)).FirstOrDefault(w => Reading.WireNumbers && Drawing.WireLabel(w, w.Route(Editor.Sheet),Editor.Project.Presentation) is Ink ink && Drawing.TextBounds(Reading.Scale(ink)).Contains(point));
         if (wire is not null) { before = Editor.ExportSnapshot; dragStart = point; wireTextDrag = (wire.Id, DocumentModel.Copy(wire.NumberPlacement)); textMoved = false; Editor.InteractionInProgress = true; Select(wire.Id); Status?.Invoke("Déplacer le numéro du conducteur • Échap : annuler"); return true; }
         if (HitText(point) is not { } hit) return false;
         before = Editor.ExportSnapshot; dragStart = point;
@@ -316,6 +317,7 @@ public sealed partial class SheetCanvas : FrameworkElement
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
+            if(Mode=="select"&&e.ClickCount==2&&HitGraphic(pointer) is string graphicId&&Editor.Sheet.Graphics.Any(g=>g.Id==graphicId&&g.Kind is "textbox" or "table")){Select(graphicId);GraphicEditRequested?.Invoke(graphicId);e.Handled=true;return;}
             if(GraphicClick(pointer)||HandleBlockClick(pointer)||BeginGraphicResize(pointer) || HandleBandClick(pointer)){e.Handled=true;return;}
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && BeginTextMove(pointer)) { CaptureMouse(); e.Handled = true; return; }
             if (e.ClickCount == 2 && ActivateReference(pointer)) { e.Handled = true; return; }

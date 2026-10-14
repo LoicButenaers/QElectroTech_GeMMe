@@ -160,6 +160,7 @@ public sealed partial class MainWindow
             AutomationProperties.SetName(swatch, color.Name); swatch.Click += (_, _) => textColor.Text = color.Color; swatches.Children.Add(swatch);
         }
         var textRotation = DocField(stylePanel, "Rotation du texte (°)", "0"); textRotation.Name = "TextRotation";
+        var bold=new CheckBox{Content="Gras",Name="ComponentTextBold",FontWeight=FontWeights.Bold,Margin=new(0,5,0,5)};var italic=new CheckBox{Content="Italique",Name="ComponentTextItalic",FontStyle=FontStyles.Italic,Margin=new(0,5,0,5)};stylePanel.Children.Add(bold);stylePanel.Children.Add(italic);
         TextBox gap = null!, x = null!, y = null!; TextBlock feedback = null!;
         var smartStatus = Hint(""); smartStatus.Visibility = Visibility.Collapsed;
         void AdjustText(string? side) { var result = allTexts.IsChecked == true ? preview.AlignAll(side) : preview.SmartAdjust(side); smartStatus.Text = result.Message; smartStatus.Visibility = Visibility.Visible; }
@@ -249,6 +250,7 @@ public sealed partial class MainWindow
             foreach (var pair in errors) { pair.Key.ClearValue(Control.BorderBrushProperty); pair.Value.Visibility = Visibility.Collapsed; }
             target.ItemsSource = preview.Items; target.SelectedIndex = preview.Target; contentText.IsReadOnly = preview.Items[preview.Target].ReadOnly; contentText.Text = preview.ContentText; removeText.IsEnabled = preview.TextKey.StartsWith("extra:");
             var p = preview.Placement; visible.IsChecked = p.Visible; inline.IsChecked = preview.Draft.ReferenceDestinationInline;
+            bold.IsChecked=p.Bold;italic.IsChecked=p.Italic;
             gap.Text = Number(p.Gap); x.Text = Number(p.OffsetX); y.Text = Number(p.OffsetY); fontSize.Text = Number(p.FontSize); textColor.Text = p.Color; textRotation.Text = Number(p.Rotation);
             foreach (var b in sides) b.Value.IsChecked = b.Key == p.Side; foreach (var b in horizontal) b.Value.IsChecked = b.Key == p.Horizontal; foreach (var b in vertical) b.Value.IsChecked = b.Key == p.Vertical;
             bool independent = !(report && preview.Target == 1 && preview.Draft.ReferenceDestinationInline); gap.IsEnabled = x.IsEnabled = y.IsEnabled = independent;
@@ -259,6 +261,7 @@ public sealed partial class MainWindow
         target.SelectionChanged += (_, _) => { if (loading || target.SelectedIndex < 0) return; int selected = target.SelectedIndex; preview.EndDrag(); preview.Target = labelTarget = selected; Load(); };
         contentText.TextChanged += (_, _) => { if (loading || contentText.IsReadOnly) return; try { preview.SetContent(contentText.Text); Publish(); } catch (Exception ex) { feedback.Text = ex.Message; } };
         visible.Click += (_, _) => { preview.Placement.Visible = visible.IsChecked == true; Load(); };
+        bold.Click+=(_,_)=>{if(loading)return;preview.Placement.Bold=bold.IsChecked==true;Load();};italic.Click+=(_,_)=>{if(loading)return;preview.Placement.Italic=italic.IsChecked==true;Load();};
         inline.Click += (_, _) => { if (inline.IsChecked == true) preview.Draft.ReferenceDestinationInline = true; else { int old = preview.Target; preview.Target = 1; preview.DetachDestination(); preview.Target = old; } Load(); };
         preview.Edited += Load; preview.Loaded += (_, _) => preview.Fit(); Load(); ShowDocumentDialog(dialog);
     }

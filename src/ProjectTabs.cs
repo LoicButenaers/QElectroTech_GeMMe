@@ -39,6 +39,7 @@ public sealed partial class MainWindow
         canvas.Status += text => { if (activeSession == session) status.Text = text; };
         canvas.SelectionChanged += () => { if (activeSession == session) Inspect(); };
         canvas.TextRequested += p => { FreeTextDialog(p); };
+        canvas.GraphicEditRequested += EditGraphicContent;
         editor.Changed += () => { RefreshTabs(); if (activeSession == session) Refresh(); };
         return session;
     }
