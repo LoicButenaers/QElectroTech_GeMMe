@@ -8,7 +8,9 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.20)
+## Fonctionnalités (version 0.21)
+
+- [Position sur la page et copier/coller 0.21](docs/POSITION_COPIE_0.21.md) : coordonnées X/Y et dimensions des formes en unités ou en %, alignement sur les bords/centre de la page et Ctrl+C/Ctrl+V entre folios ou projets, avec placement par clic.
 
 - [Pages de garde et dessins libres 0.20](docs/PAGE_GARDE_0.20.md) : type de folio sans repérage, cartouche facultatif, textes stylés ou liés aux informations du projet, rectangles, ellipses, lignes et logos. Déplacement, poignées, sauvegarde et exports partagés.
 
@@ -56,7 +58,7 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec snapshots compressés et budget mémoire de 64 Mo, y compris pour les projets contenant des images.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3 en arrière-plan sur un instantané, nomenclature CSV UTF-8. Le dessin peut continuer pendant l’export ; le PDF reflète l’état au lancement.
-- Serveur MCP local avec 92 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Serveur MCP local avec 94 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Interface
 

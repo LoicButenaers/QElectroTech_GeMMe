@@ -1,0 +1,101 @@
+{
+  "version": "0.21.0",
+  "projectFormat": 9,
+  "executableSha256": "C27B0F5B1CED548F94B615F15B1DF4B5C00846D16A4D46FBE0FF29F376594961",
+  "selfTests": {
+    "passed": true,
+    "count": 182
+  },
+  "mcp": {
+    "passed": true,
+    "count": 153,
+    "tools": 94,
+    "userProjectTestedOnCopy": true
+  },
+  "interaction": {
+    "passed": true,
+    "version": "0.21.0.0",
+    "measurement": "Préparation des dessins WPF hors écran, sans rasterisation GPU",
+    "samples": [
+      {
+        "activeComponents": 50,
+        "projectComponents": 5000,
+        "activeWires": 49,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 68.432,
+          "meanMs": 0.5702666666666667,
+          "allocatedBytes": 4471808
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 211.225,
+          "meanMs": 1.7602083333333334,
+          "allocatedBytes": 13876336
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 60.5488,
+          "meanMs": 0.5045733333333333,
+          "allocatedBytes": 4776280
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 4.7108,
+          "meanMs": 0.07851333333333334,
+          "allocatedBytes": 352672
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 6.4005,
+          "meanMs": 0.0533375,
+          "allocatedBytes": 482520
+        }
+      },
+      {
+        "activeComponents": 400,
+        "projectComponents": 5000,
+        "activeWires": 392,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 73.0428,
+          "meanMs": 0.60869,
+          "allocatedBytes": 4469704
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 485.9824,
+          "meanMs": 4.049853333333333,
+          "allocatedBytes": 50606016
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 292.4351,
+          "meanMs": 2.4369591666666666,
+          "allocatedBytes": 21691592
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 6.1647,
+          "meanMs": 0.102745,
+          "allocatedBytes": 352672
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 10.4605,
+          "meanMs": 0.08717083333333334,
+          "allocatedBytes": 482520
+        }
+      }
+    ]
+  },
+  "clipboardPreview": {
+    "components": 400,
+    "frames": 120,
+    "totalMs": 0.6195,
+    "meanMs": 0.0051625,
+    "allocatedBytes": 161320
+  },
+  "clipboardTestIo": "Isolated in-memory clipboard; user clipboard preserved",
+  "measuredAtUtc": "2026-10-14T10:11:48.4887416+00:00"
+}

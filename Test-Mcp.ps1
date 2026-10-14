@@ -64,7 +64,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 92) '92 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 94) '94 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -555,6 +555,31 @@ try {
     $null = Call 'project_save' @{path=$coverSaved;overwrite=$true}
     $null = Call 'project_open' @{path=$coverSaved}
     Assert ((Call 'project_get').project.version -eq 9 -and (Call 'project_get').project.sheets[0].graphics.Count -eq 4) 'Garde et formes sauvegardées puis relues MCP'
+
+    $null = Call 'project_new' @{title='Placement page';discardUnsaved=$true}
+    $null = Call 'page_kind' @{kind='cover'}
+    $positionSymbol = Call 'component_add' @{symbol='coil';x=200;y=200}
+    $positionTerminal = Call 'component_add' @{symbol='terminal';x=400;y=600}
+    $positionWire = Call 'wire_add' @{fromComponent=$positionSymbol.id;fromPort='A2';toComponent=$positionTerminal.id;toPort='1'}
+    $null = Call 'element_position' @{id=$positionSymbol.id;axis='X';value=50;unit='percent'}
+    Assert ((Call 'project_get').project.sheets[0].components[0].x -eq 700 -and (Call 'project_get').project.sheets[0].wires[0].from.componentId -eq $positionSymbol.id) 'Position symbole en pourcent avec connexion conservée MCP'
+    $null = Call 'element_position' @{id=$positionSymbol.id;axis='Y';value=220.5}
+    Assert ((Call 'project_get').project.sheets[0].components[0].y -eq 220.5) 'Position numérique précise MCP'
+    $positionRect = Call 'graphic_put' @{graphic=@{x=100;y=100;width=200;height=100}}
+    $null = Call 'element_position' @{id=$positionRect.id;axis='Width';value=20;unit='percent'}
+    Assert ((Call 'project_get').project.sheets[0].graphics[0].width -eq 280) 'Dimensions de forme en pourcent MCP'
+    $positionNote = Call 'note_put' @{note=@{x=100;y=400;text='Placement';fontSize=24}}
+    $null = Call 'element_position' @{id=$positionNote.id;axis='Y';value=50;unit='percent'}
+    Assert ((Call 'project_get').project.sheets[0].notes[0].y -eq 495) 'Position texte en pourcent MCP'
+    $positionBefore = (Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress
+    $errorText = Rpc 'tools/call' @{name='element_position';arguments=@{id=$positionRect.id;axis='X';value=110;unit='percent'}} -AllowError
+    Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $positionBefore) 'Position hors page refusée atomiquement MCP'
+    $null = Call 'selection_align_page' @{ids=@($positionRect.id);operation='center'}
+    Assert ((Call 'project_get').project.sheets[0].graphics[0].x -eq 560 -and (Call 'project_get').project.sheets[0].graphics[0].y -eq 445) 'Centrage sur la page entière MCP'
+    $null = Call 'history_undo' @{}
+    Assert (((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $positionBefore) 'Annulation du centrage page MCP'
+    $errorText = Rpc 'tools/call' @{name='element_position';arguments=@{id=$positionRect.id;axis='X';value=10;unit='mm'}} -AllowError
+    Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $positionBefore) 'Unité inconnue refusée MCP'
 
     if ($RoundTripProjectPath) {
         if (!$Headless) { throw 'La relecture du document utilisateur exige un hôte de test isolé.' }

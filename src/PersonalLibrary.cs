@@ -47,16 +47,37 @@ public static class PersonalLibrary
 }
 public sealed partial class SheetCanvas
 {
-    public CircuitBlock? PendingBlock { get; set; }
+    private CircuitBlock? pendingBlock;
+    private System.Windows.Media.DrawingGroup? blockPreview;
+    private Rect? blockBounds;
+    public CircuitBlock? PendingBlock { get => pendingBlock; set { pendingBlock=value;blockPreview=null;blockBounds=null; } }
+    internal bool PlaceBlockForTest(Point point) => HandleBlockClick(point);
+    internal System.Windows.Media.DrawingGroup BlockPreviewForTest() => BlockPreview();
+    private System.Windows.Media.DrawingGroup BlockPreview()
+    {
+        if(blockPreview is not null)return blockPreview;
+        var block=PendingBlock??throw new InvalidOperationException("Aucune copie à placer.");var p=block.Project;var s=p.Sheets[0];var drawing=new System.Windows.Media.DrawingGroup();
+        using(var dc=drawing.Open())
+        {
+            Drawing.Render(dc,s.Graphics.Select(g=>FreeGraphics.Ink(p,g)));Drawing.Render(dc,s.Notes.Select(n=>FreeGraphics.NoteInk(p,s,n)));var refs=new CrossReferences(p);
+            foreach(var w in s.Wires){var path=w.Route(s);for(int i=1;i<path.Count;i++)dc.DrawLine(new(Drawing.Brush(w.Color),w.Thickness),path[i-1],path[i]);}
+            foreach(var c in s.Components)Drawing.Render(dc,Drawing.ComponentScene(p,c,refs));
+        }
+        drawing.Freeze();return blockPreview=drawing;
+    }
     private bool HandleBlockClick(Point point)
     {
         if(Mode!="block"||PendingBlock is null)return false;var ids=Editor.InsertBlock(PendingBlock,point);SetMode("select");Selected.Clear();foreach(string id in ids)Selected.Add(id);SelectionChanged?.Invoke();InvalidateVisual();return true;
     }
     private void RenderBlock(System.Windows.Media.DrawingContext dc)
     {
-        if(Mode!="block"||PendingBlock is null||!IsMouseOver)return;var bounds=CircuitBlocks.Bounds(PendingBlock.Project);var target=new Point(Editor.Snap(pointer.X),Editor.Snap(pointer.Y));var delta=target-bounds.TopLeft;
+        if(Mode!="block"||PendingBlock is null||!IsMouseOver)return;RenderBlockAt(dc,pointer);
+    }
+    internal void RenderBlockAt(System.Windows.Media.DrawingContext dc,Point point)
+    {
+        if(PendingBlock is null)return;var bounds=blockBounds??=CircuitBlocks.Bounds(PendingBlock.Project);var target=new Point(Editor.Snap(point.X),Editor.Snap(point.Y));var delta=target-bounds.TopLeft;
         dc.PushOpacity(.45);dc.PushTransform(new System.Windows.Media.TranslateTransform(delta.X,delta.Y));
-        var s=PendingBlock.Project.Sheets[0];Drawing.Render(dc,s.Graphics.Select(g=>FreeGraphics.Ink(PendingBlock.Project,g)));Drawing.Render(dc,s.Notes.Select(n=>FreeGraphics.NoteInk(PendingBlock.Project,s,n)));var refs=new CrossReferences(PendingBlock.Project);foreach(var c in s.Components)Drawing.Render(dc,Drawing.ComponentScene(PendingBlock.Project,c,refs));foreach(var w in s.Wires){var path=w.Route(s);for(int i=1;i<path.Count;i++)dc.DrawLine(new(Drawing.Brush(w.Color),w.Thickness),path[i-1],path[i]);}dc.Pop();dc.Pop();
+        dc.DrawDrawing(BlockPreview());dc.Pop();dc.Pop();
     }
 }
 public sealed partial class MainWindow

@@ -99,6 +99,7 @@ public sealed partial class SheetCanvas : FrameworkElement
     public void SetMode(string mode)
     {
         CancelDrag(); CancelBand();Mode = mode; connection = null; waypoints.Clear();
+        if (mode != "block") PendingBlock = null;
         Cursor = mode == "select" ? Cursors.Arrow : Cursors.Cross;
         InvalidateVisual(); Status?.Invoke(mode switch { "place" => "Cliquer pour placer • Tirer depuis une borne pour câbler • Échap : terminer", "wire" => "Tirer d’une borne à l’autre, ou cliquer les bornes et les points de passage", "text" => "Cliquer sur le folio pour ajouter un texte", _ => "Tirer depuis une borne : câbler • Sélectionner un fil : déplacer ses poignées" });
     }
@@ -315,7 +316,7 @@ public sealed partial class SheetCanvas : FrameworkElement
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
-            if(GraphicClick(pointer)||BeginGraphicResize(pointer)||HandleBlockClick(pointer) || HandleBandClick(pointer)){e.Handled=true;return;}
+            if(GraphicClick(pointer)||HandleBlockClick(pointer)||BeginGraphicResize(pointer) || HandleBandClick(pointer)){e.Handled=true;return;}
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && BeginTextMove(pointer)) { CaptureMouse(); e.Handled = true; return; }
             if (e.ClickCount == 2 && ActivateReference(pointer)) { e.Handled = true; return; }
             if (Mode == "place" && Hit(pointer) is string existing && Editor.Sheet.Components.Any(c => c.Id == existing && CrossReferences.IsPoint(c))) { SetMode("select"); Select(existing); return; }

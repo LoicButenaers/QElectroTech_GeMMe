@@ -71,7 +71,8 @@ public sealed partial class Editor
     public List<string> InsertBlock(CircuitBlock block,Point anchor)
     {
         CircuitBlocks.Validate(block);var p=ProjectTemplates.Instantiate(block.Project,block.Name,true);var s=p.Sheets[0];var bounds=CircuitBlocks.Bounds(p);double dx=Snap(anchor.X)-bounds.Left,dy=Snap(anchor.Y)-bounds.Top;bounds.Offset(dx,dy);
-        if(!double.IsFinite(anchor.X)||!double.IsFinite(anchor.Y)||!SheetZones.Area(Project,Sheet).Contains(bounds))throw new ArgumentException("Placer le bloc entièrement dans la zone de dessin.");
+        var placementArea=Sheet.Kind=="cover"?new Rect(0,0,Sheet.Width,Sheet.Height):SheetZones.Area(Project,Sheet);
+        if(!PagePlacement.Editable(Sheet)||!double.IsFinite(anchor.X)||!double.IsFinite(anchor.Y)||!placementArea.Contains(bounds))throw new ArgumentException("Placer le bloc entièrement dans la zone de dessin d’un folio modifiable.");
         CircuitBlocks.Translate(s,dx,dy);List<string> ids=[];
         Change(()=>
         {

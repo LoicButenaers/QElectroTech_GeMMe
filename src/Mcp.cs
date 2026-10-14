@@ -15,6 +15,8 @@ public static class McpTools
     private static JsonObject B(string description) => new() { ["type"] = "boolean", ["description"] = description };
     public static readonly ToolSpec[] Specs =
     [
+        new("element_position","Positionner un symbole, texte ou dessin libre par rapport à la page : X/Y, Width/Height pour les formes. unit=units ou percent.",new(){["id"]=S("ID élément"),["axis"]=S("X, Y, Width ou Height"),["value"]=N("Coordonnée"),["unit"]=S("units (défaut) ou percent")},["id","axis","value"]),
+        new("selection_align_page","Aligner le groupe sélectionné sur la page entière, avec déplacement des coudes internes, en une action annulable.",new(){["ids"]=new JsonObject{["type"]="array"},["operation"]=S("left, right, top, bottom, centerX, centerY ou center")},["ids","operation"]),
         new("page_kind","Définir le folio actif comme schéma ou page de garde ; aucun objet supprimé. La page de garde n’affiche pas les zones.",new(){["kind"]=S("drawing ou cover"),["titleBlockId"]=S("Cartouche, vide pour aucun")},["kind"]),
         new("graphic_put","Créer ou remplacer une forme libre du folio actif : rect, ellipse, line ou image. Aucune connexion électrique.",new(){["graphic"]=new JsonObject{["type"]="object"}},["graphic"]),
         new("graphic_delete","Supprimer une forme libre, opération annulable.",new(){["id"]=S("ID dessin libre")},["id"]),
@@ -141,6 +143,8 @@ public static class McpTools
         object result;
         switch (name)
         {
+            case "element_position":string positionUnit=Str("unit","units");if(positionUnit is not ("units" or "percent"))throw new ArgumentException("Choisir units ou percent.");e.SetElementCoordinate(Str("id"),Str("axis"),Num("value"),positionUnit=="percent");result=e.Sheet;break;
+            case "selection_align_page":e.AlignToPage(a.GetProperty("ids").Deserialize<string[]>()??[],Str("operation"));result=e.Sheet;break;
             case "page_kind":e.Change(()=>{FreeGraphics.SetKind(e.Sheet,Str("kind"));if(a.TryGetProperty("titleBlockId",out _))e.Sheet.TitleBlockId=Str("titleBlockId");});result=e.Sheet;break;
             case "graphic_put":result=e.PutGraphic(a.GetProperty("graphic").Deserialize<SheetGraphic>(ProjectStore.Json)??throw new ArgumentException("Dessin absent."));break;
             case "graphic_delete":if(!e.Sheet.Graphics.Any(g=>g.Id==Str("id")))throw new ArgumentException("Dessin absent.");e.Delete([Str("id")]);result=new{deleted=Str("id")};break;

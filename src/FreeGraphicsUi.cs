@@ -82,7 +82,7 @@ public sealed partial class MainWindow
     private void GraphicProperties(SheetGraphic graphic)
     {
         properties.Children.Add(new TextBlock{Text=graphic.Kind=="image"?"Logo / image":graphic.Kind=="line"?"Ligne":graphic.Kind=="ellipse"?"Ellipse":"Rectangle",FontSize=19,Margin=new(0,15,0,8)});properties.Children.Add(Hint("Déplacer avec la souris ; redimensionner par les poignées. Ctrl+Z annule."));
-        PropertyGroup("Position et dimensions",()=>{foreach(var(key,label,value)in new[]{("X","X",graphic.X),("Y","Y",graphic.Y),("Width","Largeur",graphic.Width),("Height","Hauteur",graphic.Height)}){var input=Field("graphic"+key,label,Number(value));LiveText(input,text=>Editor.Change(()=>{var live=Editor.Sheet.Graphics.Single(g=>g.Id==graphic.Id);typeof(SheetGraphic).GetProperty(key)!.SetValue(live,ReadNumber(text));},graphic.Id+":"+key));}});
+        PropertyGroup("Position et dimensions sur la page",()=>PagePositionFields(graphic.Id,"graphic",true));
         if(graphic.Kind!="image")PropertyGroup("Aspect",()=>{
             foreach(var(key,label,value)in new[]{("Color","Couleur du trait",graphic.Color),("Fill","Fond · vide = transparent",graphic.Fill)}.Where(item=>graphic.Kind!="line"||item.Item1!="Fill")){var input=Field("graphic"+key,label,value);LiveText(input,text=>Editor.Change(()=>typeof(SheetGraphic).GetProperty(key)!.SetValue(Editor.Sheet.Graphics.Single(g=>g.Id==graphic.Id),text),graphic.Id+":"+key));}
             var style=PropertyChoice("Type de trait",graphic.LineStyle,[("solid","Continu"),("dashed","Tirets"),("dotted","Pointillés"),("dashdot","Mixte")]);style.SelectionChanged+=(_,_)=>LiveProperty(style,()=>Editor.Change(()=>Editor.Sheet.Graphics.Single(g=>g.Id==graphic.Id).LineStyle=(string)style.SelectedValue));
@@ -99,6 +99,6 @@ public sealed partial class MainWindow
     }
     private ComboBox PropertyChoice(string label,string value,(string Key,string Label)[] choices)
     {
-        PropertyContents.Children.Add(Hint(label));var control=new ComboBox{ItemsSource=choices.Select(c=>new KeyValuePair<string,string>(c.Key,c.Label)).ToList(),DisplayMemberPath="Value",SelectedValuePath="Key",SelectedValue=value,Margin=new(0,3,0,8)};PropertyContents.Children.Add(control);RegisterPropertyControl(control);return control;
+        PropertyContents.Children.Add(Hint(label));var control=new ComboBox{SelectedValuePath="Tag",Margin=new(0,3,0,8)};foreach(var choice in choices)control.Items.Add(new ComboBoxItem{Content=choice.Label,Tag=choice.Key});control.SelectedValue=value;PropertyContents.Children.Add(control);RegisterPropertyControl(control);return control;
     }
 }

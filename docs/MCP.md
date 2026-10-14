@@ -2,6 +2,8 @@
 
 Le serveur est intégré au logiciel : **`GeMMeElec.exe --mcp`**. Il utilise JSON-RPC 2.0 sur stdin/stdout UTF-8, un objet par ligne. L’interface doit être ouverte pour exécuter les outils ; initialize et tools/list restent disponibles sans fenêtre.
 
+La version 0.21 expose 94 outils. `element_position` accepte `id`, `axis` (`X`, `Y`, `Width`, `Height` pour les formes), `value` et `unit` (`units` par défaut ou `percent`). Les pourcentages utilisent la page entière. `selection_align_page` accepte `ids` et `operation` (`left`, `right`, `top`, `bottom`, `centerX`, `centerY`, `center`) ; le déplacement du groupe conserve ses coudes internes. Les deux opérations utilisent le même modèle annulable que l’interface.
+
 ## Configuration Codex
 
 Le dépôt contient `.codex/config.toml`, limité à ce projet :

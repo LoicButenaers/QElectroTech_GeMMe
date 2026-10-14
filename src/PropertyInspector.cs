@@ -54,7 +54,8 @@ public sealed partial class MainWindow
         {
             properties.Children.Add(new TextBlock { Text = $"{Canvas.Selected.Count} éléments sélectionnés", FontSize = 18, TextWrapping = TextWrapping.Wrap, Margin = new(0, 14, 0, 4) });
             properties.Children.Add(Hint("Glisser pour déplacer le groupe. Les commandes ci-dessous s’appliquent à toute la sélection."));
-            foreach (var id in new[] { "rotate", "duplicate", "delete" }) properties.Children.Add(CommandButton(id));
+            foreach (var id in new[] { "copy", "paste", "rotate", "duplicate", "delete" }) properties.Children.Add(CommandButton(id));
+            PageAlignmentButtons();
             return;
         }
         if (c is not null)
@@ -122,7 +123,7 @@ public sealed partial class MainWindow
             properties.Children.Add(new TextBlock { Text = "Texte du folio", FontSize = 18, Margin = new(0, 14, 0, 4) });
             PropertyGroup("Contenu", () => { var input = Field("text", "Texte affiché", note.Text); input.AcceptsReturn = true; input.MinHeight = 75; LiveText(input, value => Editor.Change(() => Editor.Sheet.Notes.Single(n => n.Id == note.Id).Text = value, note.Id + ":text")); });
             NoteStyleProperties(note);
-            PropertyGroup("Position", () => { foreach (var axis in new[] { "X", "Y" }) { var input = Field("note" + axis, axis + " (unités de dessin)", Number(axis == "X" ? note.X : note.Y)); LiveText(input, value => { double n = ReadCoordinate(value, axis); Editor.Change(() => { var live = Editor.Sheet.Notes.Single(x => x.Id == note.Id); if (axis == "X") live.X = n; else live.Y = n; }, note.Id + ":" + axis); }); } });
+            PropertyGroup("Position sur la page", () => PagePositionFields(note.Id, "note"));
         }
         else if (Editor.Sheet.CabinetPlanId.Length>0)
         {
@@ -154,8 +155,7 @@ public sealed partial class MainWindow
     private void ComponentPositionFields(Component c)
     {
         PropertyContents.Children.Add(Hint("Emplacement : " + SheetZones.Address(Editor.Project, Editor.Sheet, c)));
-        Field("X", "Position X (unités de dessin)", Number(c.X), $"De 0 à {Number(Editor.Sheet.Width)}. Virgule ou point accepté.");
-        Field("Y", "Position Y (unités de dessin)", Number(c.Y), $"De 0 à {Number(Editor.Sheet.Height)}. Virgule ou point accepté.");
+        PagePositionFields(c.Id, "");
         Field("rotation", "Rotation (°)", c.Rotation.ToString(), "Multiples de 90° : 0, 90, 180, 270. Les conducteurs suivent les bornes.");
     }
     private double ReadCoordinate(string value, string axis)

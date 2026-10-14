@@ -15,6 +15,11 @@ public sealed partial class MainWindow
         var menu = new ContextMenu();
         var components = Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id)).ToList();
         var wires = Editor.Sheet.Wires.Where(w => Canvas.Selected.Contains(w.Id)).ToList();
+        if (PagePlacement.Editable(Editor.Sheet))
+        {
+            if (CopyableSelection()) menu.Items.Add(QuickAction("Copier    Ctrl+C", CopySelection));
+            menu.Items.Add(QuickAction("Coller    Ctrl+V", PasteSelection));
+        }
         if (Canvas.Selected.Count > 0)
         {
             menu.Items.Add(QuickAction("Propriétés", () => { workspace?.Show("properties"); Inspect(); }));

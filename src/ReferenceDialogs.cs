@@ -48,6 +48,7 @@ public sealed partial class MainWindow
         });
         PropertyGroup("Destinations", () => { PropertyContents.Children.Add(destinations); PropertyContents.Children.Add(Button("Navigateur des renvois…", ReferenceNavigator)); });
         PropertyGroup("Textes du report", () => TextPositionEditor(c));
+        PropertyGroup("Position sur la page", () => { PagePositionFields(c.Id, ""); var rotation = Field("rotation", "Rotation (°)", c.Rotation.ToString()); LiveText(rotation, value => Editor.SetComponentField(c.Id,"rotation",value)); }, false);
         void SyncFields()
         {
             updatingPropertyControls = true;

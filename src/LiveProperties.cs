@@ -26,6 +26,7 @@ public sealed partial class MainWindow
     {
         foreach (var (key, box) in fields)
         {
+            if (key is "X" or "Y") continue; // PagePositionFields handles both numeric units and percentages.
             LiveText(box, value => Editor.SetComponentField(id,key,value));
         }
     }

@@ -35,6 +35,8 @@ public sealed partial class MainWindow
         Add("undo", "Annuler", "undo", () => Editor.Undo(), "Ctrl+Z", () => Editor.CanUndo && !Editor.InteractionInProgress);
         Add("redo", "Rétablir", "redo", () => Editor.Redo(), "Ctrl+Y", () => Editor.CanRedo && !Editor.InteractionInProgress);
         Add("duplicate", "Dupliquer", "new", Duplicate, "Ctrl+D", Selection);
+        Add("copy", "Copier", "new", CopySelection, "Ctrl+C", CopyableSelection);
+        Add("paste", "Coller", "new", PasteSelection, "Ctrl+V", () => !Editor.InteractionInProgress && PagePlacement.Editable(Editor.Sheet));
         Add("rotate", "Rotation 90°", "rotate", Rotate, "R", Selection);
         Add("delete", "Supprimer", "delete", Delete, "Suppr", Selection);
         Add("coverAdd", "Ajouter une page de garde…", "page", AddCoverPage);
@@ -119,7 +121,7 @@ public sealed partial class MainWindow
             menu.Items.Add(group);
         }
         Menu("_Fichier", "new", "templateNew", "open", "save", "saveAs", "templateSave", "recovery", "projectInfo", "demo", "close");
-        Menu("_Édition", "undo", "redo", "duplicate", "rotate", "delete", "alignment", "projectSearch");
+        Menu("_Édition", "undo", "redo", "copy", "paste", "duplicate", "rotate", "delete", "alignment", "projectSearch");
         Menu("_Folio", "pageAdd", "coverAdd", "sheetInfo", "titleblocks", "zones", "pageUp", "pageDown", "pageRename", "pageDelete");
         Menu("_Insérer", "wire", "text", "graphicRect", "graphicEllipse", "graphicLine", "graphicImage", "select", "terminalLine", "cableLine", "insertOnWire", "blockSave", "blockImport", "personalLibrary", "newSymbol", "editSymbol", "importSymbol");
         Menu("I_mporter", "importQet", "importDxf");
@@ -194,7 +196,7 @@ public sealed partial class MainWindow
         }
         Tab("Accueil", ("Projet", [("new", "Nouveau"), ("open", "Ouvrir"), ("save", "Enregistrer"), ("pdf", "PDF")]), ("Historique", [("undo", "Annuler"), ("redo", "Rétablir")]), ("Édition", [("select", "Sélection"), ("wire", "Conducteur"), ("text", "Texte"), ("rotate", "Rotation"), ("duplicate", "Dupliquer"), ("delete", "Supprimer")]));
         Tab("Dessiner", ("Symboles", [("newSymbol", "Créer"), ("editSymbol", "Copie"), ("importSymbol", "Importer")]), ("Dessin", [("select", "Sélection"), ("wire", "Conducteur"), ("text", "Texte")]), ("Folios", [("pageAdd", "Ajouter"), ("sheetInfo", "Propriétés"), ("titleblocks", "Cartouches"), ("zones", "Repérage")]));
-        Tab("Mise en page", ("Dessins libres",[("text","Texte"),("graphicRect","Rectangle"),("graphicEllipse","Ellipse"),("graphicLine","Ligne"),("graphicImage","Logo / image")]),("Folio",[("coverAdd","Page de garde"),("sheetInfo","Propriétés"),("alignment","Aligner")]));
+        Tab("Mise en page", ("Dessins libres",[("text","Texte"),("graphicRect","Rectangle"),("graphicEllipse","Ellipse"),("graphicLine","Ligne"),("graphicImage","Logo / image")]),("Édition",[("copy","Copier"),("paste","Coller")]),("Folio",[("coverAdd","Page de garde"),("sheetInfo","Propriétés"),("alignment","Aligner")]));
         Tab("Circuits", ("Câblage", [("terminalLine", "Bornes"), ("cableLine", "Câble"), ("insertOnWire", "Insérer"), ("smartRoute", "Router")]), ("Organisation", [("cables", "Sections"), ("terminalStrips", "Plans borniers")]), ("Réutiliser", [("blockSave", "Créer un bloc"), ("blockImport", "Importer un bloc"), ("personalLibrary", "Favoris")]));
         Tab("Projet", ("Données", [("projectInfo", "Informations"), ("bom", "Nomenclature"), ("references", "Renvois"), ("coilContacts", "Bobines / contacts"), ("validate", "Vérifier")]), ("Importer", [("importQet", "QElectroTech"), ("importDxf", "DXF")]), ("Exporter", [("pdf", "PDF"), ("svg", "SVG"), ("csv", "CSV")]));
         Tab("Affichage", ("Vue", [("fit", "Ajuster"), ("zoomSelection", "Sélection"), ("reading", "Lecture"), ("grid", "Grille"), ("palette", "Palette")]), ("Panneaux", [("library", "Bibliothèque"), ("pages", "Folios"), ("properties", "Propriétés"), ("resetPanels", "Rétablir")]), ("Interface", [("settings", "Paramètres")]));
