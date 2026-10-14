@@ -1,0 +1,91 @@
+{
+  "version": "0.20.0",
+  "projectFormat": 9,
+  "applicationTests": 170,
+  "mcpChecks": 145,
+  "mcpTools": 92,
+  "executableSha256": "00C8C36AC63BD7DC2F237579FB6AE54DEA87F21E289DDA3D82F5671AAE52FF21",
+  "interaction": {
+    "passed": true,
+    "version": "0.20.0.0",
+    "measurement": "Préparation des dessins WPF hors écran, sans rasterisation GPU",
+    "samples": [
+      {
+        "activeComponents": 50,
+        "projectComponents": 5000,
+        "activeWires": 49,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 79.1797,
+          "meanMs": 0.6598308333333333,
+          "allocatedBytes": 4493344
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 245.6839,
+          "meanMs": 2.047365833333333,
+          "allocatedBytes": 13886856
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 64.9313,
+          "meanMs": 0.5410941666666667,
+          "allocatedBytes": 4785832
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 5.1491,
+          "meanMs": 0.08581833333333333,
+          "allocatedBytes": 355112
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 6.9405,
+          "meanMs": 0.0578375,
+          "allocatedBytes": 486880
+        }
+      },
+      {
+        "activeComponents": 400,
+        "projectComponents": 5000,
+        "activeWires": 392,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 82.917,
+          "meanMs": 0.690975,
+          "allocatedBytes": 4474832
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 467.3826,
+          "meanMs": 3.894855,
+          "allocatedBytes": 50614408
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 277.1119,
+          "meanMs": 2.3092658333333334,
+          "allocatedBytes": 21713552
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 6.7104,
+          "meanMs": 0.11184,
+          "allocatedBytes": 354592
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 11.532,
+          "meanMs": 0.0961,
+          "allocatedBytes": 486360
+        }
+      }
+    ]
+  },
+  "originalUserProjectProtected": "MCP verifies its hash before and after a round trip on a separate copy.",
+  "visualQa": [
+    "WPF cover preview",
+    "SVG ellipse and filled rectangle",
+    "PDF first page precedes contents; rendered and inspected"
+  ]
+}

@@ -64,7 +64,7 @@ try {
     Assert ($init.serverInfo.name -eq 'gemmeelec') 'Négociation MCP'
     $client.StandardInput.WriteLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')
     $list = Rpc 'tools/list' @{}
-    Assert ($list.tools.Count -eq 87) '87 outils déclarés avec schémas'
+    Assert ($list.tools.Count -eq 92) '92 outils déclarés avec schémas'
     $current = Call 'project_get'
     if ($current.dirty -or ($current.project.sheets[0].components.Count -gt 0 -and $current.filePath -ne (Join-Path $root "build/$stem.gemelec"))) { throw 'Ouvrir un projet vierge enregistré avant ce test : le projet existant est préservé.' }
     $null = Call 'project_new' @{ title = 'Essai MCP · circuit de commande' }
@@ -384,7 +384,7 @@ try {
     $null = Call 'project_save' @{path=$continuityPath;overwrite=$true}
     $null = Call 'project_open' @{path=$continuityPath;discardUnsaved=$true}
     $state = Call 'project_get'
-    Assert ($state.project.version -eq 8 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
+    Assert ($state.project.version -eq 9 -and !$state.project.sheets[1].useProjectZones -and @($state.project.sheets[0].wires | Where-Object number -eq '26').Count -eq 3) 'Format courant et réglages relus via MCP'
     $null = Call 'wire_update' @{id=$continuation.id;numberIndependent=$true;number='CABLE-01';color='#D32F2F';thickness=3.2;lineStyle='dashed'}
     $null = Call 'wire_update' @{id=$wire.id;number='27'}
     $state = Call 'project_get'
@@ -522,6 +522,39 @@ try {
     Assert ((Call 'project_get').project.sheets[0].wires[0].routingMode -eq 'smart' -and (Call 'project_get').project.sheets[0].wires[0].waypoints.Count -gt 0) 'Routage avec obstacle via MCP'
     $null = Call 'wire_segment_move' @{id=$w.id;segment=2;x=100;y=300}
     Assert ((Call 'project_get').project.sheets[0].wires[0].routingMode -eq 'manual') 'Déplacement de segment conserve le parcours manuel MCP'
+
+    $null = Call 'project_new' @{title='Garde MCP';discardUnsaved=$true}
+    $cover = Call 'page_kind' @{kind='cover'}
+    Assert ($cover.kind -eq 'cover' -and $cover.titleBlockId -eq '') 'Page de garde sans cartouche par défaut MCP'
+    $rect = Call 'graphic_put' @{graphic=@{kind='rect';x=100;y=100;width=500;height=200;color='#203348';fill='#E7EDF3'}}
+    $ellipse = Call 'graphic_put' @{graphic=@{kind='ellipse';x=700;y=300;width=200;height=100;color='#007F86';fill='#E7F5F4'}}
+    $line = Call 'graphic_put' @{graphic=@{kind='line';x=1100;y=600;width=-900;height=0}}
+    $note = Call 'note_put' @{note=@{x=350;y=170;text='{project.title}';fontSize=36;color='#007F86';align='center';resolveFields=$true}}
+    Assert ((Call 'project_get').project.sheets[0].graphics.Count -eq 3 -and $note.fontSize -eq 36) 'Rectangles ellipses lignes et texte stylé MCP'
+    $image = Call 'graphic_image_import' @{path=(Join-Path $root 'assets/logo.png');x=900;y=100;width=100}
+    Assert ($image.kind -eq 'image' -and $image.imageId.Length -gt 0) 'Logo importé sur la page de garde MCP'
+    $null = Call 'view_zoom_selection' @{ids=@($rect.id,$note.id)}
+    $rect.width = 600
+    $null = Call 'graphic_put' @{graphic=$rect}
+    Assert ((Call 'project_get').project.sheets[0].graphics[0].width -eq 600) 'Dimensions graphiques modifiables MCP'
+    $beforeInvalid = (Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress
+    $errorText = Rpc 'tools/call' @{name='graphic_put';arguments=@{graphic=@{kind='rect';x=100;y=100;width=-1}}} -AllowError
+    Assert ($errorText.Length -gt 0 -and ((Call 'project_get').project | ConvertTo-Json -Depth 100 -Compress) -eq $beforeInvalid) 'Forme invalide refusée atomiquement MCP'
+    $coverSvg = Join-Path $root 'build/MCP-cover.svg'
+    $null = Call 'export_svg' @{path=$coverSvg;overwrite=$true}
+    [xml]$coverXml = Get-Content -LiteralPath $coverSvg -Raw
+    $visibleText = @($coverXml.SelectNodes('//*[local-name()="text"]') | ForEach-Object {$_.InnerText})
+    Assert ($coverXml.OuterXml.Contains('ellipse') -and $visibleText -contains 'Garde MCP' -and !($visibleText -contains 'Schéma de puissance')) 'SVG de garde sans cartouche et avec champs résolus MCP'
+    $null = Call 'graphic_delete' @{id=$ellipse.id}
+    Assert ((Call 'project_get').project.sheets[0].graphics.Count -eq 3) 'Suppression de forme MCP'
+    $null = Call 'history_undo' @{}
+    Assert ((Call 'project_get').project.sheets[0].graphics.Count -eq 4) 'Annulation suppression de forme MCP'
+    $withCartouche = Call 'page_kind' @{kind='cover';titleBlockId='technical'}
+    Assert ($withCartouche.kind -eq 'cover' -and $withCartouche.titleBlockId -eq 'technical') 'Cartouche facultatif sur garde MCP'
+    $coverSaved = Join-Path $root 'build/MCP-cover.gemelec'
+    $null = Call 'project_save' @{path=$coverSaved;overwrite=$true}
+    $null = Call 'project_open' @{path=$coverSaved}
+    Assert ((Call 'project_get').project.version -eq 9 -and (Call 'project_get').project.sheets[0].graphics.Count -eq 4) 'Garde et formes sauvegardées puis relues MCP'
 
     if ($RoundTripProjectPath) {
         if (!$Headless) { throw 'La relecture du document utilisateur exige un hôte de test isolé.' }

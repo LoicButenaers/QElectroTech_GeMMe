@@ -75,7 +75,8 @@ public sealed partial class SheetCanvas : FrameworkElement
         if (!add) Selected.Clear();
         // Whole objects are enclosed: crossing an unrelated wire does not select it.
         foreach (var c in Editor.Sheet.Components.Where(c => !Junctions.Automatic(c) && area.Contains(c.Bounds()))) Selected.Add(c.Id);
-        foreach (var n in Editor.Sheet.Notes) if (area.Contains(new Rect(new Point(n.X, n.Y), Drawing.Measure(n.Text, 16)))) Selected.Add(n.Id);
+        foreach (var n in Editor.Sheet.Notes) if (area.Contains(FreeGraphics.NoteBounds(Editor.Project,Editor.Sheet,n))) Selected.Add(n.Id);
+        foreach(var g in Editor.Sheet.Graphics)if(area.Contains(g.Bounds()))Selected.Add(g.Id);
         var index = Editor.Sheet.Components.ToDictionary(c => c.Id);
         foreach (var w in Editor.Sheet.Wires) if (w.Route(Editor.Sheet, index).All(area.Contains)) Selected.Add(w.Id);
         SelectionChanged?.Invoke(); InvalidateVisual(); Status?.Invoke($"{Selected.Count} éléments sélectionnés • Ctrl + glisser pour ajouter à la sélection");
@@ -133,7 +134,7 @@ public sealed partial class SheetCanvas : FrameworkElement
         foreach (var wire in sheet.Wires.Where(w => HighlightedWires.Contains(w.Id))) { var path = wire.Route(sheet); var highlight = new Pen(new SolidColorBrush(Color.FromArgb(90, 255, 170, 0)), wire.Thickness + 7 / Zoom); for (int i = 1; i < path.Count; i++) dc.DrawLine(highlight, path[i-1], path[i]); }
         RenderBand(dc); RenderBlock(dc);
         retainedScene ??= new(Editor.Project,sheet,Reading);retainedScene.Update();
-        dc.DrawDrawing(retainedScene.Drawing);
+        dc.DrawDrawing(retainedScene.Drawing);RenderGraphicsOverlay(dc);
         var accent = Drawing.Brush("#007F86"); var pen = new Pen(accent, 2 / Zoom);
         foreach (var c in sheet.Components)
         {
@@ -149,7 +150,7 @@ public sealed partial class SheetCanvas : FrameworkElement
             dc.DrawEllipse(accent, new Pen(Brushes.White, 1 / Zoom), points[0], 5 / Zoom, 5 / Zoom);
             dc.DrawEllipse(accent, new Pen(Brushes.White, 1 / Zoom), points[^1], 5 / Zoom, 5 / Zoom);
         }
-        foreach (var n in sheet.Notes.Where(n => Selected.Contains(n.Id))) dc.DrawRectangle(null, pen, new(n.X - 3, n.Y - 3, Math.Max(60, n.Text.Length * 9), 26));
+        foreach (var n in sheet.Notes.Where(n => Selected.Contains(n.Id))) {var r=FreeGraphics.NoteBounds(Editor.Project,sheet,n,Reading.TextScale);r.Inflate(3,3);dc.DrawRectangle(null,pen,r);}
         if (connection is not null)
         {
             var c = sheet.Components.FirstOrDefault(x => x.Id == connection.ComponentId);
@@ -226,19 +227,20 @@ public sealed partial class SheetCanvas : FrameworkElement
     {
         CrossReferences? references = null;
         foreach (var c in Editor.Sheet.Components.AsEnumerable().Reverse().Where(c => !Junctions.Automatic(c))) { var r = CrossReferences.IsPoint(c) ? ReferenceDisplay.HitBounds(Editor.Project, c, references ??= new CrossReferences(Editor.Project)) : c.Bounds(); r.Inflate(8, 8); if (r.Contains(p)) return c.Id; }
-        foreach (var n in Editor.Sheet.Notes.AsEnumerable().Reverse().Where(_=>Reading.Notes)) if (new Rect(new Point(n.X,n.Y), Drawing.Measure(n.Text,16*Reading.TextScale)).Contains(p)) return n.Id;
+        foreach (var n in Editor.Sheet.Notes.AsEnumerable().Reverse().Where(_=>Reading.Notes)) if (FreeGraphics.NoteBounds(Editor.Project,Editor.Sheet,n,Reading.TextScale).Contains(p)) return n.Id;
         foreach (var w in Editor.Sheet.Wires.AsEnumerable().Reverse()) { var r = w.Route(Editor.Sheet); for (int i = 1; i < r.Count; i++) if (Distance(p, r[i - 1], r[i]) < 7 / Zoom) return w.Id; }
-        return null;
+        return HitGraphic(p);
     }
     private static double Distance(Point p, Point a, Point b) { var v = b - a; if (v.LengthSquared < .001) return (p - a).Length; double t = Math.Clamp(Vector.Multiply(p - a, v) / v.LengthSquared, 0, 1); return (p - (a + v * t)).Length; }
     internal void BeginSelectionMove(Point point)
     {
-        original.Clear(); originalWaypoints.Clear(); moveBounds = Rect.Empty;
+        original.Clear(); originalWaypoints.Clear();originalGraphics.Clear(); moveBounds = Rect.Empty;
         foreach (var c in Editor.Sheet.Components.Where(c => Selected.Contains(c.Id) || Junctions.Automatic(c) && Editor.Sheet.Wires.Where(w => w.From.ComponentId == c.Id || w.To.ComponentId == c.Id).All(w => Selected.Contains(w.Id)))) original[c.Id] = new(c.X, c.Y);
         foreach (var n in Editor.Sheet.Notes.Where(n => Selected.Contains(n.Id))) original[n.Id] = new(n.X, n.Y);
         foreach (var w in Editor.Sheet.Wires.Where(w => original.ContainsKey(w.From.ComponentId) && original.ContainsKey(w.To.ComponentId))) originalWaypoints[w.Id] = w.Waypoints.ToList();
+        foreach(var g in Editor.Sheet.Graphics.Where(g=>Selected.Contains(g.Id))){originalGraphics[g.Id]=DocumentModel.Copy(g);moveBounds.Union(g.Bounds());}
         foreach (var p in original.Values.Concat(originalWaypoints.Values.SelectMany(v => v).Select(p => p.Point))) moveBounds.Union(p);
-        if (original.Count > 0) { before = ProjectStore.Serialize(Editor.Project); dragStart = point; Editor.InteractionInProgress = true; }
+        if (original.Count > 0||originalGraphics.Count>0) { before = ProjectStore.Serialize(Editor.Project); dragStart = point; Editor.InteractionInProgress = true; }
     }
     private (Component Component, ComponentTextTarget Text, Rect Bounds)? HitText(Point point)
     {
@@ -280,19 +282,19 @@ public sealed partial class SheetCanvas : FrameworkElement
     internal void EndPreviewMove()
     {
         if (before is not string snapshot) return;
-        before = null; textDrag = null; wireTextDrag = null; guideX = guideY = null; editingWire = null; originalRoute = null; Editor.InteractionInProgress = false;
+        before = null; textDrag = null; wireTextDrag = null;graphicResize=null; guideX = guideY = null; editingWire = null; originalRoute = null; Editor.InteractionInProgress = false;
         try { Editor.Commit(snapshot); } catch { Editor.CancelPreview(snapshot); throw; } SelectionChanged?.Invoke();
     }
     internal void MoveSelection(Point point)
     {
-        if (before is null || original.Count == 0) return;
+        if (before is null || original.Count+originalGraphics.Count == 0) return;
         routeCache = null;
         double dx = Math.Clamp(Editor.Snap(point.X - dragStart.X), -moveBounds.Left, Editor.Sheet.Width - moveBounds.Right);
         double dy = Math.Clamp(Editor.Snap(point.Y - dragStart.Y), -moveBounds.Top, Editor.Sheet.Height - moveBounds.Bottom);
         guideX = guideY = null;
         if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
         {
-            var reference = original.Values.First(); var candidates = Editor.Sheet.Components.Where(c => !original.ContainsKey(c.Id) && !Junctions.Automatic(c)).ToList();
+            var reference = original.Count>0?original.Values.First():new Point(originalGraphics.Values.First().X,originalGraphics.Values.First().Y); var candidates = Editor.Sheet.Components.Where(c => !original.ContainsKey(c.Id) && !Junctions.Automatic(c)).ToList();
             Component? nearX=null,nearY=null;double closestX=double.MaxValue,closestY=double.MaxValue;foreach(var candidate in candidates){double x=Math.Abs(candidate.X-reference.X-dx),y=Math.Abs(candidate.Y-reference.Y-dy);if(x<closestX){closestX=x;nearX=candidate;}if(y<closestY){closestY=y;nearY=candidate;}}
             if (nearX is not null && Math.Abs(nearX.X-reference.X-dx)*Zoom < 5) { dx = Math.Clamp(nearX.X-reference.X, -moveBounds.Left, Editor.Sheet.Width-moveBounds.Right); guideX = nearX.X; }
             if (nearY is not null && Math.Abs(nearY.Y-reference.Y-dy)*Zoom < 5) { dy = Math.Clamp(nearY.Y-reference.Y, -moveBounds.Top, Editor.Sheet.Height-moveBounds.Bottom); guideY = nearY.Y; }
@@ -300,6 +302,7 @@ public sealed partial class SheetCanvas : FrameworkElement
         foreach (var c in Editor.Sheet.Components.Where(c => original.ContainsKey(c.Id))) { c.X = original[c.Id].X + dx; c.Y = original[c.Id].Y + dy; }
         foreach (var n in Editor.Sheet.Notes.Where(n => original.ContainsKey(n.Id))) { n.X = original[n.Id].X + dx; n.Y = original[n.Id].Y + dy; }
         foreach (var w in Editor.Sheet.Wires.Where(w => originalWaypoints.ContainsKey(w.Id))) w.Waypoints = originalWaypoints[w.Id].Select(p => new Position(p.X + dx, p.Y + dy)).ToList();
+        foreach(var g in Editor.Sheet.Graphics.Where(g=>originalGraphics.ContainsKey(g.Id))){g.X=originalGraphics[g.Id].X+dx;g.Y=originalGraphics[g.Id].Y+dy;}retainedScene?.GraphicsChanged(originalGraphics.Keys);
         retainedScene?.GeometryChanged(original.Keys.Where(id=>Editor.Sheet.Components.Any(c=>c.Id==id)),original.Keys.Where(id=>Editor.Sheet.Notes.Any(n=>n.Id==id)));
     }
     protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -312,7 +315,7 @@ public sealed partial class SheetCanvas : FrameworkElement
         if (pointer.X < 0 || pointer.Y < 0 || pointer.X > Editor.Sheet.Width || pointer.Y > Editor.Sheet.Height) return;
         try
         {
-            if(HandleBlockClick(pointer) || HandleBandClick(pointer)){e.Handled=true;return;}
+            if(GraphicClick(pointer)||BeginGraphicResize(pointer)||HandleBlockClick(pointer) || HandleBandClick(pointer)){e.Handled=true;return;}
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && BeginTextMove(pointer)) { CaptureMouse(); e.Handled = true; return; }
             if (e.ClickCount == 2 && ActivateReference(pointer)) { e.Handled = true; return; }
             if (Mode == "place" && Hit(pointer) is string existing && Editor.Sheet.Components.Any(c => c.Id == existing && CrossReferences.IsPoint(c))) { SetMode("select"); Select(existing); return; }
@@ -343,6 +346,7 @@ public sealed partial class SheetCanvas : FrameworkElement
     protected override void OnMouseMove(MouseEventArgs e)
     {
         pointer = World(e.GetPosition(this));
+        if(graphicResize is not null){ResizeGraphic(pointer);Cursor=Cursors.SizeNWSE;return;}
         if (textDrag is not null || wireTextDrag is not null) { MoveText(pointer); Cursor = Cursors.SizeAll; return; }
         if (marqueeStart is not null) { InvalidateVisual(); return; }
         var oldPort=hoveredPort; hoveredPort = HitPort(pointer); hoveredWire = connection is not null && hoveredPort is null ? HitWire(pointer) : null;
@@ -359,12 +363,13 @@ public sealed partial class SheetCanvas : FrameworkElement
             MoveSelection(pointer);
         }
         Cursor = hoveredPort is not null || connection is not null ? Cursors.Cross : Mode == "select" ? Cursors.Arrow : Cursors.Cross;
-        if(oldPort!=hoveredPort||before is not null||connection is not null||bandStart is not null||Mode is "place" or "block")InvalidateVisual();
+        if(oldPort!=hoveredPort||before is not null||connection is not null||bandStart is not null||graphicStart is not null||Mode is "place" or "block" or "graphicImage")InvalidateVisual();
     }
     protected override void OnMouseUp(MouseButtonEventArgs e)
     {
         if (e.ChangedButton == MouseButton.Middle) { panning = false; if (before is null && !connectionPressed) ReleaseMouseCapture(); return; }
         if (e.ChangedButton != MouseButton.Left) return;
+        try{if(GraphicRelease(World(e.GetPosition(this))))return;}catch(Exception ex){CancelDrag();Status?.Invoke(ex.Message);return;}
         if (marqueeStart is Point start) { marqueeStart = null; Editor.InteractionInProgress = false; SelectRectangle(new Rect(start, World(e.GetPosition(this))), marqueeAdd); ReleaseMouseCapture(); return; }
         try
         {
@@ -383,11 +388,11 @@ public sealed partial class SheetCanvas : FrameworkElement
         catch (Exception ex) { CancelDrag(); Status?.Invoke(ex.Message); }
         if (before is null && !panning && !connectionPressed) ReleaseMouseCapture();
     }
-    protected override void OnLostMouseCapture(MouseEventArgs e) { base.OnLostMouseCapture(e); if (before is not null || connectionPressed || marqueeStart is not null) CancelDrag(); panning = false; }
+    protected override void OnLostMouseCapture(MouseEventArgs e) { base.OnLostMouseCapture(e); if (before is not null || connectionPressed || marqueeStart is not null||graphicPressed) CancelDrag(); panning = false; }
     public void CancelDrag()
     {
-        CancelBand();
-        var snapshot = before; before = null; textDrag = null; wireTextDrag = null; guideX = guideY = null; marqueeStart = null; originalRoute = null; editingWire = null; connection = null; hoveredWire = null; connectionPressed = false; connectionMoved = false; waypoints.Clear(); panning = false; Editor.InteractionInProgress = false;
+        CancelBand();CancelGraphicGesture();
+        var snapshot = before; before = null; textDrag = null; wireTextDrag = null;graphicResize=null; guideX = guideY = null; marqueeStart = null; originalRoute = null; editingWire = null; connection = null; hoveredWire = null; connectionPressed = false; connectionMoved = false; waypoints.Clear(); panning = false; Editor.InteractionInProgress = false;
         ReleaseMouseCapture(); if (snapshot is not null) Editor.CancelPreview(snapshot); InvalidateVisual();
     }
     protected override void OnMouseWheel(MouseWheelEventArgs e)

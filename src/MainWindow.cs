@@ -137,16 +137,17 @@ public sealed partial class MainWindow : Window
     private void RenamePage() { var name = Prompt("Renommer le folio", "Titre", Editor.Sheet.Title); if (name is not null) Editor.Change(() => Editor.Sheet.Title = name); }
     private void DeletePage() { if (Editor.Project.Sheets.Count == 1) throw new InvalidOperationException("Conserver au moins un folio."); if (MessageBox.Show(this, "Supprimer ce folio et son contenu ? Cette opération peut être annulée.", "Folio", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { Editor.DeleteSheet(Editor.Sheet.Id); } }
     private void Delete() { Editor.Delete(Canvas.Selected); Canvas.Selected.Clear(); Inspect(); }
-    private void Rotate() => Editor.Change(() => { foreach (var c in Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id))) c.Rotation = (c.Rotation + 90) % 360; });
+    private void Rotate() => Editor.Change(() => { foreach (var c in Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id))) c.Rotation = (c.Rotation + 90) % 360;foreach(var n in Editor.Sheet.Notes.Where(n=>Canvas.Selected.Contains(n.Id)))n.Rotation=(n.Rotation+90)%360; });
     private void Duplicate()
     {
         Canvas.CancelDrag();
         var originals = Editor.Sheet.Components.Where(c => Canvas.Selected.Contains(c.Id)).ToList();
-        var notes = Editor.Sheet.Notes.Where(n => Canvas.Selected.Contains(n.Id)).ToList();
-        if (originals.Count == 0 && notes.Count == 0) return;
+        var notes = Editor.Sheet.Notes.Where(n => Canvas.Selected.Contains(n.Id)).ToList();var graphics=Editor.Sheet.Graphics.Where(g=>Canvas.Selected.Contains(g.Id)).ToList();
+        if (originals.Count == 0 && notes.Count == 0&&graphics.Count==0) return;
         var map = originals.ToDictionary(c => c.Id, _ => Guid.NewGuid().ToString("N"));
         var wires = Editor.Sheet.Wires.Where(w => map.ContainsKey(w.From.ComponentId) && map.ContainsKey(w.To.ComponentId)).ToList();
-        var positions = originals.Select(c => new Point(c.X, c.Y)).Concat(notes.Select(n => new Point(n.X, n.Y))).Concat(wires.SelectMany(w => w.Waypoints).Select(p => p.Point)).ToList();
+        var graphicPoints=graphics.SelectMany(g=>new[]{g.Bounds().TopLeft,g.Bounds().BottomRight});
+        var positions = originals.Select(c => new Point(c.X, c.Y)).Concat(notes.Select(n => new Point(n.X, n.Y))).Concat(wires.SelectMany(w => w.Waypoints).Select(p => p.Point)).Concat(graphicPoints).ToList();
         double dx = Math.Min(40, Editor.Sheet.Width - positions.Max(p => p.X)), dy = Math.Min(40, Editor.Sheet.Height - positions.Max(p => p.Y));
         T Copy<T>(T value) => System.Text.Json.JsonSerializer.Deserialize<T>(System.Text.Json.JsonSerializer.Serialize(value, ProjectStore.Json), ProjectStore.Json)!;
         List<string> ids = [];
@@ -155,6 +156,7 @@ public sealed partial class MainWindow : Window
             foreach (var c in originals) { var copy = Copy(c); copy.Id = map[c.Id]; copy.X += dx; copy.Y += dy; copy.ResolvedDefinition = CustomSymbols.Resolve(Editor.Project, copy.Symbol); copy.Tag = Editor.NextTag(copy.Definition.Prefix); if (CrossReferences.IsPoint(copy)) { copy.LinkName = ""; copy.LinkSource = false; } Editor.Sheet.Components.Add(copy); ids.Add(copy.Id); }
             foreach (var part in Editor.Sheet.Components.Where(c => ids.Contains(c.Id) && c.CoilId.Length > 0)) { part.CoilId = map.GetValueOrDefault(part.CoilId, part.CoilId); part.Tag = Editor.Project.Sheets.SelectMany(s => s.Components).Single(c => c.Id == part.CoilId).Tag; }
             foreach (var n in notes) { var copy = Copy(n); copy.Id = Guid.NewGuid().ToString("N"); copy.X += dx; copy.Y += dy; Editor.Sheet.Notes.Add(copy); ids.Add(copy.Id); }
+            foreach(var g in graphics){var copy=Copy(g);copy.Id=Guid.NewGuid().ToString("N");copy.X+=dx;copy.Y+=dy;Editor.Sheet.Graphics.Add(copy);ids.Add(copy.Id);}
             foreach (var w in wires) { var copy = Copy(w); copy.Id = Guid.NewGuid().ToString("N"); copy.From = new(map[w.From.ComponentId], w.From.PortId); copy.To = new(map[w.To.ComponentId], w.To.PortId); copy.Waypoints = w.Waypoints.Select(p => new Position(p.X + dx, p.Y + dy)).ToList(); Editor.Sheet.Wires.Add(copy); ids.Add(copy.Id); }
         });
         Canvas.Selected.Clear(); foreach (var id in ids) Canvas.Selected.Add(id); Inspect(); Canvas.InvalidateVisual();

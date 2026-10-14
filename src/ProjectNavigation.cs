@@ -17,7 +17,7 @@ public static class ProjectNavigation
             if (Matches(s.Title, s.Number)) result.Add(new(s.Id, "", folio, "Folio", s.Title, s.Number, s.Width / 2, s.Height / 2));
             foreach (var c in s.Components.Where(c => !Junctions.Automatic(c))) if (Matches(c.Tag, c.Description, c.Reference, c.Brand, c.Rating, c.LinkName, ReferenceDisplay.Name(c), string.Join(' ', c.AdditionalTexts.Select(t => t.Text).Concat(c.TextOverrides.Values.Select(t => t.Text)).Concat(c.Definition.Shapes.Where(s => s.Kind == "text").Select(s => s.Text))))) result.Add(new(s.Id, c.Id, folio, "Composant", c.Tag, string.Join(" · ", new[] { c.Description, c.Brand, c.Reference }.Where(v => v.Length > 0)), c.X, c.Y));
             foreach (var w in s.Wires) if (Matches(w.Number)) { var point = w.Route(s)[0]; result.Add(new(s.Id, w.Id, folio, "Conducteur", w.Number, w.NumberIndependent ? "Numéro indépendant" : "Numéro commun", point.X, point.Y)); }
-            foreach (var n in s.Notes) if (Matches(n.Text)) result.Add(new(s.Id, n.Id, folio, "Texte", n.Text, "", n.X, n.Y));
+            foreach (var n in s.Notes) if (Matches(n.Text,n.ResolveFields?DocumentModel.Resolve(n.Text,DocumentModel.Values(p,s)):"")) result.Add(new(s.Id, n.Id, folio, "Texte", n.Text, "", n.X, n.Y));
         }
         return result;
     }

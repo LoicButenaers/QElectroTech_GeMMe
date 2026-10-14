@@ -10,6 +10,7 @@ public static class SheetZones
     public static string Zone(Project p, Sheet s, double x, double y)
     {
         var area = Area(p, s);
+        if(s.Kind=="cover")return "page de garde";
         if (s.BomPage is not null || !area.Contains(new Point(x, y))) return "hors cadre";
         int columns = Columns(p, s), rows = Rows(p, s);
         int column = Math.Min(columns - 1, (int)((x - area.Left) / area.Width * columns));
@@ -19,6 +20,7 @@ public static class SheetZones
     public static string Address(Project p, Sheet s, Component c) => $"{DocumentModel.PageNumber(p, s)} / {Zone(p, s, c.X, c.Y)}";
     public static IEnumerable<Ink> Frame(Project p, Sheet s)
     {
+        if(s.Kind=="cover")yield break;
         var r = Area(p, s); const string color = "#53677B";
         yield return new("rect", 10, 10, s.Width - 40, r.Bottom - 10, Color: color);
         yield return new("line", 10, 30, s.Width - 30, 30, Color: color);

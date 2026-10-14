@@ -33,7 +33,8 @@ public sealed partial class SheetCanvas
     {
         Rect bounds = Rect.Empty; var refs = new CrossReferences(Editor.Project);
         foreach(var c in Editor.Sheet.Components.Where(c=>Selected.Contains(c.Id))) { bounds.Union(c.Bounds()); foreach(var ink in Reading.ComponentTexts(Editor.Project,c,refs)) bounds.Union(Drawing.TextBounds(ink)); }
-        foreach(var n in Editor.Sheet.Notes.Where(n=>Selected.Contains(n.Id))) bounds.Union(new Rect(new Point(n.X,n.Y),Drawing.Measure(n.Text,16*Reading.TextScale)));
+        foreach(var n in Editor.Sheet.Notes.Where(n=>Selected.Contains(n.Id))) bounds.Union(FreeGraphics.NoteBounds(Editor.Project,Editor.Sheet,n,Reading.TextScale));
+        foreach(var g in Editor.Sheet.Graphics.Where(g=>Selected.Contains(g.Id)))bounds.Union(g.Bounds());
         foreach(var w in Editor.Sheet.Wires.Where(w=>Selected.Contains(w.Id))) foreach(var point in w.Route(Editor.Sheet)) bounds.Union(point);
         if(bounds.IsEmpty)throw new ArgumentException("Sélectionner les objets à cadrer."); bounds.Inflate(30,30);
         Zoom=Math.Clamp(Math.Min(Math.Max(10,ActualWidth-40)/bounds.Width,Math.Max(10,ActualHeight-40)/bounds.Height),.08,4);

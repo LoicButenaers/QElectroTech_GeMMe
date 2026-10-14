@@ -15,6 +15,11 @@ public static class McpTools
     private static JsonObject B(string description) => new() { ["type"] = "boolean", ["description"] = description };
     public static readonly ToolSpec[] Specs =
     [
+        new("page_kind","Définir le folio actif comme schéma ou page de garde ; aucun objet supprimé. La page de garde n’affiche pas les zones.",new(){["kind"]=S("drawing ou cover"),["titleBlockId"]=S("Cartouche, vide pour aucun")},["kind"]),
+        new("graphic_put","Créer ou remplacer une forme libre du folio actif : rect, ellipse, line ou image. Aucune connexion électrique.",new(){["graphic"]=new JsonObject{["type"]="object"}},["graphic"]),
+        new("graphic_delete","Supprimer une forme libre, opération annulable.",new(){["id"]=S("ID dessin libre")},["id"]),
+        new("graphic_image_import","Importer un logo/image et le placer sur le folio actif ; une action annulable.",new(){["path"]=S("Chemin absolu de l’image"),["x"]=N("X"),["y"]=N("Y"),["width"]=N("Largeur, défaut 280")},["path","x","y"]),
+        new("note_put","Créer ou remplacer un texte libre : taille, couleur, angle, alignement et champs du projet.",new(){["note"]=new JsonObject{["type"]="object"}},["note"]),
         new("projects_list","Lister les onglets, fichiers, modifications et projet actif.",new(),[],true),
         new("project_tab_add","Ouvrir un projet dans un nouvel onglet, ou en créer un avec title. Les autres projets sont conservés.",new(){["path"]=S("Chemin absolu .gemelec, facultatif"),["title"]=S("Nom du nouveau projet")},[]),
         new("project_tab_select","Activer un onglet existant.",new(){["id"]=S("ID onglet")},["id"]),
@@ -136,6 +141,11 @@ public static class McpTools
         object result;
         switch (name)
         {
+            case "page_kind":e.Change(()=>{FreeGraphics.SetKind(e.Sheet,Str("kind"));if(a.TryGetProperty("titleBlockId",out _))e.Sheet.TitleBlockId=Str("titleBlockId");});result=e.Sheet;break;
+            case "graphic_put":result=e.PutGraphic(a.GetProperty("graphic").Deserialize<SheetGraphic>(ProjectStore.Json)??throw new ArgumentException("Dessin absent."));break;
+            case "graphic_delete":if(!e.Sheet.Graphics.Any(g=>g.Id==Str("id")))throw new ArgumentException("Dessin absent.");e.Delete([Str("id")]);result=new{deleted=Str("id")};break;
+            case "graphic_image_import":string coverImagePath=Str("path");if(!Path.IsPathFullyQualified(coverImagePath))throw new ArgumentException("Chemin absolu requis.");var imageAsset=ImageAssets.Import(coverImagePath);var bitmap=ImageAssets.Decode(imageAsset.Data);double imageWidth=a.TryGetProperty("width",out var widthValue)?widthValue.GetDouble():280;SheetGraphic? importedGraphic=null;e.Change(()=>{e.Project.Images.TryAdd(imageAsset.Id,imageAsset.Data);importedGraphic=new(){Kind="image",ImageId=imageAsset.Id,X=Editor.Snap(Num("x")),Y=Editor.Snap(Num("y")),Width=imageWidth,Height=imageWidth*bitmap.PixelHeight/bitmap.PixelWidth};e.Sheet.Graphics.Add(importedGraphic);});result=importedGraphic!;break;
+            case "note_put":result=e.PutNote(a.GetProperty("note").Deserialize<Annotation>(ProjectStore.Json)??throw new ArgumentException("Texte absent."));break;
             case "projects_list":result=new{activeId=window.ActiveSessionId,projects=window.Sessions.Select(s=>new{s.Id,s.Editor.Project.Title,s.Editor.FilePath,s.Editor.Dirty,s.Editor.CanUndo,s.Editor.CanRedo})};break;
             case "project_tab_add":if(a.TryGetProperty("path",out _)){if(a.TryGetProperty("title",out _))throw new ArgumentException("Choisir path ou title.");result=new{id=window.AddProjectTab(path:PathFor(".gemelec",false)).Id};}else result=new{id=window.AddProjectTab(title:Str("title","Nouveau projet")).Id};break;
             case "project_tab_select":window.SelectProjectTab(Str("id"));result=new{activeId=window.ActiveSessionId};break;
@@ -147,7 +157,7 @@ public static class McpTools
             case "personal_library_delete":PersonalLibrary.Delete(Str("id"));window.ReloadLibraryFromMcp();result=new{deleted=Str("id")};break;
             case "personal_library_place":result=new{ids=window.PlaceLibraryFromMcp(Str("id"),new(Num("x"),Num("y")))};break;
             case "view_reading":window.Canvas.SetReading(a.GetProperty("options").Deserialize<ReadingOptions>(ProjectStore.Json)??throw new ArgumentException("Réglages absents."));result=window.Canvas.Reading;break;
-            case "view_zoom_selection":var selectedIds=a.GetProperty("ids").Deserialize<string[]>()??[];var available=e.Sheet.Components.Select(c=>c.Id).Concat(e.Sheet.Wires.Select(w=>w.Id)).Concat(e.Sheet.Notes.Select(n=>n.Id)).ToHashSet();if(selectedIds.Length==0||selectedIds.Any(id=>!available.Contains(id)))throw new ArgumentException("Sélection absente du folio.");window.Canvas.Selected.Clear();foreach(var id in selectedIds)window.Canvas.Selected.Add(id);window.Canvas.ZoomSelection();result=new{window.Canvas.Zoom};break;
+            case "view_zoom_selection":var selectedIds=a.GetProperty("ids").Deserialize<string[]>()??[];var available=e.Sheet.Components.Select(c=>c.Id).Concat(e.Sheet.Wires.Select(w=>w.Id)).Concat(e.Sheet.Notes.Select(n=>n.Id)).Concat(e.Sheet.Graphics.Select(g=>g.Id)).ToHashSet();if(selectedIds.Length==0||selectedIds.Any(id=>!available.Contains(id)))throw new ArgumentException("Sélection absente du folio.");window.Canvas.Selected.Clear();foreach(var id in selectedIds)window.Canvas.Selected.Add(id);window.Canvas.ZoomSelection();result=new{window.Canvas.Zoom};break;
             case "wire_route_smart":result=new{routed=e.RouteWires(a.GetProperty("ids").Deserialize<string[]>()??[])};break;
             case "wire_insert_component":result=e.InsertOnWire(Str("id"),Str("symbol"),new(Num("x"),Num("y")),Str("inputPort"),Str("outputPort"));break;
             case "terminal_line_create":var terminalA=a.GetProperty("a").Deserialize<Position>(ProjectStore.Json)??throw new ArgumentException("Point absent.");var terminalB=a.GetProperty("b").Deserialize<Position>(ProjectStore.Json)??throw new ArgumentException("Point absent.");result=e.InsertTerminalLine(terminalA.Point,terminalB.Point,Str("name"),a.TryGetProperty("first",out var firstNumber)?firstNumber.GetInt32():1,a.TryGetProperty("level",out var terminalLevel)?terminalLevel.GetInt32():1);break;

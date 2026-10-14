@@ -37,6 +37,8 @@ public static class PdfNavigation
             }
             pages.Add(new(sheet,DocumentModel.PageNumber(p,sheet)+" · "+sheet.Title,Drawing.Scene(p,sheet),links));
         }
+        var coverIds=p.Sheets.TakeWhile(s=>s.Kind=="cover").Select(s=>s.Id).ToHashSet();
+        if(coverIds.Count>0){var covers=pages.Where(page=>coverIds.Contains(page.Sheet.Id)).ToList();pages.RemoveAll(page=>coverIds.Contains(page.Sheet.Id));pages.InsertRange(0,covers);}
         return pages;
     }
 }

@@ -20,10 +20,11 @@ public static class Export
             XElement el;
             if (s.Kind == "line") el = new(ns + "line", new XAttribute("x1", N(s.X)), new XAttribute("y1", N(s.Y)), new XAttribute("x2", N(s.A)), new XAttribute("y2", N(s.B)));
             else if (s.Kind == "rect") el = new(ns + "rect", new XAttribute("x", N(s.X)), new XAttribute("y", N(s.Y)), new XAttribute("width", N(s.A)), new XAttribute("height", N(s.B)));
+            else if(s.Kind=="ellipse")el=new(ns+"ellipse",new XAttribute("cx",N(s.X+s.A/2)),new XAttribute("cy",N(s.Y+s.B/2)),new XAttribute("rx",N(s.A/2)),new XAttribute("ry",N(s.B/2)));
             else if (s.Kind is "circle" or "dot") el = new(ns + "circle", new XAttribute("cx", N(s.X)), new XAttribute("cy", N(s.Y)), new XAttribute("r", N(s.A)));
             else if (s.Kind == "triangle") el = new(ns + "polygon", new XAttribute("points", $"{N(s.X)},{N(s.Y)} {N(s.X)},{N(s.Y+s.B)} {N(s.X+s.A)},{N(s.Y+s.B/2)}"));
             else { el = new(ns + "text", new XAttribute("x", N(s.X)), new XAttribute("y", N(s.Y + s.Size)), new XAttribute("font-family", "Segoe UI,Arial,sans-serif"), new XAttribute("font-size", N(s.Size)), s.Text); }
-            el.Add(new XAttribute("fill", s.Kind is "text" or "dot" or "triangle" ? s.Color : s.Kind == "circle" ? "white" : "none"));
+            el.Add(new XAttribute("fill", s.Fill.Length>0?s.Fill:s.Kind is "text" or "dot" or "triangle" ? s.Color : s.Kind == "circle" ? "white" : "none"));
             if (s.Kind != "text") { el.Add(new XAttribute("stroke", s.Color)); el.Add(new XAttribute("stroke-width", N(s.Thickness))); if (s.LineStyle != "solid") el.Add(new XAttribute("stroke-dasharray", string.Join(' ', Drawing.DashPattern(s.LineStyle).Select(n => N(n * s.Thickness))))); }
             if (s.Rotation != 0) el.Add(new XAttribute("transform", $"rotate({N(s.Rotation)} {N(s.X)} {N(s.Y)})"));
             root.Add(el);
@@ -90,10 +91,11 @@ public static class Export
                         b.AppendLine($"{N(s.A)} 0 0 {N(-s.B)} {N(s.X)} {N(s.Y+s.B)} cm /{entry.Name} Do");break;
                     case "line": b.AppendLine($"{N(s.X)} {N(s.Y)} m {N(s.A)} {N(s.B)} l S"); break;
                     case "triangle": b.AppendLine($"{N(s.X)} {N(s.Y)} m {N(s.X)} {N(s.Y+s.B)} l {N(s.X+s.A)} {N(s.Y+s.B/2)} l h f"); break;
-                    case "rect": b.AppendLine($"{N(s.X)} {N(s.Y)} {N(s.A)} {N(s.B)} re S"); break;
-                    case "circle": case "dot":
-                        double x = s.X, y = s.Y, r = s.A, k = r * .55228475;
-                        b.AppendLine($"{N(x + r)} {N(y)} m {N(x + r)} {N(y + k)} {N(x + k)} {N(y + r)} {N(x)} {N(y + r)} c {N(x - k)} {N(y + r)} {N(x - r)} {N(y + k)} {N(x - r)} {N(y)} c {N(x - r)} {N(y - k)} {N(x - k)} {N(y - r)} {N(x)} {N(y - r)} c {N(x + k)} {N(y - r)} {N(x + r)} {N(y - k)} {N(x + r)} {N(y)} c " + (s.Kind == "dot" ? "f" : "1 1 1 rg B")); break;
+                    case "rect":if(s.Fill.Length>0){var fill=(System.Windows.Media.SolidColorBrush)Drawing.Brush(s.Fill);b.AppendLine($"{N(fill.Color.R/255.0)} {N(fill.Color.G/255.0)} {N(fill.Color.B/255.0)} rg");}b.AppendLine($"{N(s.X)} {N(s.Y)} {N(s.A)} {N(s.B)} re "+(s.Fill.Length>0?"B":"S")); break;
+                    case "circle": case "dot": case "ellipse":
+                        double x=s.Kind=="ellipse"?s.X+s.A/2:s.X,y=s.Kind=="ellipse"?s.Y+s.B/2:s.Y,rx=s.Kind=="ellipse"?s.A/2:s.A,ry=s.Kind=="ellipse"?s.B/2:s.A,kx=rx*.55228475,ky=ry*.55228475;
+                        if(s.Fill.Length>0){var fill=(System.Windows.Media.SolidColorBrush)Drawing.Brush(s.Fill);b.AppendLine($"{N(fill.Color.R/255.0)} {N(fill.Color.G/255.0)} {N(fill.Color.B/255.0)} rg");}
+                        b.AppendLine($"{N(x+rx)} {N(y)} m {N(x+rx)} {N(y+ky)} {N(x+kx)} {N(y+ry)} {N(x)} {N(y+ry)} c {N(x-kx)} {N(y+ry)} {N(x-rx)} {N(y+ky)} {N(x-rx)} {N(y)} c {N(x-rx)} {N(y-ky)} {N(x-kx)} {N(y-ry)} {N(x)} {N(y-ry)} c {N(x+kx)} {N(y-ry)} {N(x+rx)} {N(y-ky)} {N(x+rx)} {N(y)} c "+(s.Kind=="dot"?"f":s.Kind=="circle"?"1 1 1 rg B":s.Fill.Length>0?"B":"S"));break;
                     case "text": b.AppendLine($"BT /F1 {N(s.Size)} Tf 1 0 0 -1 {N(s.X)} {N(s.Y + s.Size)} Tm <{Glyphs(s.Text)}> Tj ET"); break;
                 }
                 b.AppendLine("Q");

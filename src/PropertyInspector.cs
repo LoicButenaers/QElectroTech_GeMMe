@@ -48,6 +48,7 @@ public sealed partial class MainWindow
         Editor.EndPropertyEdit(); properties.Children.Clear(); fields.Clear(); propertyFeedback.Clear(); propertyGroupBody = null; updateCoilInspector = null;
         var c = Editor.Sheet.Components.FirstOrDefault(c => Canvas.Selected.Contains(c.Id));
         var wire = Editor.Sheet.Wires.FirstOrDefault(w => Canvas.Selected.Contains(w.Id));
+        var graphic=Editor.Sheet.Graphics.FirstOrDefault(g=>Canvas.Selected.Contains(g.Id));
         var note = Editor.Sheet.Notes.FirstOrDefault(n => Canvas.Selected.Contains(n.Id));
         if (Canvas.Selected.Count > 1)
         {
@@ -115,10 +116,12 @@ public sealed partial class MainWindow
             WireLabelInspector(wire);
             PropertyGroup("Câble section et routage",()=>{Field("sectionMm2","Section du conducteur en mm² · vide = section du câble",wire.SectionMm2 is double area?Number(area):"");LiveText(fields["sectionMm2"],value=>Editor.Change(()=>Editor.Sheet.Wires.Single(w=>w.Id==wire.Id).SectionMm2=value.Trim().Length==0?null:ReadNumber(value),wire.Id+":section"));PropertyContents.Children.Add(Hint(wire.CableId.Length==0?"Aucun câble affecté.":"Câble : "+Editor.Project.Cables.Single(c=>c.Id==wire.CableId).Name+" · conducteur "+wire.CableCore));PropertyContents.Children.Add(Button("Câbles et sections…",CablesDialog));PropertyContents.Children.Add(Button("Routage intelligent",()=>Editor.RouteWires([wire.Id])));PropertyContents.Children.Add(Button("Insérer un symbole sur ce fil…",InsertSymbolOnWireDialog));if(wire.RoutingWarning.Length>0)PropertyContents.Children.Add(Hint(wire.RoutingWarning));});
         }
+        else if(graphic is not null)GraphicProperties(graphic);
         else if (note is not null)
         {
             properties.Children.Add(new TextBlock { Text = "Texte du folio", FontSize = 18, Margin = new(0, 14, 0, 4) });
             PropertyGroup("Contenu", () => { var input = Field("text", "Texte affiché", note.Text); input.AcceptsReturn = true; input.MinHeight = 75; LiveText(input, value => Editor.Change(() => Editor.Sheet.Notes.Single(n => n.Id == note.Id).Text = value, note.Id + ":text")); });
+            NoteStyleProperties(note);
             PropertyGroup("Position", () => { foreach (var axis in new[] { "X", "Y" }) { var input = Field("note" + axis, axis + " (unités de dessin)", Number(axis == "X" ? note.X : note.Y)); LiveText(input, value => { double n = ReadCoordinate(value, axis); Editor.Change(() => { var live = Editor.Sheet.Notes.Single(x => x.Id == note.Id); if (axis == "X") live.X = n; else live.Y = n; }, note.Id + ":" + axis); }); } });
         }
         else if (Editor.Sheet.CabinetPlanId.Length>0)

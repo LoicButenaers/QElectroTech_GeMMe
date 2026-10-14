@@ -8,7 +8,9 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.19.1)
+## Fonctionnalités (version 0.20)
+
+- [Pages de garde et dessins libres 0.20](docs/PAGE_GARDE_0.20.md) : type de folio sans repérage, cartouche facultatif, textes stylés ou liés aux informations du projet, rectangles, ellipses, lignes et logos. Déplacement, poignées, sauvegarde et exports partagés.
 
 - [Optimisation de la fluidité 0.19.1](docs/FLUIDITE_0.19.1.md) : dessins conservés pendant les glissers, grille répétée pour le zoom et survol allégé, sans changement des fonctionnalités ou du format projet.
 
@@ -25,7 +27,7 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Numéro indépendant par conducteur, protégé des renommages de la continuité. Couleur, épaisseur et type de trait individuels, avec conservation dans PDF/SVG et les dérivations.
 - Même numéro de conducteur sur une borne de départ, ses dérivations et les bornes de passage/PE. Renommage de la continuité en une action annulable.
 - Maj + clic gauche puis glisser sur un texte du symbole pour le déplacer directement. Échap annule ; Ctrl+Z annule le déplacement terminé. [Mode d’emploi](docs/REPERAGE_CONDUCTEURS_TEXTES.md).
-- Projets JSON `.gemelec` version 8, migration des fichiers versions 1 à 7 sans écriture implicite, sauvegarde atomique et contrôle de structure. Jusqu’à 200 folios ; taille de fichier limitée à 64 Mo avec contrôle identique à la lecture et à l’enregistrement.
+- Projets JSON `.gemelec` version 9, migration des fichiers versions 1 à 8 sans écriture implicite, sauvegarde atomique et contrôle de structure. Jusqu’à 200 folios ; taille de fichier limitée à 64 Mo avec contrôle identique à la lecture et à l’enregistrement.
 - Folios A3 paysage : ajout, renommage, suppression annulable, cartouche projet/auteur/révision.
 - 92 symboles génériques GeMMeElec ; deux bibliothèques documentées distinctes : 3 dessins fabricants raccordables (Schneider LC1D09BD, ABB AF09-30-01-13, Eaton 276705) et 4 aperçus officiels EPLAN en consultation. Les 75 anciennes associations de gammes ont été retirées du catalogue.
 - Cadre de repérage avec colonnes numérotées et lignes lettrées, configurable pour le projet avec exception par folio ; localisation des composants dans la BOM, par exemple `K1 : 3 / C7`.
@@ -54,7 +56,7 @@ Le dossier contenant l’exécutable doit être accessible en écriture pour le 
 - Historique commun à l’interface et au MCP : jusqu’à 100 annulations/rétablissements, avec snapshots compressés et budget mémoire de 64 Mo, y compris pour les projets contenant des images.
 - Vérifications de structure, repères dupliqués ou absents, bornes libres, références à compléter, débordements des symboles.
 - Export du folio en SVG, du projet multipage en PDF vectoriel A3 en arrière-plan sur un instantané, nomenclature CSV UTF-8. Le dessin peut continuer pendant l’export ; le PDF reflète l’état au lancement.
-- Serveur MCP local avec 87 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
+- Serveur MCP local avec 92 outils, schémas d’arguments, retour d’erreurs et protection des modifications non enregistrées.
 
 ## Interface
 

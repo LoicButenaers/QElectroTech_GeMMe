@@ -19,7 +19,7 @@ public sealed class RoutingObstacles
         routingProject=project;
         Area=SheetZones.Area(project,sheet);var refs=new CrossReferences(project);var components=sheet.Components.ToDictionary(c=>c.Id);OtherRoutes=sheet.Wires.ToDictionary(w=>w.Id,w=>w.Route(sheet,components));
         foreach(var c in sheet.Components){if(!Junctions.Automatic(c)){var bounds=c.Bounds();bounds.Inflate(7,7);Blocks.Add(bounds);}foreach(var ink in Drawing.ComponentScene(project,c,refs).Where(i=>i.Kind=="text")){var bounds=Drawing.TextBounds(ink);bounds.Inflate(4,4);Blocks.Add(bounds);}}
-        foreach(var n in sheet.Notes){var bounds=new Rect(new Point(n.X,n.Y),Drawing.Measure(n.Text,16));bounds.Inflate(4,4);Blocks.Add(bounds);}
+        foreach(var n in sheet.Notes){var bounds=FreeGraphics.NoteBounds(project,sheet,n);bounds.Inflate(4,4);Blocks.Add(bounds);}
         foreach(var block in Blocks)foreach(var cell in Cells(block)){if(!obstacleCells.TryGetValue(cell,out var list))obstacleCells[cell]=list=[];list.Add(block);}
         foreach(var pair in OtherRoutes)for(int i=1;i<pair.Value.Count;i++){var a=pair.Value[i-1];var b=pair.Value[i];foreach(var cell in Cells(new Rect(a,b))){if(!wireCells.TryGetValue(cell,out var list))wireCells[cell]=list=[];list.Add((pair.Key,a,b));}}
     }
@@ -48,7 +48,7 @@ public sealed class RoutingObstacles
         foreach(var c in sheet.Components.Where(c=>!Junctions.Automatic(c))){var r=c.Bounds();r.Inflate(7,7);if(c.Id!=from.Id&&Intersects(a,start,r)||c.Id!=to.Id&&Intersects(b,end,r))throw new ArgumentException("Une sortie de borne traverse un autre appareil.");}
         var references=new CrossReferences(routingProject);
         foreach(var c in sheet.Components.Where(c=>c.Id!=from.Id&&c.Id!=to.Id))foreach(var text in Drawing.ComponentScene(routingProject,c,references).Where(i=>i.Kind=="text")){var r=Drawing.TextBounds(text);r.Inflate(4,4);if(Intersects(a,start,r)||Intersects(b,end,r))throw new ArgumentException("Un texte recouvre une sortie de borne.");}
-        foreach(var n in sheet.Notes){var r=new Rect(new Point(n.X,n.Y),Drawing.Measure(n.Text,16));r.Inflate(4,4);if(Intersects(a,start,r)||Intersects(b,end,r))throw new ArgumentException("Une note recouvre une sortie de borne.");}
+        foreach(var n in sheet.Notes){var r=FreeGraphics.NoteBounds(routingProject,sheet,n);r.Inflate(4,4);if(Intersects(a,start,r)||Intersects(b,end,r))throw new ArgumentException("Une note recouvre une sortie de borne.");}
         if(route.Count>102)throw new ArgumentException("Le parcours dépasse 100 coudes ; simplifier le dessin.");return route;
     }
 }

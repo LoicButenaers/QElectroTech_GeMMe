@@ -21,7 +21,7 @@ public sealed partial class MainWindow
             menu.Items.Add(QuickAction("Cadrer la sélection",()=>Canvas.ZoomSelection()));
             if(components.Count>0)menu.Items.Add(QuickAction("Créer un bloc de circuit…",SaveCircuitBlock));
             if (components.Count > 0) menu.Items.Add(QuickAction("Rotation 90°    R", Rotate));
-            if (components.Count > 0 || Editor.Sheet.Notes.Any(n => Canvas.Selected.Contains(n.Id))) menu.Items.Add(QuickAction("Dupliquer    Ctrl+D", Duplicate));
+            if (components.Count > 0 || Editor.Sheet.Notes.Any(n => Canvas.Selected.Contains(n.Id))||Editor.Sheet.Graphics.Any(g=>Canvas.Selected.Contains(g.Id))) menu.Items.Add(QuickAction("Dupliquer    Ctrl+D", Duplicate));
             if (components.Count == 1 && Canvas.Selected.Count == 1)
             {
                 var c = components[0];
@@ -53,6 +53,7 @@ public sealed partial class MainWindow
                 menu.Items.Add(QuickAction("Tout sélectionner", () => Canvas.SelectRectangle(new Rect(0, 0, Editor.Sheet.Width, Editor.Sheet.Height), false)));
             }
             menu.Items.Add(QuickAction("Propriétés du folio…", SheetInfo));
+            menu.Items.Add(QuickAction("Rectangle libre",()=>Canvas.SetMode("graphicRect")));menu.Items.Add(QuickAction("Ellipse libre",()=>Canvas.SetMode("graphicEllipse")));menu.Items.Add(QuickAction("Ligne libre",()=>Canvas.SetMode("graphicLine")));
             menu.Items.Add(QuickAction("Ajuster le folio    F", Canvas.Fit));
         }
         return menu;

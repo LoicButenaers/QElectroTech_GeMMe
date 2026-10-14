@@ -39,6 +39,8 @@ public sealed partial class MainWindow
         var panel=new StackPanel();root.Children.Add(new ScrollViewer{Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto});object target=sheetMode?Editor.Sheet:Editor.Project;var inputs=new Dictionary<string,TextBox>();
         (string Key,string Label)[] spec=sheetMode?[("Title","Titre"),("Number","Numéro de page · vide = ordre automatique"),("Author","Auteur · vide = auteur du projet"),("CheckedBy","Vérifié par"),("ApprovedBy","Approuvé par"),("Date","Date · vide = date du projet"),("Revision","Révision · vide = révision du projet"),("Location","Localisation"),("Function","Fonction")]:[("Title","Titre du projet"),("Author","Auteur"),("Revision","Révision"),("Customer","Client / société"),("DocumentNumber","Numéro de document"),("Date","Date")];
         foreach(var entry in spec)inputs[entry.Key]=DocField(panel,entry.Label,(string)target.GetType().GetProperty(entry.Key)!.GetValue(target)!);
+        ComboBox? kinds=null;
+        if(sheetMode){panel.Children.Add(Hint("Type de folio"));kinds=new ComboBox{Name="SheetKind",ItemsSource=new[]{new KeyValuePair<string,string>("drawing","Schéma"),new("cover","Page de garde · sans lignes / colonnes")},DisplayMemberPath="Value",SelectedValuePath="Key",SelectedValue=Editor.Sheet.Kind,Padding=new(6),IsEnabled=Editor.Sheet.BomPage is null&&Editor.Sheet.TerminalPlanId.Length==0&&Editor.Sheet.CabinetPlanId.Length==0};panel.Children.Add(kinds);panel.Children.Add(Hint("Une page de garde garde son contenu et n’affiche aucun index. Choisir un cartouche ci-dessous si nécessaire."));}
         ComboBox? templates=null;
         if(sheetMode) {panel.Children.Add(Hint("Cartouche affecté à ce folio"));templates=new ComboBox{ItemsSource=new[]{new KeyValuePair<string,string>("","Sans cartouche")}.Concat(Editor.Project.TitleBlocks.Select(t=>new KeyValuePair<string,string>(t.Id,t.Name))),DisplayMemberPath="Value",SelectedValuePath="Key",SelectedValue=Editor.Sheet.TitleBlockId,Padding=new(6)};templates.IsEnabled=Editor.Sheet.BomPage is null;panel.Children.Add(templates);}
         var custom=DocField(panel,"Champs personnalisés · nom=valeur, un par ligne",string.Join("\n",(sheetMode?Editor.Sheet.CustomFields:Editor.Project.CustomFields).Select(x=>x.Key+"="+x.Value)),true);
@@ -55,11 +57,12 @@ public sealed partial class MainWindow
         }
         foreach (var pair in inputs) { var input = pair.Value; input.TextChanged += (_, _) => ChangeField(input, () => { var live = sheetMode ? (object)Editor.Sheet : Editor.Project; live.GetType().GetProperty(pair.Key)!.SetValue(live, input.Text); }, pair.Key); input.LostKeyboardFocus += (_, _) => Editor.EndPropertyEdit(); }
         custom.TextChanged += (_, _) => ChangeField(custom, () => { var extra = ParseCustom(custom.Text); if (sheetMode) Editor.Sheet.CustomFields = extra; else Editor.Project.CustomFields = extra; }, "custom"); custom.LostKeyboardFocus += (_, _) => Editor.EndPropertyEdit();
+        if(kinds is not null)kinds.SelectionChanged+=(_,_)=>{ChangeField(kinds,()=>FreeGraphics.SetKind(Editor.Sheet,(string?)kinds.SelectedValue??"drawing"),"kind");loading=true;try{if(templates is not null)templates.SelectedValue=Editor.Sheet.TitleBlockId;}finally{loading=false;}};
         if (templates is not null) templates.SelectionChanged += (_, _) => ChangeField(templates, () => Editor.Sheet.TitleBlockId = (string?)templates.SelectedValue ?? "", "titleblock");
         void Sync()
         {
             if (editingProperty) return; loading = true;
-            try { var live = sheetMode ? (object)Editor.Sheet : Editor.Project; foreach (var pair in inputs) pair.Value.Text = (string)live.GetType().GetProperty(pair.Key)!.GetValue(live)!; custom.Text = string.Join("\n", (sheetMode ? Editor.Sheet.CustomFields : Editor.Project.CustomFields).Select(x => x.Key + "=" + x.Value)); if (templates is not null) templates.SelectedValue = Editor.Sheet.TitleBlockId; feedback.Text = ""; }
+            try { var live = sheetMode ? (object)Editor.Sheet : Editor.Project; foreach (var pair in inputs) pair.Value.Text = (string)live.GetType().GetProperty(pair.Key)!.GetValue(live)!; custom.Text = string.Join("\n", (sheetMode ? Editor.Sheet.CustomFields : Editor.Project.CustomFields).Select(x => x.Key + "=" + x.Value)); if (templates is not null) templates.SelectedValue = Editor.Sheet.TitleBlockId;if(kinds is not null)kinds.SelectedValue=Editor.Sheet.Kind; feedback.Text = ""; }
             finally { loading = false; }
         }
         Editor.Changed += Sync;

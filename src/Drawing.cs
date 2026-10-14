@@ -5,7 +5,7 @@ using System.Windows.Media;
 namespace GeMMeElec;
 
 // A single scene description drives screen, SVG and PDF rendering.
-public sealed record Ink(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "", string Color = "#203348", double Size = 12, double Rotation = 0, double Thickness = 1.6, string LineStyle = "solid");
+public sealed record Ink(string Kind, double X, double Y, double A = 0, double B = 0, string Text = "", string Color = "#203348", double Size = 12, double Rotation = 0, double Thickness = 1.6, string LineStyle = "solid", string Fill = "");
 public sealed class SymbolPreview(string symbol) : FrameworkElement
 {
     public SymbolDefinition? Definition { get; set; }
@@ -26,9 +26,10 @@ public static class Drawing
         if (sheet.BomPage is not null) return BomFolios.Scene(project, sheet);
         if (sheet.TerminalPlanId.Length>0) return TerminalStrips.Scene(project,sheet);
         if (sheet.CabinetPlanId.Length>0) return Cabinets.PlanScene(project,sheet);
-        List<Ink> result = [new("rect", 10, 10, sheet.Width - 40, sheet.Height - 40, Color: "#53677B")];
+        List<Ink> result = sheet.Kind=="cover"?[]:[new("rect", 10, 10, sheet.Width - 40, sheet.Height - 40, Color: "#53677B")];
         result.AddRange(DocumentModel.Scene(project,sheet));
         result.AddRange(SheetZones.Frame(project, sheet));
+        result.AddRange(sheet.Graphics.Select(g=>FreeGraphics.Ink(project,g)));
         var references = new CrossReferences(project);
         var components = sheet.Components.ToDictionary(c => c.Id);
         var routes = sheet.Wires.ToDictionary(w => w.Id, w => w.Route(sheet, components));
@@ -47,7 +48,7 @@ public static class Drawing
         }
         foreach (var c in sheet.Components) result.AddRange(ComponentScene(project, c, references, false, reading));
         foreach (var dot in Junctions.Dots(sheet, routes)) result.Add(new("dot", dot.Point.X, dot.Point.Y, 4, Color: dot.Color));
-        if (reading?.Notes ?? true) foreach (var n in sheet.Notes) result.Add(new("text", n.X, n.Y, Text: n.Text, Size: 16 * (reading?.TextScale ?? 1)));
+        if (reading?.Notes ?? true) foreach (var n in sheet.Notes) result.Add(FreeGraphics.NoteInk(project,sheet,n,reading?.TextScale ?? 1));
         result.AddRange(CableDefinitions.Scene(project,sheet));
         foreach(var marker in sheet.TerminalMarkers)result.Add(new("text",Math.Max(32,Math.Min(marker.A.X,marker.B.X)-40),Math.Min(marker.A.Y,marker.B.Y)-15,Text:project.TerminalStrips.Single(t=>t.Id==marker.StripId).Name,Size:14));
         return result;
@@ -131,7 +132,8 @@ public static class Drawing
             switch (s.Kind)
             {
                 case "line": dc.DrawLine(pen, new(s.X, s.Y), new(s.A, s.B)); break;
-                case "rect": dc.DrawRectangle(null, pen, new(s.X, s.Y, s.A, s.B)); break;
+                case "rect": dc.DrawRectangle(s.Fill.Length>0?Brush(s.Fill):null, pen, new(s.X, s.Y, s.A, s.B)); break;
+                case "ellipse":dc.DrawEllipse(s.Fill.Length>0?Brush(s.Fill):null,pen,new(s.X+s.A/2,s.Y+s.B/2),s.A/2,s.B/2);break;
                 case "circle": dc.DrawEllipse(Brushes.White, pen, new(s.X, s.Y), s.A, s.A); break;
                 case "dot": dc.DrawEllipse(brush, null, new(s.X, s.Y), s.A, s.A); break;
                 case "triangle":

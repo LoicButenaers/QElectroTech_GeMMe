@@ -56,7 +56,7 @@ public sealed partial class SheetCanvas
     {
         if(Mode!="block"||PendingBlock is null||!IsMouseOver)return;var bounds=CircuitBlocks.Bounds(PendingBlock.Project);var target=new Point(Editor.Snap(pointer.X),Editor.Snap(pointer.Y));var delta=target-bounds.TopLeft;
         dc.PushOpacity(.45);dc.PushTransform(new System.Windows.Media.TranslateTransform(delta.X,delta.Y));
-        var s=PendingBlock.Project.Sheets[0];var refs=new CrossReferences(PendingBlock.Project);foreach(var c in s.Components)Drawing.Render(dc,Drawing.ComponentScene(PendingBlock.Project,c,refs));foreach(var w in s.Wires){var path=w.Route(s);for(int i=1;i<path.Count;i++)dc.DrawLine(new(Drawing.Brush(w.Color),w.Thickness),path[i-1],path[i]);}dc.Pop();dc.Pop();
+        var s=PendingBlock.Project.Sheets[0];Drawing.Render(dc,s.Graphics.Select(g=>FreeGraphics.Ink(PendingBlock.Project,g)));Drawing.Render(dc,s.Notes.Select(n=>FreeGraphics.NoteInk(PendingBlock.Project,s,n)));var refs=new CrossReferences(PendingBlock.Project);foreach(var c in s.Components)Drawing.Render(dc,Drawing.ComponentScene(PendingBlock.Project,c,refs));foreach(var w in s.Wires){var path=w.Route(s);for(int i=1;i<path.Count;i++)dc.DrawLine(new(Drawing.Brush(w.Color),w.Thickness),path[i-1],path[i]);}dc.Pop();dc.Pop();
     }
 }
 public sealed partial class MainWindow

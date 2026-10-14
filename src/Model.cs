@@ -8,7 +8,7 @@ namespace GeMMeElec;
 
 public sealed class Project
 {
-    public const int CurrentVersion = 8;
+    public const int CurrentVersion = 9;
     public const int MaxSheets = 200;
     public const int MaxFileBytes = 64_000_000;
     public Dictionary<string, SymbolDefinition> CustomSymbols { get; set; } = [];
@@ -37,6 +37,8 @@ public sealed class Project
 }
 public sealed class Sheet
 {
+    public string Kind {get;set;}="drawing";
+    public List<SheetGraphic> Graphics {get;set;}=[];
     public List<CableMarker> CableMarkers { get; set; } = [];
     public List<TerminalMarker> TerminalMarkers { get; set; } = [];
     public string TerminalPlanStyle {get;set;}="table";
@@ -65,7 +67,7 @@ public sealed class Sheet
     public List<Component> Components { get; set; } = [];
     public List<Wire> Wires { get; set; } = [];
     public List<Annotation> Notes { get; set; } = [];
-    [JsonIgnore] public string Display => Number.Length == 0 ? Title : Number + " · " + Title;
+    [JsonIgnore] public string Display => (Kind=="cover"?"PG · ":"") + (Number.Length == 0 ? Title : Number + " · " + Title);
 }
 public sealed class Component
 {
@@ -235,6 +237,11 @@ public static class WireRouting
 }
 public sealed class Annotation
 {
+    public double FontSize {get;set;}=16;
+    public string Color {get;set;}="#203348";
+    public double Rotation {get;set;}
+    public string Align {get;set;}="left";
+    public bool ResolveFields {get;set;}
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public double X { get; set; }
     public double Y { get; set; }
@@ -261,7 +268,7 @@ public static class ProjectStore
             project.PdfOptions.Contents=false;
         }
         else if (project.Version is 3 or 4 or 5 or 6) {project.Version = Project.CurrentVersion;project.PdfOptions.Contents=false;}
-        else if (project.Version==7) project.Version=Project.CurrentVersion;
+        else if (project.Version is 7 or 8) project.Version=Project.CurrentVersion;
         ValidateStructure(project);
         return project;
     }
@@ -291,7 +298,7 @@ public static class ProjectStore
             if (!double.IsFinite(s.Width) || !double.IsFinite(s.Height) || s.Width is < 200 or > 10000 || s.Height is < 200 or > 10000) throw new InvalidDataException("Dimensions de folio invalides.");
             if (s.Components is null || s.Wires is null || s.Notes is null || s.Components.Count > 10000 || s.Wires.Count > 20000 || s.Notes.Count > 5000) throw new InvalidDataException("Contenu du folio invalide ou trop volumineux.");
             if((s.TerminalPlanId.Length>0||s.CabinetPlanId.Length>0)&&(s.Components.Count>0||s.Wires.Count>0||s.Notes.Count>0||s.CableMarkers?.Count>0||s.TerminalMarkers?.Count>0))throw new InvalidDataException("Modifier les plans générés depuis leur gestionnaire.");
-            BomFolios.Validate(p, s);
+            BomFolios.Validate(p, s);FreeGraphics.Validate(s,p);foreach(var graphic in s.Graphics)Id(graphic.Id);
             foreach (var c in s.Components)
             {
                 if (c is null) throw new InvalidDataException("Composant vide.");
@@ -328,7 +335,7 @@ public static class ProjectStore
             }
             var pairs = new HashSet<string>();
             foreach (var w in s.Wires) { var ends = new[] { w.From.ComponentId + ":" + w.From.PortId, w.To.ComponentId + ":" + w.To.PortId }.Order(StringComparer.Ordinal); if (!pairs.Add(string.Join("|", ends))) throw new InvalidDataException("Ces bornes sont déjà reliées."); }
-            foreach (var n in s.Notes) { if (n is null) throw new InvalidDataException("Annotation vide."); Id(n.Id); if (!double.IsFinite(n.X) || !double.IsFinite(n.Y) || n.X < 0 || n.X > s.Width || n.Y < 0 || n.Y > s.Height || n.Text is null || n.Text.Length > 2000) throw new InvalidDataException("Annotation invalide."); }
+            foreach (var n in s.Notes) { if (n is null) throw new InvalidDataException("Annotation vide."); Id(n.Id);FreeGraphics.ValidateNote(n); if (!double.IsFinite(n.X) || !double.IsFinite(n.Y) || n.X < 0 || n.X > s.Width || n.Y < 0 || n.Y > s.Height || n.Text is null || n.Text.Length > 2000) throw new InvalidDataException("Annotation invalide."); }
         }
         CoilContacts.Validate(p);
         TerminalStrips.Validate(p);
@@ -475,7 +482,7 @@ public sealed partial class Editor
     public void Delete(IEnumerable<string> selected)
     {
         var ids = selected.ToHashSet();
-        Change(() => { RemoveTerminalAssignments(ids);foreach (var c in Project.Sheets.SelectMany(s => s.Components).Where(c => ids.Contains(c.CoilId))) c.CoilId = ""; Sheet.Wires.RemoveAll(w => ids.Contains(w.Id) || ids.Contains(w.From.ComponentId) || ids.Contains(w.To.ComponentId)); Sheet.Components.RemoveAll(c => ids.Contains(c.Id)); Sheet.Notes.RemoveAll(n => ids.Contains(n.Id)); });
+        Change(() => { RemoveTerminalAssignments(ids);foreach (var c in Project.Sheets.SelectMany(s => s.Components).Where(c => ids.Contains(c.CoilId))) c.CoilId = ""; Sheet.Wires.RemoveAll(w => ids.Contains(w.Id) || ids.Contains(w.From.ComponentId) || ids.Contains(w.To.ComponentId)); Sheet.Components.RemoveAll(c => ids.Contains(c.Id)); Sheet.Notes.RemoveAll(n => ids.Contains(n.Id));Sheet.Graphics.RemoveAll(g=>ids.Contains(g.Id)); });
     }
     public static double Snap(double value) => Math.Round(value / 10) * 10;
     public List<Finding> Validate()
