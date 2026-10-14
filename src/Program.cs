@@ -10,6 +10,7 @@ public static class Program
     {
         if (args.Contains("--mcp")) return McpServer.Run().GetAwaiter().GetResult();
         if (args.Contains("--self-test")) return SelfTests.Run();
+        if (args.Contains("--benchmark-interaction")) return InteractionBenchmark.Run();
         if (args.Contains("--benchmark")) return EditorBenchmark.Run(args.Contains("--folios=100") ? 100 : args.Contains("--folios=200") ? 200 : null);
         if (args.Contains("--test-host"))
         {

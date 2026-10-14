@@ -8,7 +8,9 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.19)
+## Fonctionnalités (version 0.19.1)
+
+- [Optimisation de la fluidité 0.19.1](docs/FLUIDITE_0.19.1.md) : dessins conservés pendant les glissers, grille répétée pour le zoom et survol allégé, sans changement des fonctionnalités ou du format projet.
 
 - [Guide de la version 0.19](docs/LIVRAISON_0.19.md) : routage avec obstacles, gestes de création de bornes/câbles avec section en mm², vues graphiques des borniers, blocs de circuits, insertion sur un fil, onglets de projets, favoris classés et réglages de lecture. Le ruban **Circuits** regroupe ces commandes.
 

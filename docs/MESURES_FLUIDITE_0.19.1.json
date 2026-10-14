@@ -1,0 +1,163 @@
+{
+  "version": "0.19.1",
+  "projectFormat": 8,
+  "featuresChanged": false,
+  "applicationTests": 160,
+  "mcpChecks": 135,
+  "mcpTools": 87,
+  "executableSha256": "2DC066C1947683E77ABE92979E1BCF3E38C393005EA0550D979CF95472D06EA5",
+  "before": {
+    "passed": true,
+    "version": "0.19.0.0",
+    "measurement": "Préparation des dessins WPF hors écran, sans rasterisation GPU",
+    "samples": [
+      {
+        "activeComponents": 50,
+        "projectComponents": 5000,
+        "activeWires": 49,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 6297.0707,
+          "meanMs": 52.475589166666666,
+          "allocatedBytes": 489094288
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 3326.6563,
+          "meanMs": 27.722135833333333,
+          "allocatedBytes": 486711880
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 43.1592,
+          "meanMs": 0.35966,
+          "allocatedBytes": 6974920
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 3179.4614,
+          "meanMs": 52.99102333333334,
+          "allocatedBytes": 333365368
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 36.4622,
+          "meanMs": 0.3038516666666667,
+          "allocatedBytes": 5921344
+        }
+      },
+      {
+        "activeComponents": 400,
+        "projectComponents": 5000,
+        "activeWires": 392,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 21559.7344,
+          "meanMs": 179.66445333333334,
+          "allocatedBytes": 2321409208
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 19824.4521,
+          "meanMs": 165.2037675,
+          "allocatedBytes": 2321836928
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 270.8933,
+          "meanMs": 2.2574441666666667,
+          "allocatedBytes": 39736336
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 641.6812,
+          "meanMs": 10.694686666666666,
+          "allocatedBytes": 92405368
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 15.9922,
+          "meanMs": 0.13326833333333335,
+          "allocatedBytes": 1905744
+        }
+      }
+    ]
+  },
+  "after": {
+    "passed": true,
+    "version": "0.19.1.0",
+    "measurement": "Préparation des dessins WPF hors écran, sans rasterisation GPU",
+    "samples": [
+      {
+        "activeComponents": 50,
+        "projectComponents": 5000,
+        "activeWires": 49,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 119.0036,
+          "meanMs": 0.9916966666666667,
+          "allocatedBytes": 4415168
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 377.748,
+          "meanMs": 3.1479,
+          "allocatedBytes": 13782776
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 96.1042,
+          "meanMs": 0.8008683333333334,
+          "allocatedBytes": 4725200
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 8.0436,
+          "meanMs": 0.13405999999999998,
+          "allocatedBytes": 331072
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 11.5022,
+          "meanMs": 0.09585166666666667,
+          "allocatedBytes": 439320
+        }
+      },
+      {
+        "activeComponents": 400,
+        "projectComponents": 5000,
+        "activeWires": 392,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 139.4347,
+          "meanMs": 1.1619558333333333,
+          "allocatedBytes": 4413064
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 729.6289,
+          "meanMs": 6.080240833333334,
+          "allocatedBytes": 50477096
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 446.1136,
+          "meanMs": 3.7176133333333334,
+          "allocatedBytes": 21578024
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 7.9354,
+          "meanMs": 0.13225666666666666,
+          "allocatedBytes": 327232
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 15.6225,
+          "meanMs": 0.1301875,
+          "allocatedBytes": 431640
+        }
+      }
+    ]
+  }
+}

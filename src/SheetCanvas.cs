@@ -13,7 +13,8 @@ public sealed partial class SheetCanvas : FrameworkElement
     public double GridIntensity { get; set; } = 25;
     private (string Id, Point Point)? hoveredWire;
     private Dictionary<string, List<Point>>? routeCache;
-    private DrawingGroup? gridCache;
+    private DrawingBrush? gridCache;
+    private Rect gridBounds;
     private (bool, double, double, double, double) gridKey;
     public HashSet<string> Selected { get; } = [];
     public string Mode { get; private set; } = "select";
@@ -39,7 +40,8 @@ public sealed partial class SheetCanvas : FrameworkElement
     private Point pressPosition;
     private readonly List<Position> waypoints = [];
     private string previousSheet = "";
-    private DrawingGroup? sceneCache;
+    private CanvasScene? retainedScene;
+    private (Component Component,Port Port,Endpoint Endpoint)[]? portHandles;
     private (string ComponentId, string Key, LabelPlacement Placement, bool DetachInline)? textDrag;
     private bool textMoved;
     private (string Id, WireNumberPlacement Placement)? wireTextDrag;
@@ -90,7 +92,7 @@ public sealed partial class SheetCanvas : FrameworkElement
     {
         Editor = editor; previousSheet = editor.Sheet.Id; Focusable = true; ClipToBounds = true;
         ToolTip = "Maj + clic gauche puis glisser sur un texte : déplacer ce texte · Échap : annuler";
-        Editor.Changed += () => { sceneCache=null; routeCache=null; RefreshCircuitHighlight(); if (previousSheet != Editor.Sheet.Id) { previousSheet = Editor.Sheet.Id; Selected.Clear(); SetMode("select"); Fit(); } InvalidateVisual(); };
+        Editor.Changed += () => { retainedScene=null; portHandles=null; routeCache=null; RefreshCircuitHighlight(); if (previousSheet != Editor.Sheet.Id) { previousSheet = Editor.Sheet.Id; Selected.Clear(); SetMode("select"); Fit(); } InvalidateVisual(); };
         bool firstLoad=true; Loaded += (_, _) => { if(firstLoad){firstLoad=false;Fit();} };
     }
     public void SetMode(string mode)
@@ -117,21 +119,21 @@ public sealed partial class SheetCanvas : FrameworkElement
         var key = (GridVisible && sheet.BomPage is null && sheet.TerminalPlanId.Length==0 && sheet.CabinetPlanId.Length==0, GridIntensity, Zoom, sheet.Width, DocumentModel.DrawingBottom(Editor.Project, sheet));
         if (gridCache is null || gridKey != key)
         {
-            gridKey = key; gridCache = new();
-            using (var grid = gridCache.Open()) if (key.Item1 && GridIntensity > 0)
+            gridKey=key;gridCache=null;
+            if(key.Item1&&GridIntensity>0&&key.Item5>40&&sheet.Width>70)
             {
-                double step = Zoom > .7 ? 10 : 50; grid.PushOpacity(Math.Clamp(GridIntensity / 100, 0, 1));
-                while (sheet.Width / step * sheet.Height / step > 30000) step *= 5;
-                for (double x = 40; x < sheet.Width - 30; x += step) for (double y = 40; y < key.Item5; y += step) grid.DrawEllipse(Drawing.Brush("#60758A"), null, new(x, y), .65 / Zoom, .65 / Zoom);
-                grid.Pop();
+                double step=Zoom>.7?10:50;while(sheet.Width/step*sheet.Height/step>30000)step*=5;
+                double radius=.65/Zoom;var tile=new DrawingGroup();using(var draw=tile.Open())draw.DrawEllipse(Drawing.Brush("#60758A"),null,new(step/2,step/2),radius,radius);tile.Freeze();
+                gridCache=new DrawingBrush(tile){Viewbox=new Rect(0,0,step,step),ViewboxUnits=BrushMappingMode.Absolute,Viewport=new Rect(40-step/2,40-step/2,step,step),ViewportUnits=BrushMappingMode.Absolute,TileMode=TileMode.Tile,Stretch=Stretch.Fill,Opacity=Math.Clamp(GridIntensity/100,0,1)};gridCache.Freeze();
+                double lastX=40+(Math.Ceiling((sheet.Width-70)/step)-1)*step,lastY=40+(Math.Ceiling((key.Item5-40)/step)-1)*step;
+                gridBounds=new Rect(40-radius,40-radius,lastX-40+2*radius,lastY-40+2*radius);
             }
-            gridCache.Freeze();
         }
-        dc.DrawDrawing(gridCache);
+        if(gridCache is not null)dc.DrawRectangle(gridCache,null,gridBounds);
         foreach (var wire in sheet.Wires.Where(w => HighlightedWires.Contains(w.Id))) { var path = wire.Route(sheet); var highlight = new Pen(new SolidColorBrush(Color.FromArgb(90, 255, 170, 0)), wire.Thickness + 7 / Zoom); for (int i = 1; i < path.Count; i++) dc.DrawLine(highlight, path[i-1], path[i]); }
         RenderBand(dc); RenderBlock(dc);
-        if(sceneCache is null) {sceneCache=new();using(var context=sceneCache.Open())Drawing.Render(context,ReadingScene());sceneCache.Freeze();}
-        dc.DrawDrawing(sceneCache);
+        retainedScene ??= new(Editor.Project,sheet,Reading);retainedScene.Update();
+        dc.DrawDrawing(retainedScene.Drawing);
         var accent = Drawing.Brush("#007F86"); var pen = new Pen(accent, 2 / Zoom);
         foreach (var c in sheet.Components)
         {
@@ -182,7 +184,8 @@ public sealed partial class SheetCanvas : FrameworkElement
     }
     private Endpoint? HitPort(Point p)
     {
-        return Editor.Sheet.Components.SelectMany(c => c.Definition.Ports.Select(t => (End: new Endpoint(c.Id, t.Id), Distance: (c.PortPoint(t.Id) - p).Length))).Where(x => x.Distance < 8 / Zoom).OrderBy(x => x.Distance).Select(x => x.End).FirstOrDefault();
+        portHandles ??= Editor.Sheet.Components.SelectMany(c=>c.Definition.Ports.Select(port=>(c,port,new Endpoint(c.Id,port.Id)))).ToArray();
+        double nearest=64/(Zoom*Zoom);Endpoint? result=null;foreach(var handle in portHandles){double distance=(handle.Component.Transform(handle.Port.X,handle.Port.Y)-p).LengthSquared;if(distance<nearest){nearest=distance;result=handle.Endpoint;}}return result;
     }
     private Point PortPoint(Endpoint e) => Editor.Sheet.Components.Single(c => c.Id == e.ComponentId).PortPoint(e.PortId);
     private (string Id, Point Point)? HitWire(Point p)
@@ -265,14 +268,14 @@ public sealed partial class SheetCanvas : FrameworkElement
     }
     internal void MoveText(Point point)
     {
-        if (wireTextDrag is { } wireDrag && before is not null) { var wireDelta = point - dragStart; if (!textMoved && wireDelta.Length * Zoom < 3) return; textMoved = true; var wirePlacement = DocumentModel.Copy(wireDrag.Placement); wirePlacement.OffsetX = Math.Clamp(wirePlacement.OffsetX + wireDelta.X, -10000, 10000); wirePlacement.OffsetY = Math.Clamp(wirePlacement.OffsetY + wireDelta.Y, -10000, 10000); Editor.Sheet.Wires.Single(w => w.Id == wireDrag.Id).NumberPlacement = wirePlacement; sceneCache = null; InvalidateVisual(); return; }
+        if (wireTextDrag is { } wireDrag && before is not null) { var wireDelta = point - dragStart; if (!textMoved && wireDelta.Length * Zoom < 3) return; textMoved = true; var wirePlacement = DocumentModel.Copy(wireDrag.Placement); wirePlacement.OffsetX = Math.Clamp(wirePlacement.OffsetX + wireDelta.X, -10000, 10000); wirePlacement.OffsetY = Math.Clamp(wirePlacement.OffsetY + wireDelta.Y, -10000, 10000); Editor.Sheet.Wires.Single(w => w.Id == wireDrag.Id).NumberPlacement = wirePlacement; retainedScene?.TextChanged(wireDrag.Id,true); InvalidateVisual(); return; }
         if (textDrag is not { } drag || before is null) return;
         var delta = point - dragStart; if (!textMoved && delta.Length * Zoom < 3) return; textMoved = true;
         var c = Editor.Sheet.Components.Single(c => c.Id == drag.ComponentId); var placement = DocumentModel.Copy(drag.Placement);
         if (drag.DetachInline) c.ReferenceDestinationInline = false;
         // Rebuild from the original placement on every frame to avoid drift.
         placement.OffsetX = Math.Clamp(placement.OffsetX + delta.X, -10000, 10000); placement.OffsetY = Math.Clamp(placement.OffsetY + delta.Y, -10000, 10000);
-        ComponentTexts.SetPlacement(c, drag.Key, placement); sceneCache = null; InvalidateVisual();
+        ComponentTexts.SetPlacement(c, drag.Key, placement); retainedScene?.TextChanged(c.Id,false); InvalidateVisual();
     }
     internal void EndPreviewMove()
     {
@@ -283,20 +286,21 @@ public sealed partial class SheetCanvas : FrameworkElement
     internal void MoveSelection(Point point)
     {
         if (before is null || original.Count == 0) return;
-        sceneCache = null; routeCache = null;
+        routeCache = null;
         double dx = Math.Clamp(Editor.Snap(point.X - dragStart.X), -moveBounds.Left, Editor.Sheet.Width - moveBounds.Right);
         double dy = Math.Clamp(Editor.Snap(point.Y - dragStart.Y), -moveBounds.Top, Editor.Sheet.Height - moveBounds.Bottom);
         guideX = guideY = null;
         if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
         {
             var reference = original.Values.First(); var candidates = Editor.Sheet.Components.Where(c => !original.ContainsKey(c.Id) && !Junctions.Automatic(c)).ToList();
-            var nearX = candidates.OrderBy(c => Math.Abs(c.X - reference.X - dx)).FirstOrDefault(); var nearY = candidates.OrderBy(c => Math.Abs(c.Y - reference.Y - dy)).FirstOrDefault();
+            Component? nearX=null,nearY=null;double closestX=double.MaxValue,closestY=double.MaxValue;foreach(var candidate in candidates){double x=Math.Abs(candidate.X-reference.X-dx),y=Math.Abs(candidate.Y-reference.Y-dy);if(x<closestX){closestX=x;nearX=candidate;}if(y<closestY){closestY=y;nearY=candidate;}}
             if (nearX is not null && Math.Abs(nearX.X-reference.X-dx)*Zoom < 5) { dx = Math.Clamp(nearX.X-reference.X, -moveBounds.Left, Editor.Sheet.Width-moveBounds.Right); guideX = nearX.X; }
             if (nearY is not null && Math.Abs(nearY.Y-reference.Y-dy)*Zoom < 5) { dy = Math.Clamp(nearY.Y-reference.Y, -moveBounds.Top, Editor.Sheet.Height-moveBounds.Bottom); guideY = nearY.Y; }
         }
         foreach (var c in Editor.Sheet.Components.Where(c => original.ContainsKey(c.Id))) { c.X = original[c.Id].X + dx; c.Y = original[c.Id].Y + dy; }
         foreach (var n in Editor.Sheet.Notes.Where(n => original.ContainsKey(n.Id))) { n.X = original[n.Id].X + dx; n.Y = original[n.Id].Y + dy; }
         foreach (var w in Editor.Sheet.Wires.Where(w => originalWaypoints.ContainsKey(w.Id))) w.Waypoints = originalWaypoints[w.Id].Select(p => new Position(p.X + dx, p.Y + dy)).ToList();
+        retainedScene?.GeometryChanged(original.Keys.Where(id=>Editor.Sheet.Components.Any(c=>c.Id==id)),original.Keys.Where(id=>Editor.Sheet.Notes.Any(n=>n.Id==id)));
     }
     protected override void OnMouseDown(MouseButtonEventArgs e)
     {
@@ -341,20 +345,21 @@ public sealed partial class SheetCanvas : FrameworkElement
         pointer = World(e.GetPosition(this));
         if (textDrag is not null || wireTextDrag is not null) { MoveText(pointer); Cursor = Cursors.SizeAll; return; }
         if (marqueeStart is not null) { InvalidateVisual(); return; }
-        hoveredPort = HitPort(pointer); hoveredWire = connection is not null && hoveredPort is null ? HitWire(pointer) : null;
+        var oldPort=hoveredPort; hoveredPort = HitPort(pointer); hoveredWire = connection is not null && hoveredPort is null ? HitWire(pointer) : null;
         if (panning) { offset = panOffset + (e.GetPosition(this) - panStart); InvalidateVisual(); return; }
         if (connectionPressed && (e.GetPosition(this) - pressPosition).Length > 4) connectionMoved = true;
         if (before is not null && editingWire is not null && originalRoute is not null)
         {
-            sceneCache=null; routeCache=null;
+            routeCache=null;
             if ((pointer - dragStart).Length * Zoom > 3) Junctions.ShiftSegment(Editor.Sheet, editingWire, originalRoute, segmentIndex, new(Math.Clamp(pointer.X, 0, Editor.Sheet.Width), Math.Clamp(pointer.Y, 0, Editor.Sheet.Height)));
+            var moved=Editor.Sheet.Wires.Single(w=>w.Id==editingWire);retainedScene?.GeometryChanged(Editor.Sheet.Components.Where(c=>Junctions.Automatic(c)&&(c.Id==moved.From.ComponentId||c.Id==moved.To.ComponentId)).Select(c=>c.Id),[],[editingWire]);
         }
         else if (before is not null)
         {
             MoveSelection(pointer);
         }
         Cursor = hoveredPort is not null || connection is not null ? Cursors.Cross : Mode == "select" ? Cursors.Arrow : Cursors.Cross;
-        InvalidateVisual();
+        if(oldPort!=hoveredPort||before is not null||connection is not null||bandStart is not null||Mode is "place" or "block")InvalidateVisual();
     }
     protected override void OnMouseUp(MouseButtonEventArgs e)
     {

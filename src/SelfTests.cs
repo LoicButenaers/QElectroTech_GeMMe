@@ -78,6 +78,7 @@ public static class SelfTests
         EngineeringTests.Run(Test,Assert,Reject,dir);
         DeliveryTests.Run(Test,Assert,Reject,dir);
         NewWorkflowTests.Run(Test,Assert,Reject,dir);
+        PerformanceTests.Run(Test,Assert,Reject,dir);
         File.WriteAllText(Path.Combine(dir, "self-test.json"), JsonSerializer.Serialize(new { passed = failures == 0, failures, results }, ProjectStore.Json)); return failures == 0 ? 0 : 1;
     }
 }

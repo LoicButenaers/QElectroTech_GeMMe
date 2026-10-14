@@ -27,7 +27,7 @@ public sealed class ReadingOptions
 public sealed partial class SheetCanvas
 {
     public ReadingOptions Reading { get; private set; } = new();
-    public void SetReading(ReadingOptions options) { options.Validate(); Reading=DocumentModel.Copy(options); sceneCache=null; InvalidateVisual(); }
+    public void SetReading(ReadingOptions options) { options.Validate(); Reading=DocumentModel.Copy(options); retainedScene=null; InvalidateVisual(); }
     internal List<Ink> ReadingScene() => Drawing.Scene(Editor.Project, Editor.Sheet, Reading);
     public void ZoomSelection()
     {
