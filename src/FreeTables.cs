@@ -19,7 +19,9 @@ public sealed class FreeTable
     }
     public void Resize(double width,double height)
     {
-        double dx=width/ColumnWidths.Sum(),dy=height/RowHeights.Sum();ColumnWidths=ColumnWidths.Select(w=>w*dx).ToList();RowHeights=RowHeights.Select(h=>h*dy).ToList();
+        double minimumWidth=ColumnWidths.Sum()*8/ColumnWidths.Min(),minimumHeight=RowHeights.Sum()*8/RowHeights.Min();
+        if(!double.IsFinite(width)||!double.IsFinite(height)||width<minimumWidth-1e-8||height<minimumHeight-1e-8)throw new ArgumentException($"Chaque cellule doit mesurer au moins 8 unités. Taille totale minimale pour ce tableau : {minimumWidth:0.###} × {minimumHeight:0.###}.");
+        double dx=width/ColumnWidths.Sum(),dy=height/RowHeights.Sum();ColumnWidths=ColumnWidths.Select(w=>Math.Max(8,w*dx)).ToList();RowHeights=RowHeights.Select(h=>Math.Max(8,h*dy)).ToList();
     }
     public void Reconfigure(int rows,int columns,double defaultWidth,double defaultHeight)
     {
@@ -31,6 +33,10 @@ public sealed class FreeTable
 }
 public sealed partial class Editor
 {
+    public void SetTableCellSize(string id,double? columnWidth=null,double? rowHeight=null)
+    {
+        Change(()=>{var graphic=Sheet.Graphics.Single(g=>g.Id==id&&g.Kind=="table");var table=graphic.Table!;if(columnWidth is double w)table.ColumnWidths=Enumerable.Repeat(w,table.ColumnWidths.Count).ToList();if(rowHeight is double h)table.RowHeights=Enumerable.Repeat(h,table.RowHeights.Count).ToList();table.Validate();graphic.Width=table.ColumnWidths.Sum();graphic.Height=table.RowHeights.Sum();});
+    }
     public void SetTableCell(string id,int row,int column,RichTextContent content)
     {
         RichText.Validate(content);Change(()=>{var graphic=Sheet.Graphics.Single(g=>g.Id==id&&g.Kind=="table");var table=graphic.Table!;if(row<0||row>=table.RowHeights.Count||column<0||column>=table.ColumnWidths.Count)throw new ArgumentException("Cellule hors du tableau.");table.Cells[row*table.ColumnWidths.Count+column]=DocumentModel.Copy(content);});

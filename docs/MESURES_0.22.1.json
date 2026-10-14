@@ -1,0 +1,102 @@
+{
+  "version": "0.22.1",
+  "projectFormat": 10,
+  "executableSha256": "49B62E13333CB7FF12152FDF321C85F9EFF9AE0DDF3DC822CF769094A45870C3",
+  "selfTests": {
+    "passed": true,
+    "count": 201
+  },
+  "mcp": {
+    "passed": true,
+    "count": 166,
+    "tools": 97,
+    "userProjectTestedOnCopy": true
+  },
+  "regressionReproducedBeforeFix": true,
+  "interaction": {
+    "passed": true,
+    "version": "0.22.1.0",
+    "measurement": "Préparation des dessins WPF hors écran, sans rasterisation GPU",
+    "samples": [
+      {
+        "activeComponents": 50,
+        "projectComponents": 5000,
+        "activeWires": 49,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 162.0947,
+          "meanMs": 1.3507891666666665,
+          "allocatedBytes": 4511168
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 350.1712,
+          "meanMs": 2.918093333333333,
+          "allocatedBytes": 13947264
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 94.4052,
+          "meanMs": 0.7867099999999999,
+          "allocatedBytes": 4797688
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 8.1617,
+          "meanMs": 0.13602833333333333,
+          "allocatedBytes": 352672
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 10.1913,
+          "meanMs": 0.0849275,
+          "allocatedBytes": 482520
+        }
+      },
+      {
+        "activeComponents": 400,
+        "projectComponents": 5000,
+        "activeWires": 392,
+        "textDrag": {
+          "frames": 120,
+          "totalMs": 113.961,
+          "meanMs": 0.9496749999999999,
+          "allocatedBytes": 4509064
+        },
+        "componentDrag": {
+          "frames": 120,
+          "totalMs": 674.6251,
+          "meanMs": 5.621875833333333,
+          "allocatedBytes": 50811624
+        },
+        "hover": {
+          "frames": 120,
+          "totalMs": 368.7125,
+          "meanMs": 3.0726041666666664,
+          "allocatedBytes": 21806408
+        },
+        "zoom": {
+          "frames": 60,
+          "totalMs": 8.3717,
+          "meanMs": 0.13952833333333334,
+          "allocatedBytes": 348832
+        },
+        "pan": {
+          "frames": 120,
+          "totalMs": 13.5707,
+          "meanMs": 0.11308916666666667,
+          "allocatedBytes": 474840
+        }
+      }
+    ]
+  },
+  "richTable": {
+    "rows": 8,
+    "columns": 6,
+    "frames": 120,
+    "totalMs": 150.958,
+    "meanMs": 1.2579833333333332,
+    "allocatedBytes": 13263824
+  },
+  "measuredAtUtc": "2026-10-14T13:18:05.3568818+00:00"
+}

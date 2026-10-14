@@ -8,7 +8,9 @@ Ouvrir **`C:\dev\QElectroTech_GeMMe\build\GeMMeElec.exe`**. L’exécutable Wind
 
 Le dossier contenant l’exécutable doit être accessible en écriture pour le fichier de session MCP et les journaux. Une seule fenêtre d’application est ouverte par compte Windows. Le même exécutable, lancé avec `--mcp`, sert de passerelle MCP sans ouvrir une deuxième interface.
 
-## Fonctionnalités (version 0.22)
+## Fonctionnalités (version 0.22.1)
+
+- [Correction des dimensions de tableau 0.22.1](docs/CORRECTION_TABLEAUX_0.22.1.md) : tailles communes ou individuelles réellement appliquées, grille et aperçu cohérents, saisie complète des dimensions dans Propriétés avec Entrée ou changement de champ.
 
 - [Rectangles avec texte, tableaux et mise en forme 0.22](docs/TABLEAUX_TEXTES_0.22.md) : passages normaux/gras/italiques dans le même texte, nombre de lignes/colonnes et dimensions individuelles, édition des cellules, styles des textes existants et polices conservées dans le PDF/SVG.
 

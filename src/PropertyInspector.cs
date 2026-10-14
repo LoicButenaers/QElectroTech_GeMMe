@@ -45,7 +45,7 @@ public sealed partial class MainWindow
     }
     private void Inspect()
     {
-        Editor.EndPropertyEdit(); properties.Children.Clear(); fields.Clear(); propertyFeedback.Clear(); propertyGroupBody = null; updateCoilInspector = null;
+        ClearDimensionInputs();Editor.EndPropertyEdit(); properties.Children.Clear(); fields.Clear(); propertyFeedback.Clear(); propertyGroupBody = null; updateCoilInspector = null;
         var c = Editor.Sheet.Components.FirstOrDefault(c => Canvas.Selected.Contains(c.Id));
         var wire = Editor.Sheet.Wires.FirstOrDefault(w => Canvas.Selected.Contains(w.Id));
         var graphic=Editor.Sheet.Graphics.FirstOrDefault(g=>Canvas.Selected.Contains(g.Id));

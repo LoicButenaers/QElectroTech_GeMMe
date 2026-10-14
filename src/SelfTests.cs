@@ -82,6 +82,7 @@ public static class SelfTests
         CoverTests.Run(Test,Assert,Reject,dir);
         PlacementClipboardTests.Run(Test,Assert,Reject,dir);
         RichGraphicsTests.Run(Test,Assert,Reject,dir);
+        TableDimensionTests.Run(Test,Assert,Reject,dir);
         File.WriteAllText(Path.Combine(dir, "self-test.json"), JsonSerializer.Serialize(new { passed = failures == 0, failures, results }, ProjectStore.Json)); return failures == 0 ? 0 : 1;
     }
 }

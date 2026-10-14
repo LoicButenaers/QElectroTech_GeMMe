@@ -87,17 +87,19 @@ public sealed partial class MainWindow
         var inputs = new Dictionary<string, TextBox>();
         foreach (string key in dimensions ? new[] { "X", "Y", "Width", "Height" } : new[] { "X", "Y" })
         {
-            string label = key switch { "Width" => "Largeur", "Height" => "Hauteur", _ => "Position " + key };
+            bool table=Editor.Sheet.Graphics.Any(g=>g.Id==id&&g.Kind=="table");string label = key switch { "Width" => table?"Largeur totale du tableau":"Largeur", "Height" => table?"Hauteur totale du tableau":"Hauteur", _ => "Position " + key };
             var box = Field(prefix + key, label, Number(PagePlacement.Display(Editor.Sheet, key, PagePlacement.Coordinate(Editor.Sheet, id, key), percentCoordinates)), "Saisir une valeur dans l’unité choisie ci-dessus. Virgule ou point accepté.");
-            inputs[key] = box; LiveText(box, text => Editor.SetElementCoordinate(id, key, ReadNumber(text), percentCoordinates));
+            inputs[key] = box;if(key is "Width" or "Height")DimensionText(box,text=>Editor.SetElementCoordinate(id,key,ReadNumber(text),percentCoordinates),()=>Number(PagePlacement.Display(Editor.Sheet,key,PagePlacement.Coordinate(Editor.Sheet,id,key),percentCoordinates)));else LiveText(box, text => Editor.SetElementCoordinate(id, key, ReadNumber(text), percentCoordinates));
         }
         mode.SelectionChanged += (_, _) =>
         {
+            if(updatingPropertyControls)return;if(!CommitDimensionInputs()){updatingPropertyControls=true;try{mode.SelectedValue=percentCoordinates?"percent":"units";}finally{updatingPropertyControls=false;}return;}
             Editor.EndPropertyEdit(); percentCoordinates = (string?)mode.SelectedValue == "percent";
             updatingPropertyControls = true;
             try { foreach (var pair in inputs) { pair.Value.Text = Number(PagePlacement.Display(Editor.Sheet, pair.Key, PagePlacement.Coordinate(Editor.Sheet, id, pair.Key), percentCoordinates)); SetPropertyFeedback(pair.Value, null); } }
             finally { updatingPropertyControls = false; }
         };
+        if(dimensions)PropertyContents.Children.Add(Hint("Largeur / hauteur : Entrée ou quitter le champ pour appliquer. Échap restaure la valeur précédente."));
         PageAlignmentButtons();
     }
     private void PageAlignmentButtons()

@@ -48,7 +48,7 @@ public sealed partial class MainWindow : Window
         var right = UiTheme.Bind(new ScrollViewer { Content = properties, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, Control.BackgroundProperty, "Ui.Surface"); properties.Margin = new(14, 0, 14, 16);
         workspace = new WorkspacePanels(Canvas, left, pagePanel, right); root.Children.Add(workspace);
         PreviewKeyDown += Keys;
-        Closing += (_, e) => { if (exportInProgress||recoveryWriting) { e.Cancel = true; status.Text = "Export ou copie en cours · fermer après sa fin."; return; } Canvas.CancelDrag(); if (!CanCloseAllProjects()) e.Cancel = true; }; Closed += (_, _) => { recoveryTimer.Stop();bridge?.Dispose(); };
+        Closing += (_, e) => { if (exportInProgress||recoveryWriting) { e.Cancel = true; status.Text = "Export ou copie en cours · fermer après sa fin."; return; } if(!CommitDimensionInputs()){e.Cancel=true;status.Text="Corriger les dimensions dans Propriétés ou Échap pour annuler la saisie.";return;}Canvas.CancelDrag(); if (!CanCloseAllProjects()) e.Cancel = true; }; Closed += (_, _) => { recoveryTimer.Stop();bridge?.Dispose(); };
         bridge = new LocalBridge(this); Run(ReloadPersonalLibrary); Filter(); Refresh(); Canvas.SetMode("select");
         if (file is not null) Run(() => Editor.Open(file));
         StartRecovery();
@@ -128,6 +128,7 @@ public sealed partial class MainWindow : Window
     private void Open() { Canvas.CancelDrag(); var dialog = new OpenFileDialog { Filter = "Projet GeMMeElec|*.gemelec" }; if (dialog.ShowDialog(this) == true) AddProjectTab(path: dialog.FileName); }
     private bool Save(bool saveAs)
     {
+        if(!CommitDimensionInputs())throw new ArgumentException("Corriger les dimensions signalées dans Propriétés avant d’enregistrer.");
         Canvas.CancelDrag(); var path = Editor.FilePath;
         if (saveAs || path is null) { var dialog = new SaveFileDialog { Filter = "Projet GeMMeElec|*.gemelec", DefaultExt = ".gemelec", FileName = path is null ? "Projet.gemelec" : Path.GetFileName(path) }; if (dialog.ShowDialog(this) != true) return false; path = dialog.FileName; }
         CheckProjectSavePath(path); Editor.Save(path); status.Text = "Projet enregistré · " + path; return true;
@@ -163,6 +164,7 @@ public sealed partial class MainWindow : Window
     }
     private void Keys(object sender, KeyEventArgs e)
     {
+        if(e.Key==Key.Escape&&e.OriginalSource is TextBox dimensionBox&&dimensionInputs.ContainsKey(dimensionBox))return;
         if (e.Key == Key.Escape) { Canvas.SetMode("select"); Canvas.Focus(); return; }
         bool ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
         if (ctrl && e.Key is Key.C or Key.V && TextClipboardTarget(e.OriginalSource)) return;

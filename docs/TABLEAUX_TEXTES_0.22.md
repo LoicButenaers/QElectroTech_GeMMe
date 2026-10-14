@@ -1,5 +1,7 @@
 # GeMMeElec 0.22 — rectangles avec texte, tableaux et styles
 
+Les réglages de dimensions ont été corrigés en [version 0.22.1](CORRECTION_TABLEAUX_0.22.1.md) : champs communs ou listes individuelles dans le dialogue, dimensions totales ou communes dans Propriétés, et validation des champs de dimensions avec Entrée ou changement de champ.
+
 ## Rectangle avec texte
 
 Choisir **Insérer → Rectangle avec texte**, ou le bouton **Rectangle + texte** du ruban **Mise en page**. Dessiner le rectangle avec un glisser ou deux clics, puis saisir son contenu dans l’éditeur. Un rectangle libre existant peut également recevoir du texte depuis **Propriétés → Contenu → Écrire / formater le texte**.
